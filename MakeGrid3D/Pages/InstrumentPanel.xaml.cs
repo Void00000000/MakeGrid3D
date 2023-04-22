@@ -1,0 +1,242 @@
+﻿using OpenTK.Windowing.Common;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
+using OpenTK.Wpf;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Reflection;
+
+namespace MakeGrid3D.Pages
+{
+    /// <summary>
+    /// Interaction logic for InstrumentPanel.xaml
+    /// </summary>
+    public partial class InstrumentPanel : Page
+    {
+        public InstrumentPanel()
+        {
+            InitializeComponent();
+            LinesSizeSlider.Value = Default.linesSize;
+            PointsSizeSlider.Value = Default.pointsSize;
+            SpeedTranslateSlider.Value = Default.speedTranslate;
+            SpeedZoomSlider.Value = Default.speedZoom;
+
+            PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
+            LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
+            BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
+            WiremodeCheckBox.IsChecked = Default.wireframeMode;
+
+            DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
+            WidthInput.Text = Default.maxAR_width.ToString();
+            HeightInput.Text = Default.maxAR_height.ToString();
+        }
+
+
+        private Color ColorFloatToByte(Color4 color4)
+        {
+            Color color = new Color();
+            color.R = (byte)(color4.R * 255);
+            color.G = (byte)(color4.G * 255);
+            color.B = (byte)(color4.B * 255);
+            color.A = (byte)(color4.A * 255);
+            return color;
+        }
+        private Color4 ColorByteToFloat(Color color)
+        {
+            Color4 color4 = new Color4();
+            color4.R = color.R / 255f;
+            color4.G = color.G / 255f;
+            color4.B = color.B / 255f;
+            color4.A = color.A / 255f;
+            return color4;
+        }
+
+        private void RotateLeftClick(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+        private void MoveLeftClick(object sender, RoutedEventArgs e)
+        {
+            
+            BufferClass.horOffset += BufferClass.speedHor * BufferClass.speedTranslate;
+            BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
+
+            BufferClass.mouse_horOffset -= BufferClass.speedHor * BufferClass.speedTranslate;
+        }
+
+        private void MoveRightClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.horOffset -= BufferClass.speedHor * BufferClass.speedTranslate;
+            BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
+
+            BufferClass.mouse_horOffset += BufferClass.speedHor * BufferClass.speedTranslate;
+        }
+
+        private void MoveDownClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.verOffset += BufferClass.speedVer * BufferClass.speedTranslate;
+            BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
+
+            BufferClass.mouse_verOffset -= BufferClass.speedVer * BufferClass.speedTranslate;
+        }
+
+        private void MoveUpClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.verOffset -= BufferClass.speedVer * BufferClass.speedTranslate;
+            BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
+
+            BufferClass.mouse_verOffset += BufferClass.speedVer * BufferClass.speedTranslate;
+        }
+
+        private void ZoomInClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.scaleX *= BufferClass.speedZoom;
+            BufferClass.scaleY *= BufferClass.speedZoom;
+            BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
+
+            BufferClass.mouse_scaleX /= BufferClass.speedZoom;
+            BufferClass.mouse_scaleY /= BufferClass.speedZoom;
+        }
+
+        private void ZoomOutClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.scaleX /= BufferClass.speedZoom;
+            BufferClass.scaleY /= BufferClass.speedZoom;
+            BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
+
+            BufferClass.mouse_scaleX *= BufferClass.speedZoom;
+            BufferClass.mouse_scaleY *= BufferClass.speedZoom;
+        }
+
+        private void ResetPositionClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.translate = Matrix4.Identity;
+            BufferClass.scale = Matrix4.Identity;
+            BufferClass.horOffset = 0;
+            BufferClass.verOffset = 0;
+            BufferClass.scaleX = 1;
+            BufferClass.scaleY = 1;
+            BufferClass.mouse_horOffset = 0;
+            BufferClass.mouse_verOffset = 0;
+            BufferClass.mouse_scaleX = 1;
+            BufferClass.mouse_scaleY = 1;
+        }
+
+        private void LinesSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            BufferClass.linesSize = (float)e.NewValue;
+        }
+
+        private void PointsSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            BufferClass.pointsSize = (float)e.NewValue;
+        }
+
+        private void PointsColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            BufferClass.pointsColor = ColorByteToFloat((Color)e.NewValue);
+        }
+
+        private void LinesColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            BufferClass.linesColor = ColorByteToFloat((Color)e.NewValue);
+        }
+
+        private void BgColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            BufferClass.bgColor = ColorByteToFloat((Color)e.NewValue);
+        }
+
+        private void SpeedTranslateChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            BufferClass.speedTranslate = (float)e.NewValue;
+        }
+
+        private void SpeedZoomChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            BufferClass.speedZoom = (float)e.NewValue;
+        }
+
+        private void ResetSettingsClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.Reset();
+            LinesSizeSlider.Value = Default.linesSize;
+            PointsSizeSlider.Value = Default.pointsSize;
+            SpeedTranslateSlider.Value = Default.speedTranslate;
+            SpeedZoomSlider.Value = Default.speedZoom;
+            WiremodeCheckBox.IsChecked = Default.wireframeMode;
+
+            PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
+            LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
+            BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
+        }
+
+        private void WiremodeChecked(object sender, RoutedEventArgs e)
+        {
+            BufferClass.wireframeMode = true;
+        }
+
+        private void WiremodeUnChecked(object sender, RoutedEventArgs e)
+        {
+            BufferClass.wireframeMode = false;
+        }
+
+        private void DrawRemovedLinesChecked(object sender, RoutedEventArgs e)
+        {
+            BufferClass.drawRemovedLinesMode = true;
+        }
+
+        private void DrawRemovedLinesUnChecked(object sender, RoutedEventArgs e)
+        {
+            BufferClass.drawRemovedLinesMode = false;
+        }
+
+        private void MakeUnstructedGridClick(object sender, RoutedEventArgs e)
+        {
+            BufferClass.unstructedGridMode = true;
+        }
+
+        private void MaxARClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int w = int.Parse(WidthInput.Text);
+                int h = int.Parse(HeightInput.Text);
+                if (w <= 0 || h <= 0)
+                {
+                    MessageBox.Show("Некорректный формат введённых данных", "Числа в полях должны быть положительными числами");
+                    throw new Exception("BelowOrEqualZero");
+                }
+                float maxAr = (float)w / h;
+                if (maxAr < 1) maxAr = 1f / maxAr;
+                BufferClass.maxAR = maxAr;
+                MessageBox.Show(BufferClass.maxAR.ToString());
+            }
+            catch (Exception ex){
+                if (ex is ArgumentNullException || ex is FormatException)
+                {
+                    MessageBox.Show("Некорректный формат введённых данных", "Числа в полях должны быть целыми положительными числами");
+                }
+                else
+                {
+                    MessageBox.Show("Не удалось прочитать данные", "Не удалось прочитать данные из полей");
+                }
+                WidthInput.Text = "";
+                HeightInput.Text = "";
+            }
+        }
+    }
+}

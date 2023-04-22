@@ -1,0 +1,45 @@
+﻿<Window x:Class="MakeGrid3D.GraphicsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MakeGrid3D"
+        xmlns:glWpfControl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
+        mc:Ignorable="d"
+        Title="MakeGrid3D" Height="720" Width="1280"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip"
+        Closing="Window_Closing">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <Menu.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel HorizontalAlignment="Stretch"/>
+                </ItemsPanelTemplate>
+            </Menu.ItemsPanel>
+            <MenuItem Header="Открыть" Click="OpenFileClick"/>
+            <MenuItem HorizontalAlignment="Center" Header="X: 0, Y: 0" FontSize="18" Name="coordinatesTextBlock" Grid.Row="8"/>
+        </Menu>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <glWpfControl:GLWpfControl 
+            x:Name="OpenTkControl" 
+            Render="OpenTkControl_OnRender" MouseMove="OpenTkControl_MouseMove" Grid.ColumnSpan="3"/>
+
+            <Frame Name="Panel" Grid.Column="3" Source="\Pages\InstrumentPanel.xaml" NavigationUIVisibility="Hidden"/>
+        </Grid>
+    </Grid>
+</Window>

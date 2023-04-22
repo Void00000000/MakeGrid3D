@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Pages\Images\arrow_down.png" />
+    <None Remove="Pages\Images\arrow_left.png" />
+    <None Remove="Pages\Images\arrow_right.png" />
+    <None Remove="Pages\Images\arrow_up.png" />
+    <None Remove="Pages\Images\light_purple_gradient.jpg" />
+    <None Remove="Pages\Images\purple_gradient.jpg" />
+    <None Remove="Pages\Images\rotate_around_left.png" />
+    <None Remove="Pages\Images\rotate_around_right.png" />
+    <None Remove="Pages\Images\rotate_bottom.png" />
+    <None Remove="Pages\Images\rotate_left.png" />
+    <None Remove="Pages\Images\rotate_right.png" />
+    <None Remove="Pages\Images\rotate_top.png" />
+    <None Remove="Pages\Images\zoom_in.png" />
+    <None Remove="Pages\Images\zoom_out.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.0" />
+    <PackageReference Include="OpenTK" Version="4.7.7" />
+    <PackageReference Include="OpenTK.GLWpfControl" Version="4.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Pages\Images\arrow_down.png" />
+    <Resource Include="Pages\Images\arrow_left.png" />
+    <Resource Include="Pages\Images\arrow_right.png" />
+    <Resource Include="Pages\Images\arrow_up.png" />
+    <Resource Include="Pages\Images\light_purple_gradient.jpg" />
+    <Resource Include="Pages\Images\purple_gradient.jpg" />
+    <Resource Include="Pages\Images\rotate_around_left.png" />
+    <Resource Include="Pages\Images\rotate_around_right.png" />
+    <Resource Include="Pages\Images\rotate_bottom.png" />
+    <Resource Include="Pages\Images\rotate_left.png" />
+    <Resource Include="Pages\Images\rotate_right.png" />
+    <Resource Include="Pages\Images\rotate_top.png" />
+    <Resource Include="Pages\Images\zoom_in.png" />
+    <Resource Include="Pages\Images\zoom_out.png" />
+  </ItemGroup>
+
+</Project>
