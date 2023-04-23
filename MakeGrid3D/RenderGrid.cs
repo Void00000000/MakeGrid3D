@@ -41,8 +41,11 @@ namespace MakeGrid3D
             {
                 if (e is DirectoryNotFoundException || e is FileNotFoundException)
                 {
-                    MessageBox.Show("Ошибка чтения файла", "Не удалось прочитать код шейдеров");
-                    Application.Current.Shutdown();
+                    ErrorHandler.FileReadingErrorMessage("Не удалось найти шейдеры");
+                }
+                else
+                {
+                    ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файлы шейдеров");
                 }
             }
 
@@ -58,8 +61,8 @@ namespace MakeGrid3D
             GL.GetShader(VertexShader, ShaderParameter.CompileStatus, out int success_v);
             if (success_v == 0)
             {
-                string infoLog = GL.GetShaderInfoLog(VertexShader);
-                MessageBox.Show("Ошибка компиляции шейдеров", infoLog);
+                string infoLog = "Ошибка компиляции vertex шейдера\n" + GL.GetShaderInfoLog(VertexShader);
+                ErrorHandler.BuildingErrorMessage(infoLog);
             }
 
             GL.CompileShader(FragmentShader);
@@ -67,8 +70,8 @@ namespace MakeGrid3D
             GL.GetShader(FragmentShader, ShaderParameter.CompileStatus, out int success_f);
             if (success_f == 0)
             {
-                string infoLog = GL.GetShaderInfoLog(FragmentShader);
-                MessageBox.Show("Ошибка компиляции шейдеров", infoLog);
+                string infoLog = "Ошибка компиляции fragment шейдера\n" + GL.GetShaderInfoLog(FragmentShader);
+                ErrorHandler.BuildingErrorMessage(infoLog); ;
             }
 
             // Linking shaders-----------------------------------------------------
@@ -82,8 +85,8 @@ namespace MakeGrid3D
             GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int success);
             if (success == 0)
             {
-                string infoLog = GL.GetProgramInfoLog(Handle);
-                MessageBox.Show("Ошибка связывания шейдеров", infoLog);
+                string infoLog = "Ошибка связывания шейдеров\n" + GL.GetProgramInfoLog(Handle);
+                ErrorHandler.BuildingErrorMessage(infoLog);
             }
 
             // Clenup
@@ -93,6 +96,7 @@ namespace MakeGrid3D
             GL.DeleteShader(VertexShader);
         }
 
+        // Bind the shader
         public void Use()
         {
             GL.UseProgram(Handle);
@@ -126,6 +130,22 @@ namespace MakeGrid3D
             GL.Uniform4(location, vector.R, vector.G, vector.B, vector.A);
         }
 
+
+        public void DashedLines(bool dash, float dash_size=0.2f, float gap_size=0.5f)
+        {
+            if (dash)
+            {
+                SetFloat("u_dashSize", dash_size);
+                SetFloat("u_gapSize", gap_size);
+            }
+            else
+            {
+                SetFloat("u_dashSize", BufferClass.linesSize);
+                SetFloat("u_gapSize", 0f);
+            }
+            Use();
+        }
+
         private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
@@ -151,15 +171,38 @@ namespace MakeGrid3D
         }
     }
 
+    class Mesh
+    {
+        public int Vao { get; }
+        private int vbo;
+        private int ebo;
+        public Mesh(int vbo, int vao, int ebo)
+        {
+            this.vbo = vbo;
+            Vao = vao;
+            this.ebo = ebo;
+            GL.BindVertexArray(Vao);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, this.vbo);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, this.ebo);
+            GL.BindVertexArray(0);
+        }
+
+        public void Dispose()
+        {
+            GL.DeleteBuffer(vbo);
+            GL.DeleteVertexArray(Vao);
+            GL.DeleteBuffer(ebo);
+        }
+    }
+
 
     class RenderGrid
     {
-        private int VertexBufferObject;
-        private int VertexBufferObjectUnstr;
-        private int VertexArrayObject;
-        private int ElementBufferObject;
-        private int ElementBufferObjectArea;
-        private int ElementBufferObjectUnstr;
+        Mesh regularGrid;
+        Mesh irregularGrid;
+        Mesh area;
 
         private Shader shader;
         private float[] vertices;
@@ -186,119 +229,16 @@ namespace MakeGrid3D
                 Default.area2Color,
                 Default.area3Color
             };
-        }
-
-
-        public void AssembleVertices()
-        {
-            int Nelems = grid2D.Nelems;
-            int Nnodes = grid2D.Nnodes;
-            int Nareas = grid2D.Nareas;
-
-            vertices = new float[Nnodes * 3];
-            vertices_unstr = new float[grid2D.UnStrXY.Count * 3];
-            indices = new uint[Nelems * 4 * 2];
-            indices_area = new uint[Nareas * 6];
-            indices_unstr= new uint[grid2D.UnStrElems.Count * 4 * 2];
-
-            int n = 0;
-            foreach (Vector2 node in grid2D.XY)
-            {
-                vertices[n] = node.X; vertices[n + 1] = node.Y; vertices[n + 2] = 0;
-                n += 3;
-            }
-
-            int un = 0;
-            foreach (Vector2 node in grid2D.UnStrXY)
-            {
-                vertices_unstr[un] = node.X; vertices_unstr[un + 1] = node.Y; vertices_unstr[un + 2] = 0;
-                un += 3;
-            }
-
-            int e = 0;
-            foreach (Elem5 elem5 in grid2D.Elems)
-            {
-                uint n1 = (uint)elem5.n1;
-                uint n2 = (uint)elem5.n2;
-                uint n3 = (uint)elem5.n3;
-                uint n4 = (uint)elem5.n4;
-                indices[e] = n1; indices[e + 1] = n2; indices[e + 2] = n2; indices[e + 3] = n4;
-                indices[e + 4] = n3; indices[e + 5] = n4; indices[e + 6] = n1; indices[e + 7] = n3;
-                e += 8;
-            }
-
-            int u = 0;
-            foreach (Elem5 uelem5 in grid2D.UnStrElems)
-            {
-                uint n1 = (uint)uelem5.n1;
-                uint n2 = (uint)uelem5.n2;
-                uint n3 = (uint)uelem5.n3;
-                uint n4 = (uint)uelem5.n4;
-                indices_unstr[u] = n1; indices_unstr[u + 1] = n2; indices_unstr[u + 2] = n2; indices_unstr[u + 3] = n4;
-                indices_unstr[u + 4] = n3; indices_unstr[u + 5] = n4; indices_unstr[u + 6] = n1; indices_unstr[u + 7] = n3;
-                u += 8;
-            }
-
-            int s = 0;
-            foreach(SubArea subArea in grid2D.Mw)
-            {
-                int ix1 = grid2D.IXw[subArea.nx1];
-                int iy1 = grid2D.IYw[subArea.ny1];
-                int ix2 = grid2D.IXw[subArea.nx2];
-                int iy2 = grid2D.IYw[subArea.ny2];
-
-                uint n1 = (uint)grid2D.global_num(ix1, iy1);
-                uint n2 = (uint)grid2D.global_num(ix2, iy1);
-                uint n3 = (uint)grid2D.global_num(ix1, iy2);
-                uint n4 = (uint)grid2D.global_num(ix2, iy2);
-
-                indices_area[s] = n1; indices_area[s + 1] = n2; indices_area[s + 2] = n4;
-                indices_area[s + 3] = n1; indices_area[s + 4] = n3; indices_area[s + 5] = n4;
-                s += 6;
-            }
-        }
-
-
-        public void Init()
-        {
-            VertexBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-
-            VertexBufferObjectUnstr = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObjectUnstr);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices_unstr.Length * sizeof(float), vertices_unstr, BufferUsageHint.StaticDraw);
-
-            VertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(VertexArrayObject);
-
-            ElementBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
-
-            ElementBufferObjectArea = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObjectArea);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices_area.Length * sizeof(uint), indices_area, BufferUsageHint.StaticDraw);
-
-            ElementBufferObjectUnstr = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObjectUnstr);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices_unstr.Length * sizeof(uint), indices_unstr, BufferUsageHint.StaticDraw);
-
-            // This function has two jobs, to tell opengl about the format of the data,
-            // but also to associate the current array buffer with the VAO.
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-            GL.EnableVertexAttribArray(0);
-
-
+            AssembleVertices();
+            FillBuffers();
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
-            
 
             float left = grid2D.X0;
             float right = grid2D.Xn;
             float bottom = grid2D.Y0;
             float top = grid2D.Yn;
 
-            float width = right- left;
+            float width = right - left;
             float height = top - bottom;
 
             float hor_offset = width * 0.2f;
@@ -308,7 +248,7 @@ namespace MakeGrid3D
             float right_ = right + hor_offset;
             float bottom_ = bottom - ver_offset;
             float top_ = top + ver_offset;
-            
+
             if ((right_ - left_) >= (top_ - bottom_))
             {
                 Left = left_;
@@ -324,33 +264,162 @@ namespace MakeGrid3D
                 Bottom = bottom_;
             }
             projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
-            
         }
 
+
+        private void AssembleVertices(bool re=true, bool irre=true)
+        {
+            int Nelems = grid2D.Nelems;
+            int Nnodes = grid2D.Nnodes;
+            int Nareas = grid2D.Nareas;
+
+            if (re)
+            {
+                vertices = new float[Nnodes * 3];
+                int n = 0;
+                foreach (Vector2 node in grid2D.XY)
+                {
+                    vertices[n] = node.X; vertices[n + 1] = node.Y; vertices[n + 2] = 0;
+                    n += 3;
+                }
+
+                indices = new uint[Nelems * 4 * 2];
+                int e = 0;
+                foreach (Elem5 elem5 in grid2D.Elems)
+                {
+                    uint n1 = (uint)elem5.n1;
+                    uint n2 = (uint)elem5.n2;
+                    uint n3 = (uint)elem5.n3;
+                    uint n4 = (uint)elem5.n4;
+                    indices[e] = n1; indices[e + 1] = n2; indices[e + 2] = n2; indices[e + 3] = n4;
+                    indices[e + 4] = n3; indices[e + 5] = n4; indices[e + 6] = n1; indices[e + 7] = n3;
+                    e += 8;
+                }
+
+                indices_area = new uint[Nareas * 6];
+                int s = 0;
+                foreach (SubArea subArea in grid2D.Mw)
+                {
+                    int ix1 = grid2D.IXw[subArea.nx1];
+                    int iy1 = grid2D.IYw[subArea.ny1];
+                    int ix2 = grid2D.IXw[subArea.nx2];
+                    int iy2 = grid2D.IYw[subArea.ny2];
+
+                    uint n1 = (uint)grid2D.global_num(ix1, iy1);
+                    uint n2 = (uint)grid2D.global_num(ix2, iy1);
+                    uint n3 = (uint)grid2D.global_num(ix1, iy2);
+                    uint n4 = (uint)grid2D.global_num(ix2, iy2);
+
+                    indices_area[s] = n1; indices_area[s + 1] = n2; indices_area[s + 2] = n4;
+                    indices_area[s + 3] = n1; indices_area[s + 4] = n3; indices_area[s + 5] = n4;
+                    s += 6;
+                }
+            }
+
+            if (irre)
+            {
+                vertices_unstr = new float[grid2D.UnStrXY.Count * 3];
+                int un = 0;
+                foreach (Vector2 node in grid2D.UnStrXY)
+                {
+                    vertices_unstr[un] = node.X; vertices_unstr[un + 1] = node.Y; vertices_unstr[un + 2] = 0;
+                    un += 3;
+                }
+
+                indices_unstr = new uint[grid2D.UnStrElems.Count * 4 * 2];
+                int u = 0;
+                foreach (Elem5 uelem5 in grid2D.UnStrElems)
+                {
+                    uint n1 = (uint)uelem5.n1;
+                    uint n2 = (uint)uelem5.n2;
+                    uint n3 = (uint)uelem5.n3;
+                    uint n4 = (uint)uelem5.n4;
+                    indices_unstr[u] = n1; indices_unstr[u + 1] = n2; indices_unstr[u + 2] = n2; indices_unstr[u + 3] = n4;
+                    indices_unstr[u + 4] = n3; indices_unstr[u + 5] = n4; indices_unstr[u + 6] = n1; indices_unstr[u + 7] = n3;
+                    u += 8;
+                }
+            }
+        }
+
+
+        private void FillBuffers(bool re = true, bool irre = true)
+        {
+            int vbo1, vbo2;
+            int vao1, vao2, vao3;
+            int ebo1, ebo2, ebo3;
+            if (re)
+            {
+                vbo1 = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo1);
+                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+                vao1 = GL.GenVertexArray();
+                GL.BindVertexArray(vao1);
+                ebo1 = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo1);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+                regularGrid = new Mesh(vbo1, vao1, ebo1);
+
+                vao3 = GL.GenVertexArray();
+                GL.BindVertexArray(vao3);
+                ebo3 = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo3);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, indices_area.Length * sizeof(uint), indices_area, BufferUsageHint.StaticDraw);
+                area = new Mesh(vbo1, vao3, ebo3);
+            }
+            if (irre)
+            {
+                vbo2 = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo2);
+                GL.BufferData(BufferTarget.ArrayBuffer, vertices_unstr.Length * sizeof(float), vertices_unstr, BufferUsageHint.StaticDraw);
+                vao2 = GL.GenVertexArray();
+                GL.BindVertexArray(vao2);
+                ebo2 = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo2);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, indices_unstr.Length * sizeof(uint), indices_unstr, BufferUsageHint.StaticDraw);
+                irregularGrid = new Mesh(vbo2, vao2, ebo2);
+            }
+        }
+
+        public void RebuildUnStructedGrid()
+        {
+            grid2D.MakeUnStructedGrid();
+            AssembleVertices(re:false);
+            FillBuffers(re: false);
+        }
+
+        private void DrawLines(int vao, int iLength, int iOffset) {
+            GL.BindVertexArray(vao);
+            shader.SetColor4("current_color", BufferClass.linesColor);
+            GL.DrawElements(PrimitiveType.Lines, iLength, DrawElementsType.UnsignedInt, iOffset);
+        }
+
+        public void DrawNodes(int vao, int vLength, int vOffset)
+        {
+            GL.BindVertexArray(vao);
+            shader.SetColor4("current_color", BufferClass.pointsColor);
+            GL.DrawArrays(PrimitiveType.Points, vOffset, vLength);
+        }
 
         public void RenderFrame()
         {
             GL.ClearColor(BufferClass.bgColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            // Чтобы работали прозрачные цвета
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.Blend);
 
-            GL.BindVertexArray(VertexArrayObject);
             shader.Use();
             shader.SetMatrix4("projection", ref projection);
             model = BufferClass.translate * BufferClass.scale;
             shader.SetMatrix4("model", ref model);
             shader.SetVector2("u_resolution", new Vector2(Right - Left, Top - Bottom));
+            GL.LineWidth(BufferClass.linesSize);
+            GL.PointSize(BufferClass.pointsSize);
+
             if (!BufferClass.wireframeMode)
             {
-                shader.SetFloat("u_dashSize", BufferClass.linesSize);
-                shader.SetFloat("u_gapSize", 0f);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-                GL.EnableVertexAttribArray(0);
-                shader.Use();
-
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObjectArea);
                 int s = 0;
+                GL.BindVertexArray(area.Vao);
                 foreach (SubArea subArea in grid2D.Mw)
                 {
                     shader.SetColor4("current_color", AreaColors[subArea.wi]);
@@ -358,65 +427,21 @@ namespace MakeGrid3D
                     s += 6;
                 }
             }
-
             if (BufferClass.unstructedGridMode)
             {
-                GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-                GL.EnableVertexAttribArray(0);
                 if (BufferClass.drawRemovedLinesMode)
                 {
-                    shader.SetFloat("u_dashSize", 0.2f);
-                    shader.SetFloat("u_gapSize", 0.5f);
-                    shader.Use();
-                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObject);
-                    shader.SetColor4("current_color", BufferClass.linesColor);
-                    GL.LineWidth(BufferClass.linesSize);
-                    GL.DrawElements(PrimitiveType.Lines, indices.Length, DrawElementsType.UnsignedInt, 0);
+                    shader.DashedLines(true);
+                    DrawLines(regularGrid.Vao, indices.Length, 0);
+                    shader.DashedLines(false);
                 }
-                else
-                {
-                    shader.SetFloat("u_dashSize", BufferClass.linesSize);
-                    shader.SetFloat("u_gapSize", 0f);
-                }
-                
-
-                shader.SetFloat("u_dashSize", BufferClass.linesSize);
-                shader.SetFloat("u_gapSize", 0f);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObjectUnstr);
-                shader.SetColor4("current_color", BufferClass.linesColor);
-                GL.LineWidth(BufferClass.linesSize);
-                GL.DrawElements(PrimitiveType.Lines, indices_unstr.Length, DrawElementsType.UnsignedInt, 0);
-
-                GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObjectUnstr);
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices_unstr.Length * sizeof(float), vertices_unstr, BufferUsageHint.StaticDraw);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-                GL.EnableVertexAttribArray(0);
-                shader.Use();
-
-                shader.SetColor4("current_color", BufferClass.pointsColor);
-                GL.PointSize(BufferClass.pointsSize);
-                GL.DrawArrays(PrimitiveType.Points, 0, vertices_unstr.Length);
+                DrawLines(irregularGrid.Vao, indices_unstr.Length, 0);
+                DrawNodes(irregularGrid.Vao, vertices_unstr.Length, 0);
             }
             else
             {
-                shader.SetFloat("u_dashSize", BufferClass.linesSize);
-                shader.SetFloat("u_gapSize", 0f);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-                GL.EnableVertexAttribArray(0);
-                shader.Use();
-
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObject);
-                shader.SetColor4("current_color", BufferClass.linesColor);
-                GL.LineWidth(BufferClass.linesSize);
-                GL.DrawElements(PrimitiveType.Lines, indices.Length, DrawElementsType.UnsignedInt, 0);
-
-                shader.SetColor4("current_color", BufferClass.pointsColor);
-                GL.PointSize(BufferClass.pointsSize);
-                GL.DrawArrays(PrimitiveType.Points, 0, vertices.Length);
+                DrawLines(regularGrid.Vao, indices.Length, 0);
+                DrawNodes(regularGrid.Vao, vertices.Length, 0);
             }
 
             
@@ -430,14 +455,9 @@ namespace MakeGrid3D
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
 
-            GL.UseProgram(0);
-            GL.DeleteBuffer(VertexBufferObject);
-            GL.DeleteBuffer(VertexBufferObjectUnstr);
-            GL.DeleteVertexArray(VertexArrayObject);
-            GL.DeleteBuffer(ElementBufferObject);
-            GL.DeleteBuffer(ElementBufferObjectArea);
-            GL.DeleteBuffer(ElementBufferObjectUnstr);
-
+            regularGrid.Dispose();
+            irregularGrid.Dispose();
+            area.Dispose();
             shader.Dispose();
         }
     }

@@ -29,6 +29,10 @@ namespace MakeGrid3D
         public MainWindow()
         {
             InitializeComponent();
+
+            GraphicsWindow graphicsWindow = new GraphicsWindow();
+            graphicsWindow.Show();
+            Close();
         }
 
         private void OpenFileClick(object sender, RoutedEventArgs e)

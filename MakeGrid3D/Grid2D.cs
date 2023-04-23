@@ -255,17 +255,16 @@ namespace MakeGrid3D
             {
                 if (e is DirectoryNotFoundException || e is FileNotFoundException)
                 {
-                    MessageBox.Show("Ошибка чтения файла", "Не удалось найти файл с сеткой");
+                    ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
                 }
                 else if (e is FormatException)
                 {
-                    MessageBox.Show("Ошибка чтения файла", "Некорректный формат файла");
+                    ErrorHandler.FileReadingErrorMessage("Некорректный формат файла");
                 }
                 else
                 {
-                    MessageBox.Show("Ошибка чтения файла", "Не удалось прочитать файл");
+                    ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл");
                 }
-                Application.Current.Shutdown();
             }
         }
 
@@ -298,6 +297,13 @@ namespace MakeGrid3D
 
         private void MakeUnStructedMatrix()
         {
+            IJ = new List<List<NodeType>>(Nx);
+            for (int i = 0; i < Nx; i++)
+            {
+                IJ.Add(new List<NodeType>(Ny));
+                for (int j = 0; j < Ny; j++)
+                    IJ[i].Add(NodeType.Regular);
+            }
             // Изменение матрицы IJ
             for (int j = 1; j < Ny - 1; j++)
             {
@@ -422,7 +428,12 @@ namespace MakeGrid3D
                     int n3 = global_num(i, jk);
                     int n4 = global_num(ik, jk);
 
-                    UnStrElems.Add(new Elem5(NodeType.Regular, n1, n2, n3, n4));
+                    // TODO: OPTIMIZE THAT
+                    int n1_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n1].X) < 1e-14f && MathF.Abs(v.Y - XY[n1].Y) < 1e-14f);
+                    int n2_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n2].X) < 1e-14f && MathF.Abs(v.Y - XY[n2].Y) < 1e-14f);
+                    int n3_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n3].X) < 1e-14f && MathF.Abs(v.Y - XY[n3].Y) < 1e-14f);
+                    int n4_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n4].X) < 1e-14f && MathF.Abs(v.Y - XY[n4].Y) < 1e-14f);
+                    UnStrElems.Add(new Elem5(NodeType.Regular, n1_new, n2_new, n3_new, n4_new));
                 }
         }
     }

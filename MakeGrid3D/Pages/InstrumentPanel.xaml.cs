@@ -217,22 +217,25 @@ namespace MakeGrid3D.Pages
                 int h = int.Parse(HeightInput.Text);
                 if (w <= 0 || h <= 0)
                 {
-                    MessageBox.Show("Некорректный формат введённых данных", "Числа в полях должны быть положительными числами");
-                    throw new Exception("BelowOrEqualZero");
+                    throw new BelowZeroException("Числа в полях меньше или равны нулю");
                 }
                 float maxAr = (float)w / h;
                 if (maxAr < 1) maxAr = 1f / maxAr;
                 BufferClass.maxAR = maxAr;
-                MessageBox.Show(BufferClass.maxAR.ToString());
+                BufferClass.rebuildUnStructedGrid = true;
             }
             catch (Exception ex){
                 if (ex is ArgumentNullException || ex is FormatException)
                 {
-                    MessageBox.Show("Некорректный формат введённых данных", "Числа в полях должны быть целыми положительными числами");
+                    ErrorHandler.DataErrorMessage("Данные в полях должны быть целыми положительными числами", false);
+                }
+                else if (ex is BelowZeroException)
+                {
+                    ErrorHandler.DataErrorMessage(ex.Message, false);
                 }
                 else
                 {
-                    MessageBox.Show("Не удалось прочитать данные", "Не удалось прочитать данные из полей");
+                    ErrorHandler.DataErrorMessage("Не удалось прочитать данные из полей", false);
                 }
                 WidthInput.Text = "";
                 HeightInput.Text = "";

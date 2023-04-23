@@ -52,8 +52,9 @@ namespace MakeGrid3D
         static public bool drawRemovedLinesMode = Default.drawRemovedLinesMode;
         static public bool unstructedGridMode = Default.unstructedGridMode;
 
-        static public string fileName;
+        static public string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\Grid2D_1.txt";
         static public float maxAR = (float)Default.maxAR_width / Default.maxAR_height;
+        static public bool rebuildUnStructedGrid = false;
 
         static public void Reset()
         {
@@ -84,8 +85,6 @@ namespace MakeGrid3D
             Grid2D grid2D = new Grid2D(BufferClass.fileName);
             grid2D.MakeUnStructedGrid();
             renderGrid = new RenderGrid(grid2D);
-            renderGrid.AssembleVertices();
-            renderGrid.Init();
             // Множители скорости = 1 процент от ширины(высоты) мира
             BufferClass.speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             BufferClass.speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
@@ -93,6 +92,11 @@ namespace MakeGrid3D
 
         private void OpenTkControl_OnRender(TimeSpan obj)
         {
+            if (BufferClass.rebuildUnStructedGrid)
+            {
+                renderGrid.RebuildUnStructedGrid();
+                BufferClass.rebuildUnStructedGrid = false;
+            }
             renderGrid.RenderFrame();
         }
 
@@ -155,8 +159,6 @@ namespace MakeGrid3D
             Grid2D grid2D = new Grid2D(BufferClass.fileName);
             grid2D.MakeUnStructedGrid();
             renderGrid = new RenderGrid(grid2D);
-            renderGrid.AssembleVertices();
-            renderGrid.Init();
         }
     }
 }
