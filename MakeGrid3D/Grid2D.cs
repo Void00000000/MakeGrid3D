@@ -63,6 +63,8 @@ namespace MakeGrid3D
         public int Nareas { get; private set; }
         public int Nnodes { get;}
         public int Nelems { get;}
+        public int UnStrNnodes { get; private set; }
+        public int UnStrNelems { get; private set; }
         public int Nx { get; private set; }
         public int Ny { get; private set; }
 
@@ -435,6 +437,8 @@ namespace MakeGrid3D
                     int n4_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n4].X) < 1e-14f && MathF.Abs(v.Y - XY[n4].Y) < 1e-14f);
                     UnStrElems.Add(new Elem5(NodeType.Regular, n1_new, n2_new, n3_new, n4_new));
                 }
+            UnStrNnodes = UnStrXY.Count;
+            UnStrNelems = UnStrElems.Count;
         }
     }
 }

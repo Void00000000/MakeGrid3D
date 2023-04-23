@@ -15,16 +15,11 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0">
-            <Menu.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <DockPanel HorizontalAlignment="Stretch"/>
-                </ItemsPanelTemplate>
-            </Menu.ItemsPanel>
             <MenuItem Header="Открыть" Click="OpenFileClick"/>
-            <MenuItem HorizontalAlignment="Center" Header="X: 0, Y: 0" FontSize="18" Name="coordinatesTextBlock" Grid.Row="8"/>
         </Menu>
 
         <Grid Grid.Row="1">
@@ -39,7 +34,60 @@
             x:Name="OpenTkControl" 
             Render="OpenTkControl_OnRender" MouseMove="OpenTkControl_MouseMove" Grid.ColumnSpan="3"/>
 
-            <Frame Name="Panel" Grid.Column="3" Source="\Pages\InstrumentPanel.xaml" NavigationUIVisibility="Hidden"/>
+            <Grid Grid.Column="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Frame Grid.RowSpan="3" Name="Panel" Grid.Column="3" Source="\Pages\InstrumentPanel.xaml" NavigationUIVisibility="Hidden"/>
+                <TextBlock Grid.Row="3" Text="Тут будет контент" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
         </Grid>
+        <StatusBar Grid.Row="2">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem Grid.Column="0">
+                <TextBlock Name="BlockAreaCount"/>
+            </StatusBarItem>
+            <Separator Grid.Column="1" Width="2"/>
+            <StatusBarItem Grid.Column="2">
+                <TextBlock Name="BlockNodesCount"/>
+            </StatusBarItem>
+            <Separator Grid.Column="3" Width="2" />
+            <StatusBarItem Grid.Column="4">
+                <TextBlock Name="BlockElemsCount"/>
+            </StatusBarItem>
+            <Separator Grid.Column="5" Width="2"/>
+            <StatusBarItem Grid.Column="6">
+                <TextBlock Name="BlockRemovedNodesCount"/>
+            </StatusBarItem>
+            <Separator Grid.Column="7" Width="2"/>
+            <StatusBarItem Grid.Column="8">
+                <TextBlock Name="BlockRemovedElemsCount"/>
+            </StatusBarItem>
+            <Separator Grid.Column="9" Width="2"/>
+            <StatusBarItem Grid.Column="10" HorizontalAlignment="Right">
+                <TextBlock Name="BlockCoordinates"/>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>

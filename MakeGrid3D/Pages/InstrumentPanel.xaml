@@ -139,6 +139,7 @@
             <xctk:ColorPicker Name="BgColorPicker" Grid.Column="1" Width="50" SelectedColorChanged="BgColorChanged"></xctk:ColorPicker>
         </Grid>
 
+        <!--Wirefrrame mode-->
         <Grid Grid.Row="5" Margin="10 10 10 0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -147,13 +148,16 @@
             <TextBlock Grid.Column="0" Text="Каркасный режим: " Foreground="Black"/>
             <CheckBox Name="WiremodeCheckBox" Grid.Column="1" Checked="WiremodeChecked" Unchecked="WiremodeUnChecked"/>
         </Grid>
-        
+
+        <!--Reset Settings-->
         <Button Grid.Row="6" Click="ResetSettingsClick" Content="Сбросить настройки по умолчанию" HorizontalAlignment="Center" Margin="0 10 0 0"/>
         <Separator Grid.Row="7" Background="Black" Margin="10 5 10 0">
             <Separator.RenderTransform>
                 <ScaleTransform ScaleY="2" />
             </Separator.RenderTransform>
         </Separator>
+
+        <!--Unstructed grid-->
         <Grid Grid.Row="8" Margin="10 10 10 0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -162,7 +166,7 @@
             <TextBlock Grid.Column="0" Text="Отображать удалённые линии: " Foreground="Black"/>
             <CheckBox Name="DrawRemovedLinesCheckBox" Grid.Column="1" Checked="DrawRemovedLinesChecked" Unchecked="DrawRemovedLinesUnChecked"/>
         </Grid>
-        <Button Grid.Row="9" Click="MakeUnstructedGridClick" Content="Построить нерегулярную сетку" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+        <Button Grid.Row="9" Name="BuildGridButton"  Click="MakeUnstructedGridClick" Content="Построить нерегулярную сетку" HorizontalAlignment="Center" Margin="0 10 0 0"/>
         <Grid Grid.Row="10" Margin="10 10 10 0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>

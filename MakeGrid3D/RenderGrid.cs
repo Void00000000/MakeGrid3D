@@ -214,7 +214,7 @@ namespace MakeGrid3D
         private Matrix4 model;
         private List<Color4> AreaColors;
 
-        private Grid2D grid2D;
+        public readonly Grid2D grid2D;
         public float Left { get; private set; }
         public float Right { get; private set; }
         public float Bottom { get; private set; }

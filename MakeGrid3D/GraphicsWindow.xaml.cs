@@ -17,6 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.IO;
 using System.Diagnostics;
+using MakeGrid3D.Pages;
 
 namespace MakeGrid3D
 {
@@ -67,6 +68,19 @@ namespace MakeGrid3D
             bgColor = Default.bgColor;
             wireframeMode= Default.wireframeMode;
         }
+        static public void ResetPosition()
+        {
+            translate = Matrix4.Identity;
+            scale = Matrix4.Identity;
+            horOffset = 0;
+            verOffset = 0;
+            scaleX = 1;
+            scaleY = 1;
+            mouse_horOffset = 0;
+            mouse_verOffset = 0;
+            mouse_scaleX = 1;
+            mouse_scaleY = 1;
+        }
     }
 
     public partial class GraphicsWindow : Window
@@ -85,6 +99,14 @@ namespace MakeGrid3D
             Grid2D grid2D = new Grid2D(BufferClass.fileName);
             grid2D.MakeUnStructedGrid();
             renderGrid = new RenderGrid(grid2D);
+            // если удалить отсюда то не будет показываться в статус баре
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas;
+            BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.UnStrNnodes;
+            BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.UnStrNelems;
+            BlockRemovedNodesCount.Text = "***";
+            BlockRemovedElemsCount.Text = "***";
+            //-------------------------------------------------------------------------------
+
             // Множители скорости = 1 процент от ширины(высоты) мира
             BufferClass.speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             BufferClass.speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
@@ -92,6 +114,21 @@ namespace MakeGrid3D
 
         private void OpenTkControl_OnRender(TimeSpan obj)
         {
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas; ;
+            if (BufferClass.unstructedGridMode)
+            {
+                BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.UnStrNnodes;
+                BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.UnStrNelems;
+                BlockRemovedNodesCount.Text = "Количество удалённых узлов: " + (renderGrid.grid2D.Nnodes - renderGrid.grid2D.UnStrNnodes);
+                BlockRemovedElemsCount.Text = "Количество удалённых элементов: " + (renderGrid.grid2D.Nelems - renderGrid.grid2D.UnStrNelems);
+            }
+            else
+            {
+                BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.Nnodes;
+                BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.Nelems;
+                BlockRemovedNodesCount.Text = "***";
+                BlockRemovedElemsCount.Text = "***";
+            }
             if (BufferClass.rebuildUnStructedGrid)
             {
                 renderGrid.RebuildUnStructedGrid();
@@ -133,8 +170,7 @@ namespace MakeGrid3D
             Point new_position = MouseMap(position);
             double x = new_position.X;
             double y = new_position.Y;
-            coordinatesTextBlock.Header = "X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
-            
+            BlockCoordinates.Text = "X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
         }
 
         private void OpenFileClick(object sender, RoutedEventArgs e)
@@ -156,6 +192,9 @@ namespace MakeGrid3D
             }
             renderGrid.CleanUp();
             BufferClass.unstructedGridMode = false;
+            // TODO:
+            // При загрузке новой сетки название кнопки не меняется
+            BufferClass.ResetPosition();
             Grid2D grid2D = new Grid2D(BufferClass.fileName);
             grid2D.MakeUnStructedGrid();
             renderGrid = new RenderGrid(grid2D);

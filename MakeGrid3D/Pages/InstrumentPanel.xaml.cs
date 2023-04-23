@@ -123,16 +123,7 @@ namespace MakeGrid3D.Pages
 
         private void ResetPositionClick(object sender, RoutedEventArgs e)
         {
-            BufferClass.translate = Matrix4.Identity;
-            BufferClass.scale = Matrix4.Identity;
-            BufferClass.horOffset = 0;
-            BufferClass.verOffset = 0;
-            BufferClass.scaleX = 1;
-            BufferClass.scaleY = 1;
-            BufferClass.mouse_horOffset = 0;
-            BufferClass.mouse_verOffset = 0;
-            BufferClass.mouse_scaleX = 1;
-            BufferClass.mouse_scaleY = 1;
+            BufferClass.ResetPosition();
         }
 
         private void LinesSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -206,7 +197,16 @@ namespace MakeGrid3D.Pages
 
         private void MakeUnstructedGridClick(object sender, RoutedEventArgs e)
         {
-            BufferClass.unstructedGridMode = true;
+            if (!BufferClass.unstructedGridMode)
+            {
+                BufferClass.unstructedGridMode = true;
+                BuildGridButton.Content = "Построить регулярную сетку";
+            }
+            else
+            {
+                BufferClass.unstructedGridMode = false;
+                BuildGridButton.Content = "Построить нерегулярную сетку";
+            }
         }
 
         private void MaxARClick(object sender, RoutedEventArgs e)
