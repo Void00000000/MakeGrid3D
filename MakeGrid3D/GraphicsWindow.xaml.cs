@@ -18,6 +18,8 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Diagnostics;
 using MakeGrid3D.Pages;
+using System.Windows.Media.Media3D;
+using System.Reflection;
 
 namespace MakeGrid3D
 {
@@ -86,6 +88,8 @@ namespace MakeGrid3D
     public partial class GraphicsWindow : Window
     {
         private RenderGrid renderGrid;
+        Mesh axis;
+        Mesh? selectedElem;
         public GraphicsWindow()
         {
             InitializeComponent();
@@ -95,6 +99,7 @@ namespace MakeGrid3D
                 MinorVersion = 3
             };
             OpenTkControl.Start(settings);
+            AxisOpenTkControl.Start(settings);
 
             Grid2D grid2D = new Grid2D(BufferClass.fileName);
             grid2D.MakeUnStructedGrid();
@@ -110,6 +115,33 @@ namespace MakeGrid3D
             // Множители скорости = 1 процент от ширины(высоты) мира
             BufferClass.speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             BufferClass.speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
+
+            float mid_x = (renderGrid.Right + renderGrid.Left) / 2f;
+            float mid_y = (renderGrid.Top + renderGrid.Bottom) / 2f;
+            float offset_x = (renderGrid.Right - renderGrid.Left) * 0.05f;
+            float offset_y = (renderGrid.Top - renderGrid.Bottom) * 0.1f;
+            float[] vertices = {
+                                                    // x
+                                 mid_x, renderGrid.Bottom, 0, //0
+                                 mid_x, renderGrid.Top, 0, // 1
+                                 mid_x - offset_x, renderGrid.Top - offset_y, 0, // 2
+                                 mid_x + offset_x, renderGrid.Top - offset_y, 0, // 3
+                                                    // y
+                                 renderGrid.Left, mid_y, 0, // 4
+                                 renderGrid.Right, mid_y, 0,// 5
+                                 renderGrid.Right - offset_x, mid_y + offset_y, 0, // 6
+                                 renderGrid.Right - offset_x, mid_y - offset_y, 0 }; // 7
+            uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7 };
+            int vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            int vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+            int ebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
+            axis = new Mesh(vbo, vao, ebo);
         }
 
         private void OpenTkControl_OnRender(TimeSpan obj)
@@ -141,6 +173,7 @@ namespace MakeGrid3D
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             renderGrid.CleanUp();
+            axis.Dispose();
         }
 
         private Point MouseMap(Point pos)
@@ -198,6 +231,19 @@ namespace MakeGrid3D
             Grid2D grid2D = new Grid2D(BufferClass.fileName);
             grid2D.MakeUnStructedGrid();
             renderGrid = new RenderGrid(grid2D);
+        }
+
+        private void AxisOpenTkControl_OnRender(TimeSpan obj)
+        {
+            GL.ClearColor(Color4.Black);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            
+            renderGrid.shader.Use();
+            GL.BindVertexArray(axis.Vao);
+            renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
+            GL.DrawElements(PrimitiveType.Lines, 6, DrawElementsType.UnsignedInt, 0);
+            renderGrid.shader.SetColor4("current_color", Color4.Red);
+            GL.DrawElements(PrimitiveType.Lines, 6, DrawElementsType.UnsignedInt, 6 * sizeof(uint));
         }
     }
 }

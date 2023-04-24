@@ -42,7 +42,20 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Frame Grid.RowSpan="3" Name="Panel" Grid.Column="3" Source="\Pages\InstrumentPanel.xaml" NavigationUIVisibility="Hidden"/>
-                <TextBlock Grid.Row="3" Text="Тут будет контент" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Grid Grid.Row="3">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Grid.RowSpan="2" Text="Элемент"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="Какая то инфа"/>
+                    <glWpfControl:GLWpfControl 
+                     x:Name="AxisOpenTkControl" Grid.Row="1" Grid.Column="1" Render="AxisOpenTkControl_OnRender"/>
+                </Grid>
             </Grid>
         </Grid>
         <StatusBar Grid.Row="2">

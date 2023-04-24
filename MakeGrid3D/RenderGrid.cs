@@ -204,7 +204,7 @@ namespace MakeGrid3D
         Mesh irregularGrid;
         Mesh area;
 
-        private Shader shader;
+        public readonly Shader shader;
         private float[] vertices;
         private float[] vertices_unstr;
         private uint[] indices;
