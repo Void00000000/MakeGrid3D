@@ -51,7 +51,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Grid.RowSpan="2" Text="Элемент"/>
+                    <glWpfControl:GLWpfControl 
+                     x:Name="SelectedElemOpenTkControl" Grid.RowSpan="2" Grid.Column="0" Render="SelectedElemOpenTkControl_OnRender"/>
                     <TextBlock Grid.Column="1" Grid.Row="0" Text="Какая то инфа"/>
                     <glWpfControl:GLWpfControl 
                      x:Name="AxisOpenTkControl" Grid.Row="1" Grid.Column="1" Render="AxisOpenTkControl_OnRender"/>

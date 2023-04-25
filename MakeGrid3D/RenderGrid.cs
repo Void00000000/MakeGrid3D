@@ -189,6 +189,10 @@ namespace MakeGrid3D
             GL.BindVertexArray(0);
         }
 
+        public Mesh(float[] vertices, uint[] indices) {
+            
+        }
+
         public void Dispose()
         {
             GL.DeleteBuffer(vbo);
@@ -241,27 +245,31 @@ namespace MakeGrid3D
             float width = right - left;
             float height = top - bottom;
 
-            float hor_offset = width * 0.2f;
-            float ver_offset = height * 0.2f;
+            float indent = 0.2f;
+            float hor_offset = width * indent;
+            float ver_offset = height * indent;
 
             float left_ = left - hor_offset;
             float right_ = right + hor_offset;
             float bottom_ = bottom - ver_offset;
             float top_ = top + ver_offset;
 
+            float w;
             if ((right_ - left_) >= (top_ - bottom_))
             {
                 Left = left_;
                 Right = right_;
-                Top = right_;
-                Bottom = left_;
+                w = ((Right - Left) - (top_ - bottom_)) / 2;
+                Top = top_ + w;
+                Bottom = bottom_ - w;
             }
             else
             {
-                Left = bottom_;
-                Right = top_;
                 Top = top_;
                 Bottom = bottom_;
+                w = ((Top - Bottom) - (right_ - left_)) / 2;
+                Left = left_ - w;
+                Right = right_ + w;
             }
             projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
         }
