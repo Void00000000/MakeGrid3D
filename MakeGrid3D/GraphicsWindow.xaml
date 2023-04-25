@@ -32,7 +32,7 @@
 
             <glWpfControl:GLWpfControl 
             x:Name="OpenTkControl" 
-            Render="OpenTkControl_OnRender" MouseMove="OpenTkControl_MouseMove" Grid.ColumnSpan="3"/>
+            Render="OpenTkControl_OnRender" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" Grid.ColumnSpan="3"/>
 
             <Grid Grid.Column="3">
                 <Grid.RowDefinitions>

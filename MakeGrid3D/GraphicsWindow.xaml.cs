@@ -89,7 +89,7 @@ namespace MakeGrid3D
     {
         private RenderGrid renderGrid;
         Mesh axis;
-        Mesh selectedElemMesh;
+        Mesh? selectedElemMesh = null;
         Mesh selectedElemLines;
         Elem5 selectedElem;
         public GraphicsWindow()
@@ -146,39 +146,6 @@ namespace MakeGrid3D
             GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
             axis = new Mesh(vbo, vao, ebo);
-            testElem();
-        }
-
-        private void testElem()
-        {
-            selectedElem = renderGrid.grid2D.Elems[2];
-            float xmin = renderGrid.grid2D.XY[selectedElem.n1].X;
-            float xmax = renderGrid.grid2D.XY[selectedElem.n4].X;
-            float ymin = renderGrid.grid2D.XY[selectedElem.n1].Y;
-            float ymax = renderGrid.grid2D.XY[selectedElem.n4].Y;
-            float[] vertices = { xmin, ymin, 0,  // 0
-                                 xmax, ymin, 0,  // 1
-                                 xmin, ymax, 0,  // 2
-                                 xmax, ymax, 0}; // 3
-            uint[] indices = { 0, 1, 3, 0, 2, 3};
-            uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
-            int vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-            int vao = GL.GenVertexArray();
-            GL.BindVertexArray(vao);
-            int ebo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
-
-            int vao2 = GL.GenVertexArray();
-            GL.BindVertexArray(vao2);
-            int ebo2 = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo2);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices_lines.Length * sizeof(uint), indices_lines, BufferUsageHint.StaticDraw);
-
-            selectedElemMesh = new Mesh(vbo, vao, ebo);
-            selectedElemLines = new Mesh(vbo, vao2, ebo2);
         }
 
         private void OpenTkControl_OnRender(TimeSpan obj)
@@ -211,8 +178,10 @@ namespace MakeGrid3D
         {
             renderGrid.CleanUp();
             axis.Dispose();
-            selectedElemMesh.Dispose();
-            selectedElemLines.Dispose();
+            if (selectedElemMesh != null)
+                selectedElemMesh.Dispose();
+            if (selectedElemLines != null)
+                selectedElemLines.Dispose();
         }
 
         private Point MouseMap(Point pos)
@@ -293,59 +262,116 @@ namespace MakeGrid3D
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
 
-            float left = renderGrid.grid2D.XY[selectedElem.n1].X;
-            float right = renderGrid.grid2D.XY[selectedElem.n4].X;
-            float bottom = renderGrid.grid2D.XY[selectedElem.n1].Y;
-            float top = renderGrid.grid2D.XY[selectedElem.n4].Y;
-
-            float width = right - left;
-            float height = top - bottom;
-
-            float indent = 0.2f;
-            float hor_offset = width * indent;
-            float ver_offset = height * indent;
-
-            float left_ = left - hor_offset;
-            float right_ = right + hor_offset;
-            float bottom_ = bottom - ver_offset;
-            float top_ = top + ver_offset;
-
-            float left__, right__, bottom__, top__;
-            float w;
-            if ((right_ - left_) >= (top_ - bottom_))
+            if (selectedElemMesh != null)
             {
-                left__ = left_;
-                right__ = right_;
-                w = ((right__ - left__) - (top_ - bottom_)) / 2;
-                top__ = top_ + w;
-                bottom__ = bottom_ - w;
-            }
-            else
-            {
-                top__ = top_;
-                bottom__ = bottom_;
-                w = ((top__ - bottom__) - (right_ - left_)) / 2;
-                left__ = left_ - w;
-                right__ = right_ + w;
-            }
-            Matrix4 projection = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
 
-            renderGrid.shader.Use();
-            renderGrid.shader.SetMatrix4("projection", ref projection);
-            Matrix4 model = Matrix4.Identity;
-            renderGrid.shader.SetMatrix4("model", ref model);
-            if (!BufferClass.wireframeMode)
+                float left = renderGrid.grid2D.XY[selectedElem.n1].X;
+                float right = renderGrid.grid2D.XY[selectedElem.n4].X;
+                float bottom = renderGrid.grid2D.XY[selectedElem.n1].Y;
+                float top = renderGrid.grid2D.XY[selectedElem.n4].Y;
+
+                float width = right - left;
+                float height = top - bottom;
+
+                float indent = 0.2f;
+                float hor_offset = width * indent;
+                float ver_offset = height * indent;
+
+                float left_ = left - hor_offset;
+                float right_ = right + hor_offset;
+                float bottom_ = bottom - ver_offset;
+                float top_ = top + ver_offset;
+
+                float left__, right__, bottom__, top__;
+                float w;
+                if ((right_ - left_) >= (top_ - bottom_))
+                {
+                    left__ = left_;
+                    right__ = right_;
+                    w = ((right__ - left__) - (top_ - bottom_)) / 2;
+                    top__ = top_ + w;
+                    bottom__ = bottom_ - w;
+                }
+                else
+                {
+                    top__ = top_;
+                    bottom__ = bottom_;
+                    w = ((top__ - bottom__) - (right_ - left_)) / 2;
+                    left__ = left_ - w;
+                    right__ = right_ + w;
+                }
+                Matrix4 projection = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
+
+                renderGrid.shader.Use();
+                renderGrid.shader.SetMatrix4("projection", ref projection);
+                Matrix4 model = Matrix4.Identity;
+                renderGrid.shader.SetMatrix4("model", ref model);
+                if (!BufferClass.wireframeMode)
+                {
+                    GL.BindVertexArray(selectedElemMesh.Vao);
+                    renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem.wi]);
+                    GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+                }
+
+                GL.BindVertexArray(selectedElemLines.Vao);
+                renderGrid.shader.SetColor4("current_color", BufferClass.linesColor);
+                GL.DrawElements(PrimitiveType.Lines, 8, DrawElementsType.UnsignedInt, 0);
+                renderGrid.shader.SetColor4("current_color", BufferClass.pointsColor);
+                GL.DrawArrays(PrimitiveType.Points, 0, 4 * 3);
+            }
+        }
+
+        private void OpenTkControl_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var position = e.GetPosition(OpenTkControl);
+            Point new_position = MouseMap(position);
+            float x = (float)new_position.X;
+            float y = (float)new_position.Y;
+            
+            foreach (Elem5 elem in renderGrid.grid2D.Elems)
             {
-                GL.BindVertexArray(selectedElemMesh.Vao);
-                renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
-                GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+                float xAreaMin = renderGrid.grid2D.XY[elem.n1].X;
+                float yAreaMin = renderGrid.grid2D.XY[elem.n1].Y;
+                float xAreaMax = renderGrid.grid2D.XY[elem.n4].X;
+                float yAreaMax = renderGrid.grid2D.XY[elem.n4].Y;
+                if (x >= xAreaMin && x <= xAreaMax && y >= yAreaMin && y <= yAreaMax)
+                {
+                    selectedElem = elem;
+                    float xmin = renderGrid.grid2D.XY[selectedElem.n1].X;
+                    float xmax = renderGrid.grid2D.XY[selectedElem.n4].X;
+                    float ymin = renderGrid.grid2D.XY[selectedElem.n1].Y;
+                    float ymax = renderGrid.grid2D.XY[selectedElem.n4].Y;
+                    float[] vertices = { xmin, ymin, 0,  // 0
+                                         xmax, ymin, 0,  // 1
+                                         xmin, ymax, 0,  // 2
+                                         xmax, ymax, 0}; // 3
+                    uint[] indices = { 0, 1, 3, 0, 2, 3 };
+                    uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
+                    int vbo = GL.GenBuffer();
+                    GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+                    GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+                    int vao = GL.GenVertexArray();
+                    GL.BindVertexArray(vao);
+                    int ebo = GL.GenBuffer();
+                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+                    GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
+                    int vao2 = GL.GenVertexArray();
+                    GL.BindVertexArray(vao2);
+                    int ebo2 = GL.GenBuffer();
+                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo2);
+                    GL.BufferData(BufferTarget.ElementArrayBuffer, indices_lines.Length * sizeof(uint), indices_lines, BufferUsageHint.StaticDraw);
+                    if (selectedElemMesh != null)
+                        selectedElemMesh.Dispose();
+                    if (selectedElemLines != null)
+                        selectedElemLines.Dispose();
+                    selectedElemMesh = new Mesh(vbo, vao, ebo);
+                    selectedElemLines = new Mesh(vbo, vao2, ebo2);
+                    return;
+                }
+                selectedElemMesh = null;
             }
 
-            GL.BindVertexArray(selectedElemLines.Vao);
-            renderGrid.shader.SetColor4("current_color", BufferClass.linesColor);
-            GL.DrawElements(PrimitiveType.Lines, 8, DrawElementsType.UnsignedInt, 0);
-            renderGrid.shader.SetColor4("current_color", BufferClass.pointsColor);
-            GL.DrawArrays(PrimitiveType.Points, 0, 4 * 3);
         }
     }
 }

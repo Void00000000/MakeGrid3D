@@ -26,5 +26,6 @@ namespace MakeGrid3D
         static public Color4 area1Color = new Color4(252/255f, 78/255f, 3/255f, 1);
         static public Color4 area2Color = new Color4(78/255f, 252/255f, 3/255f, 1);
         static public Color4 area3Color = new Color4(78/255f, 78/255f, 252/255f, 1);
+        static public Color4[] areaColors = {area1Color, area2Color, area3Color};
     }
 }

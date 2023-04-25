@@ -44,6 +44,7 @@ namespace MakeGrid3D
     struct Elem5
     {
         public NodeType e;
+        public int wi = -1;
         public int n1; public int n2; public int n3; public int n4; public int n5;
 
         public Elem5(NodeType e, int n1, int n2, int n3, int n4, int n5=-1)
@@ -54,6 +55,15 @@ namespace MakeGrid3D
             this.n3 = n3;
             this.n4 = n4;
             this.n5 = n5;
+        }
+        public Elem5(int wi, NodeType e, int n1, int n2, int n3, int n4, int n5 = -1)
+        {
+            this = new Elem5(e, n1, n2, n3, n4);
+            this.wi = wi;
+        }
+        public void set_subarea(int wi)
+        {
+            this.wi = wi;
         }
     }
 
@@ -119,6 +129,14 @@ namespace MakeGrid3D
             Y0 = XY[0].Y;
             Yn = XY[XY.Count - 1].Y;
 
+            for (int i = 0; i < Nelems; i++)
+            {
+                int nl = Elems[i].n1;
+                int nr = Elems[i].n4;
+                // почему то нельзя сделать напрямую
+                Elems[i] = new Elem5(FindSubArea(nl, nr), NodeType.Regular, Elems[i].n1, Elems[i].n2, Elems[i].n3, Elems[i].n4);
+            }
+
             IJ = new List<List<NodeType>>(Nx);
             for (int i = 0; i < Nx; i++)
             {
@@ -148,6 +166,30 @@ namespace MakeGrid3D
         }
 
 
+        private int FindSubArea(int nlb, int nru)
+        {
+            foreach (SubArea subArea in Mw)
+            {
+                float xAreaMin = Xw[subArea.nx1];
+                float yAreaMin = Yw[subArea.ny1];
+                float xAreaMax = Xw[subArea.nx2];
+                float yAreaMax = Yw[subArea.ny2];
+
+                float xElemMin = XY[nlb].X;
+                float yElemMin = XY[nlb].Y;
+                float xElemMax = XY[nru].X;
+                float yElemMax = XY[nru].Y;
+
+                if (xAreaMin <= xElemMin && xElemMin <= xAreaMax &&
+                    yAreaMin <= yElemMin && yElemMin <= yAreaMax &&
+                    xAreaMin <= xElemMax && xElemMax <= xAreaMax &&
+                    yAreaMin <= yElemMax && yElemMax <= yAreaMax)
+                {
+                    return subArea.wi;
+                }
+            }
+                return -1;
+        }
 
         private void ReadGrid2D(string path, List<float> X, List<float> Y)
         {
@@ -435,7 +477,8 @@ namespace MakeGrid3D
                     int n2_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n2].X) < 1e-14f && MathF.Abs(v.Y - XY[n2].Y) < 1e-14f);
                     int n3_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n3].X) < 1e-14f && MathF.Abs(v.Y - XY[n3].Y) < 1e-14f);
                     int n4_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n4].X) < 1e-14f && MathF.Abs(v.Y - XY[n4].Y) < 1e-14f);
-                    UnStrElems.Add(new Elem5(NodeType.Regular, n1_new, n2_new, n3_new, n4_new));
+                    int wi = FindSubArea(n1_new, n4_new);
+                    UnStrElems.Add(new Elem5(wi, NodeType.Regular, n1_new, n2_new, n3_new, n4_new));
                 }
             UnStrNnodes = UnStrXY.Count;
             UnStrNelems = UnStrElems.Count;

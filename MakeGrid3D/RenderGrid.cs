@@ -237,6 +237,8 @@ namespace MakeGrid3D
             FillBuffers();
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
 
+            // TODO: так как оконная высота и ширина графического окна не совпадают то для квадратные элементы
+            // отображаются как неквадратные
             float left = grid2D.X0;
             float right = grid2D.Xn;
             float bottom = grid2D.Y0;
