@@ -32,7 +32,7 @@
 
             <glWpfControl:GLWpfControl 
             x:Name="OpenTkControl" 
-            Render="OpenTkControl_OnRender" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" Grid.ColumnSpan="3"/>
+            Render="OpenTkControl_OnRender" Loaded="OpenTkControl_OnLoad" SizeChanged="OpenTkControl_Resize" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" Grid.ColumnSpan="3"/>
 
             <Grid Grid.Column="3">
                 <Grid.RowDefinitions>
@@ -53,7 +53,28 @@
                     </Grid.ColumnDefinitions>
                     <glWpfControl:GLWpfControl 
                      x:Name="SelectedElemOpenTkControl" Grid.RowSpan="2" Grid.Column="0" Render="SelectedElemOpenTkControl_OnRender"/>
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="Какая то инфа"/>
+                    <Grid Grid.Row="0" Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Name="BlockSubAreaNum" Grid.Row="0" Grid.ColumnSpan="2" Text=""/>
+                        <TextBlock Name="BlockNodesNum1" Grid.Row="1" Grid.Column="0" Text=""/>
+                        <TextBlock Name="BlockNodesCoords1" Grid.Row="1" Grid.Column="1" Text=""/>
+                        <TextBlock Name="BlockNodesNum2" Grid.Row="2" Grid.Column="0" Text=""/>
+                        <TextBlock Name="BlockNodesCoords2" Grid.Row="2" Grid.Column="1" Text=""/>
+                        <TextBlock Name="BlockNodesNum3" Grid.Row="3" Grid.Column="0" Text=""/>
+                        <TextBlock Name="BlockNodesCoords3" Grid.Row="3" Grid.Column="1" Text=""/>
+                        <TextBlock Name="BlockNodesNum4" Grid.Row="4" Grid.Column="0" Text=""/>
+                        <TextBlock Name="BlockNodesCoords4" Grid.Row="4" Grid.Column="1" Text=""/>
+                    </Grid>
                     <glWpfControl:GLWpfControl 
                      x:Name="AxisOpenTkControl" Grid.Row="1" Grid.Column="1" Render="AxisOpenTkControl_OnRender"/>
                 </Grid>

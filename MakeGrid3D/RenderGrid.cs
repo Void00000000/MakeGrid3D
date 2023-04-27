@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Xml.Linq;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Security.RightsManagement;
 
 namespace MakeGrid3D
 {
@@ -224,7 +225,7 @@ namespace MakeGrid3D
         public float Bottom { get; private set; }
         public float Top { get; private set; }
 
-        public RenderGrid(Grid2D grid2D)
+        public RenderGrid(Grid2D grid2D, float windowWidth, float windowHeight)
         {
             this.grid2D = grid2D;
             AreaColors = new List<Color4>()
@@ -233,12 +234,15 @@ namespace MakeGrid3D
                 Default.area2Color,
                 Default.area3Color
             };
+            
             AssembleVertices();
             FillBuffers();
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
+            SetSize(windowWidth, windowHeight);
+        }
 
-            // TODO: так как оконная высота и ширина графического окна не совпадают то для квадратные элементы
-            // отображаются как неквадратные
+        public void SetSize(float windowWidth, float windowHeight)
+        {
             float left = grid2D.X0;
             float right = grid2D.Xn;
             float bottom = grid2D.Y0;
@@ -261,21 +265,20 @@ namespace MakeGrid3D
             {
                 Left = left_;
                 Right = right_;
-                w = ((Right - Left) - (top_ - bottom_)) / 2;
-                Top = top_ + w;
-                Bottom = bottom_ - w;
+                w = (windowHeight / windowWidth * (Right - Left) - (top - bottom)) / 2;
+                Top = top + w;
+                Bottom = bottom - w;
             }
             else
             {
                 Top = top_;
                 Bottom = bottom_;
-                w = ((Top - Bottom) - (right_ - left_)) / 2;
-                Left = left_ - w;
-                Right = right_ + w;
+                w = (windowWidth / windowHeight * (Top - Bottom) - (right - left)) / 2;
+                Right = right + w;
+                Left = left - w;
             }
             projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
         }
-
 
         private void AssembleVertices(bool re=true, bool irre=true)
         {
