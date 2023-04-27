@@ -208,11 +208,11 @@ namespace MakeGrid3D
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             renderGrid.shader.Use();
-            GL.BindVertexArray(axis.Vao);
+            axis.Use();
             renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
-            GL.DrawElements(PrimitiveType.Lines, 6, DrawElementsType.UnsignedInt, 0);
+            axis.DrawElems(6, 0, PrimitiveType.Lines);
             renderGrid.shader.SetColor4("current_color", Color4.Red);
-            GL.DrawElements(PrimitiveType.Lines, 6, DrawElementsType.UnsignedInt, 6 * sizeof(uint));
+            axis.DrawElems(6, 6, PrimitiveType.Lines);
         }
 
         private void SelectedElemOpenTkControl_OnRender(TimeSpan obj)
@@ -270,16 +270,16 @@ namespace MakeGrid3D
                 renderGrid.shader.SetMatrix4("model", ref model);
                 if (!BufferClass.wireframeMode)
                 {
-                    GL.BindVertexArray(selectedElemMesh.Vao);
+                    selectedElemMesh.Use();
                     renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem.wi]);
-                    GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+                    selectedElemMesh.DrawElems(6, 0, PrimitiveType.Triangles);
                 }
 
-                GL.BindVertexArray(selectedElemLines.Vao);
+                selectedElemLines.Use();
                 renderGrid.shader.SetColor4("current_color", BufferClass.linesColor);
-                GL.DrawElements(PrimitiveType.Lines, 8, DrawElementsType.UnsignedInt, 0);
+                selectedElemLines.DrawElems(8, 0, PrimitiveType.Lines);
                 renderGrid.shader.SetColor4("current_color", BufferClass.pointsColor);
-                GL.DrawArrays(PrimitiveType.Points, 0, 4 * 3);
+                selectedElemLines.DrawVerices(4 * 3, 0, PrimitiveType.Points);
             }
         }
 
@@ -311,26 +311,14 @@ namespace MakeGrid3D
                                          xmax, ymax, 0}; // 3
                     uint[] indices = { 0, 1, 3, 0, 2, 3 };
                     uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
-                    int vbo = GL.GenBuffer();
-                    GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-                    GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-                    int vao = GL.GenVertexArray();
-                    GL.BindVertexArray(vao);
-                    int ebo = GL.GenBuffer();
-                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-                    GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
-
-                    int vao2 = GL.GenVertexArray();
-                    GL.BindVertexArray(vao2);
-                    int ebo2 = GL.GenBuffer();
-                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo2);
-                    GL.BufferData(BufferTarget.ElementArrayBuffer, indices_lines.Length * sizeof(uint), indices_lines, BufferUsageHint.StaticDraw);
+                   
                     if (selectedElemMesh != null)
                         selectedElemMesh.Dispose();
                     if (selectedElemLines != null)
                         selectedElemLines.Dispose();
-                    selectedElemMesh = new Mesh(vbo, vao, ebo);
-                    selectedElemLines = new Mesh(vbo, vao2, ebo2);
+                    selectedElemMesh = new Mesh(vertices, indices);
+                    selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
+
                     BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem.wi + 1).ToString();
                     BlockNodesNum1.Text = "Л.Н. №: " + selectedElem.n1;
                     BlockNodesCoords1.Text = "x: " + renderGrid.grid2D.XY[selectedElem.n1].X.ToString("0.00")
@@ -394,16 +382,7 @@ namespace MakeGrid3D
                                  renderGrid.Right - offset_x, mid_y + offset_y, 0, // 6
                                  renderGrid.Right - offset_x, mid_y - offset_y, 0 }; // 7
             uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7 };
-            int vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-            int vao = GL.GenVertexArray();
-            GL.BindVertexArray(vao);
-            int ebo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
-
-            axis = new Mesh(vbo, vao, ebo);
+            axis = new Mesh(vertices, indices);
         }
 
         private void OpenTkControl_Resize(object sender, SizeChangedEventArgs e)

@@ -175,30 +175,76 @@ namespace MakeGrid3D
     class Mesh
     {
         public int Vao { get; }
-        private int vbo;
-        private int ebo;
-        public Mesh(int vbo, int vao, int ebo)
+        public int Vbo { get; }
+        public int Ebo { get; }
+        public int VLen { get; }
+        public int ILen { get; }
+        public Mesh(int vbo, uint[] indices, int vLen)
         {
-            this.vbo = vbo;
-            Vao = vao;
-            this.ebo = ebo;
+            Vbo = vbo;
+            Vao = GL.GenVertexArray();
             GL.BindVertexArray(Vao);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, this.vbo);
+            Ebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, Ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+            VLen = vLen;
+            ILen = indices.Length;
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Vbo);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, this.ebo);
             GL.BindVertexArray(0);
         }
 
         public Mesh(float[] vertices, uint[] indices) {
-            
+            Vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            Vao = GL.GenVertexArray();
+            GL.BindVertexArray(Vao);
+            Ebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, Ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+            VLen = vertices.Length;
+            ILen = indices.Length;
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+            GL.BindVertexArray(0);
+        }
+
+        public void Use()
+        {
+            GL.BindVertexArray(Vao);
+        }
+
+        public void DrawElems(int count, int offset, PrimitiveType type)
+        {
+            GL.BindVertexArray(Vao);
+            GL.DrawElements(type, count, DrawElementsType.UnsignedInt, offset * sizeof(uint));
+        }
+
+        public void DrawElems(PrimitiveType type)
+        {
+            GL.BindVertexArray(Vao);
+            GL.DrawElements(type, ILen, DrawElementsType.UnsignedInt, 0);
+        }
+
+        public void DrawVerices(int count, int offset, PrimitiveType type)
+        {
+            GL.BindVertexArray(Vao);
+            GL.DrawArrays(type, offset, count);
+        }
+
+        public void DrawVerices(PrimitiveType type)
+        {
+            GL.BindVertexArray(Vao);
+            GL.DrawArrays(type, 0, VLen);
         }
 
         public void Dispose()
         {
-            GL.DeleteBuffer(vbo);
+            GL.DeleteBuffer(Vbo);
             GL.DeleteVertexArray(Vao);
-            GL.DeleteBuffer(ebo);
+            GL.DeleteBuffer(Ebo);
         }
     }
 
@@ -357,60 +403,33 @@ namespace MakeGrid3D
 
         private void FillBuffers(bool re = true, bool irre = true)
         {
-            int vbo1, vbo2;
-            int vao1, vao2, vao3;
-            int ebo1, ebo2, ebo3;
             if (re)
             {
-                vbo1 = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo1);
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-                vao1 = GL.GenVertexArray();
-                GL.BindVertexArray(vao1);
-                ebo1 = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo1);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
-                regularGrid = new Mesh(vbo1, vao1, ebo1);
-
-                vao3 = GL.GenVertexArray();
-                GL.BindVertexArray(vao3);
-                ebo3 = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo3);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, indices_area.Length * sizeof(uint), indices_area, BufferUsageHint.StaticDraw);
-                area = new Mesh(vbo1, vao3, ebo3);
+                regularGrid = new Mesh(vertices, indices);
+                area = new Mesh(regularGrid.Vbo, indices_area, vertices.Length);
             }
             if (irre)
             {
-                vbo2 = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo2);
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices_unstr.Length * sizeof(float), vertices_unstr, BufferUsageHint.StaticDraw);
-                vao2 = GL.GenVertexArray();
-                GL.BindVertexArray(vao2);
-                ebo2 = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo2);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, indices_unstr.Length * sizeof(uint), indices_unstr, BufferUsageHint.StaticDraw);
-                irregularGrid = new Mesh(vbo2, vao2, ebo2);
+                irregularGrid = new Mesh(vertices_unstr, indices_unstr);
             }
         }
 
         public void RebuildUnStructedGrid()
         {
             grid2D.MakeUnStructedGrid();
-            AssembleVertices(re:false);
+            AssembleVertices(re: false);
             FillBuffers(re: false);
         }
 
-        private void DrawLines(int vao, int iLength, int iOffset) {
-            GL.BindVertexArray(vao);
+        public void DrawLines(Mesh mesh) {
             shader.SetColor4("current_color", BufferClass.linesColor);
-            GL.DrawElements(PrimitiveType.Lines, iLength, DrawElementsType.UnsignedInt, iOffset);
+            mesh.DrawElems(PrimitiveType.Lines);
         }
 
-        public void DrawNodes(int vao, int vLength, int vOffset)
+        public void DrawNodes(Mesh mesh)
         {
-            GL.BindVertexArray(vao);
             shader.SetColor4("current_color", BufferClass.pointsColor);
-            GL.DrawArrays(PrimitiveType.Points, vOffset, vLength);
+            mesh.DrawVerices(PrimitiveType.Points);
         }
 
         public void RenderFrame()
@@ -436,7 +455,7 @@ namespace MakeGrid3D
                 foreach (SubArea subArea in grid2D.Mw)
                 {
                     shader.SetColor4("current_color", AreaColors[subArea.wi]);
-                    GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, s * sizeof(uint));
+                    area.DrawElems(6, s, PrimitiveType.Triangles);
                     s += 6;
                 }
             }
@@ -445,19 +464,17 @@ namespace MakeGrid3D
                 if (BufferClass.drawRemovedLinesMode)
                 {
                     shader.DashedLines(true);
-                    DrawLines(regularGrid.Vao, indices.Length, 0);
+                    DrawLines(regularGrid);
                     shader.DashedLines(false);
                 }
-                DrawLines(irregularGrid.Vao, indices_unstr.Length, 0);
-                DrawNodes(irregularGrid.Vao, vertices_unstr.Length, 0);
+                DrawLines(irregularGrid);
+                DrawNodes(irregularGrid);
             }
             else
             {
-                DrawLines(regularGrid.Vao, indices.Length, 0);
-                DrawNodes(regularGrid.Vao, vertices.Length, 0);
+                DrawLines(regularGrid);
+                DrawNodes(regularGrid);
             }
-
-            
         }
 
         // When application exists OS and GPU drives handle cleaning up but closing the GraphicsWindow
