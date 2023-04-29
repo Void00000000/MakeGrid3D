@@ -28,19 +28,7 @@ namespace MakeGrid3D.Pages
         public InstrumentPanel()
         {
             InitializeComponent();
-            LinesSizeSlider.Value = Default.linesSize;
-            PointsSizeSlider.Value = Default.pointsSize;
-            SpeedTranslateSlider.Value = Default.speedTranslate;
-            SpeedZoomSlider.Value = Default.speedZoom;
-
-            PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
-            LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
-            BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
-            WiremodeCheckBox.IsChecked = Default.wireframeMode;
-
-            DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
-            WidthInput.Text = Default.maxAR_width.ToString();
-            HeightInput.Text = Default.maxAR_height.ToString();
+            ResetUI();
         }
 
 
@@ -63,6 +51,24 @@ namespace MakeGrid3D.Pages
             return color4;
         }
 
+        private void ResetUI()
+        {
+            LinesSizeSlider.Value = Default.linesSize;
+            PointsSizeSlider.Value = Default.pointsSize;
+            SpeedTranslateSlider.Value = Default.speedTranslate;
+            SpeedZoomSlider.Value = Default.speedZoom;
+
+            PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
+            LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
+            BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
+            WiremodeCheckBox.IsChecked = Default.wireframeMode;
+            ShowGridCheckBox.IsChecked = Default.showGrid;
+
+            DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
+            WidthInput.Text = Default.maxAR_width.ToString();
+            HeightInput.Text = Default.maxAR_height.ToString();
+        }
+
         private void RotateLeftClick(object sender, RoutedEventArgs e)
         {
             
@@ -75,6 +81,7 @@ namespace MakeGrid3D.Pages
             BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
 
             BufferClass.mouse_horOffset -= BufferClass.speedHor * BufferClass.speedTranslate;
+            BufferClass.rtranslate = Matrix4.CreateTranslation(BufferClass.mouse_horOffset, BufferClass.mouse_verOffset, 0);
         }
 
         private void MoveRightClick(object sender, RoutedEventArgs e)
@@ -83,6 +90,7 @@ namespace MakeGrid3D.Pages
             BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
 
             BufferClass.mouse_horOffset += BufferClass.speedHor * BufferClass.speedTranslate;
+            BufferClass.rtranslate = Matrix4.CreateTranslation(BufferClass.mouse_horOffset, BufferClass.mouse_verOffset, 0);
         }
 
         private void MoveDownClick(object sender, RoutedEventArgs e)
@@ -91,6 +99,7 @@ namespace MakeGrid3D.Pages
             BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
 
             BufferClass.mouse_verOffset -= BufferClass.speedVer * BufferClass.speedTranslate;
+            BufferClass.rtranslate = Matrix4.CreateTranslation(BufferClass.mouse_horOffset, BufferClass.mouse_verOffset, 0);
         }
 
         private void MoveUpClick(object sender, RoutedEventArgs e)
@@ -99,26 +108,31 @@ namespace MakeGrid3D.Pages
             BufferClass.translate = Matrix4.CreateTranslation(BufferClass.horOffset, BufferClass.verOffset, 0);
 
             BufferClass.mouse_verOffset += BufferClass.speedVer * BufferClass.speedTranslate;
+            BufferClass.rtranslate = Matrix4.CreateTranslation(BufferClass.mouse_horOffset, BufferClass.mouse_verOffset, 0);
         }
 
         private void ZoomInClick(object sender, RoutedEventArgs e)
         {
-            BufferClass.scaleX *= BufferClass.speedZoom;
-            BufferClass.scaleY *= BufferClass.speedZoom;
-            BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
+            if (BufferClass.indent >= -0.5f)
+                BufferClass.indent -= BufferClass.speedZoom;
+            //MessageBox.Show(BufferClass.indent.ToString());
+            //BufferClass.scaleX *= BufferClass.speedZoom;
+            //BufferClass.scaleY *= BufferClass.speedZoom;
+            //BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
 
-            BufferClass.mouse_scaleX /= BufferClass.speedZoom;
-            BufferClass.mouse_scaleY /= BufferClass.speedZoom;
+            //BufferClass.mouse_scaleX /= BufferClass.speedZoom;
+            //BufferClass.mouse_scaleY /= BufferClass.speedZoom;
         }
 
         private void ZoomOutClick(object sender, RoutedEventArgs e)
         {
-            BufferClass.scaleX /= BufferClass.speedZoom;
-            BufferClass.scaleY /= BufferClass.speedZoom;
-            BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
+            BufferClass.indent += BufferClass.speedZoom;
+            //BufferClass.scaleX /= BufferClass.speedZoom;
+            //BufferClass.scaleY /= BufferClass.speedZoom;
+            //BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
 
-            BufferClass.mouse_scaleX *= BufferClass.speedZoom;
-            BufferClass.mouse_scaleY *= BufferClass.speedZoom;
+            //BufferClass.mouse_scaleX *= BufferClass.speedZoom;
+            //BufferClass.mouse_scaleY *= BufferClass.speedZoom;
         }
 
         private void ResetPositionClick(object sender, RoutedEventArgs e)
@@ -164,15 +178,7 @@ namespace MakeGrid3D.Pages
         private void ResetSettingsClick(object sender, RoutedEventArgs e)
         {
             BufferClass.Reset();
-            LinesSizeSlider.Value = Default.linesSize;
-            PointsSizeSlider.Value = Default.pointsSize;
-            SpeedTranslateSlider.Value = Default.speedTranslate;
-            SpeedZoomSlider.Value = Default.speedZoom;
-            WiremodeCheckBox.IsChecked = Default.wireframeMode;
-
-            PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
-            LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
-            BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
+            ResetUI();
         }
 
         private void WiremodeChecked(object sender, RoutedEventArgs e)
@@ -220,7 +226,7 @@ namespace MakeGrid3D.Pages
                     throw new BelowZeroException("Числа в полях меньше или равны нулю");
                 }
                 float maxAr = (float)w / h;
-                if (maxAr < 1) maxAr = 1f / maxAr;
+                if (maxAr < 1f) maxAr = 1f / maxAr;
                 BufferClass.maxAR = maxAr;
                 BufferClass.rebuildUnStructedGrid = true;
             }
@@ -240,6 +246,16 @@ namespace MakeGrid3D.Pages
                 WidthInput.Text = "";
                 HeightInput.Text = "";
             }
+        }
+
+        private void ShowGridChecked(object sender, RoutedEventArgs e)
+        {
+            BufferClass.showGrid = true;
+        }
+
+        private void ShowGridUnChecked(object sender, RoutedEventArgs e)
+        {
+            BufferClass.showGrid = false;
         }
     }
 }

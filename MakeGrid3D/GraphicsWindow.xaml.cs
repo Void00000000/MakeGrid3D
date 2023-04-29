@@ -31,6 +31,9 @@ namespace MakeGrid3D
     {
         static public Matrix4 translate = Matrix4.Identity;
         static public Matrix4 scale = Matrix4.Identity;
+        static public Matrix4 rtranslate = Matrix4.Identity;
+        static public Matrix4 rscale = Matrix4.Identity; // TODO: не используется вообще все матрицы scale
+
         static public float horOffset = 0;
         static public float verOffset = 0;
         static public float scaleX = 1;
@@ -52,12 +55,14 @@ namespace MakeGrid3D
         static public Color4 pointsColor = Default.pointsColor;
         static public Color4 bgColor = Default.bgColor;
         static public bool wireframeMode = Default.wireframeMode;
+        static public bool showGrid = Default.showGrid;
         static public bool drawRemovedLinesMode = Default.drawRemovedLinesMode;
         static public bool unstructedGridMode = Default.unstructedGridMode;
 
         static public string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\Grid2D_2.txt";
         static public float maxAR = (float)Default.maxAR_width / Default.maxAR_height;
         static public bool rebuildUnStructedGrid = false;
+        static public float indent = Default.indent;
 
         static public void Reset()
         {
@@ -68,12 +73,17 @@ namespace MakeGrid3D
             linesColor = Default.linesColor;
             pointsColor = Default.pointsColor;
             bgColor = Default.bgColor;
-            wireframeMode= Default.wireframeMode;
+            wireframeMode = Default.wireframeMode;
+            showGrid = Default.showGrid;
+            drawRemovedLinesMode = Default.drawRemovedLinesMode;
+            maxAR = (float)Default.maxAR_width / Default.maxAR_height;
         }
         static public void ResetPosition()
         {
             translate = Matrix4.Identity;
             scale = Matrix4.Identity;
+            rtranslate = Matrix4.Identity;
+            rscale = Matrix4.Identity;
             horOffset = 0;
             verOffset = 0;
             scaleX = 1;
@@ -82,6 +92,7 @@ namespace MakeGrid3D
             mouse_verOffset = 0;
             mouse_scaleX = 1;
             mouse_scaleY = 1;
+            indent = Default.indent;
         }
     }
 
@@ -90,7 +101,8 @@ namespace MakeGrid3D
         private RenderGrid renderGrid;
         Mesh axis;
         Mesh? selectedElemMesh = null;
-        Mesh selectedElemLines;
+        Mesh? selectedElemLines = null;
+        Matrix4 projectionSelectedElem = Matrix4.Identity;
         Elem5 selectedElem;
         public GraphicsWindow()
         {
@@ -105,11 +117,38 @@ namespace MakeGrid3D
             SelectedElemOpenTkControl.Start(settings);
         }
 
+        private void OpenTkControl_OnLoad(object sender, RoutedEventArgs e)
+        {
+            Grid2D grid2D = new Grid2D(BufferClass.fileName);
+            grid2D.MakeUnStructedGrid();
+            renderGrid = new RenderGrid(grid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+            // если удалить отсюда то не будет показываться в статус баре
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas;
+            BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.Nnodes;
+            BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.Nelems;
+            BlockRemovedNodesCount.Text = "***";
+            BlockRemovedElemsCount.Text = "***";
+            //-----------------------------------------------------------------------------
+            // Множители скорости = 1 процент от ширины(высоты) мира
+            BufferClass.speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
+            BufferClass.speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
+            SetAxis();
+        }
+
+        private void OpenTkControl_Resize(object sender, SizeChangedEventArgs e)
+        {
+            if (renderGrid == null)
+                return;
+            renderGrid.WindowWidth = (float)OpenTkControl.ActualWidth;
+            renderGrid.WindowHeight = (float)OpenTkControl.ActualHeight;
+            renderGrid.SetSize();
+        }
+
         private void OpenTkControl_OnRender(TimeSpan obj)
         {
             if (renderGrid == null)
                 return;
-            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas; ;
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas;
             if (BufferClass.unstructedGridMode)
             {
                 BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.UnStrNnodes;
@@ -132,15 +171,20 @@ namespace MakeGrid3D
             renderGrid.RenderFrame();
         }
 
-        
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             renderGrid.CleanUp();
             axis.Dispose();
             if (selectedElemMesh != null)
+            {
                 selectedElemMesh.Dispose();
+                selectedElemMesh = null;
+            }
             if (selectedElemLines != null)
+            {
                 selectedElemLines.Dispose();
+                selectedElemLines = null;
+            }
         }
 
         private Point MouseMap(Point pos)
@@ -156,10 +200,7 @@ namespace MakeGrid3D
             double x = pos.X * (right - left) / width + left;
             double y = pos.Y * (bottom - top) / height + top;
             Vector4 v = new Vector4((float)x, (float)y, 0, 1);
-            
-            Matrix4 rscale = Matrix4.CreateScale(BufferClass.mouse_scaleX, BufferClass.mouse_scaleY, 1);
-            Matrix4 rtranslate = Matrix4.CreateTranslation(BufferClass.mouse_horOffset, BufferClass.mouse_verOffset, 0); 
-            Vector4 u = v * rscale * rtranslate;
+            Vector4 u = v * BufferClass.rscale * BufferClass.rtranslate;
 
             return new Point(u.X, u.Y);
         }
@@ -173,48 +214,6 @@ namespace MakeGrid3D
             BlockCoordinates.Text = "X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
         }
 
-        private void OpenFileClick(object sender, RoutedEventArgs e)
-        {
-            // Configure open file dialog box
-            var dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.DefaultExt = ".txt"; // Default file extension
-            dialog.Filter = "Text documents (.txt)|*.txt"; // Filter files by extension
-
-            // Show open file dialog box
-            bool? result = dialog.ShowDialog();
-
-            // Process open file dialog box results
-            if (result == true)
-            {
-                // Open document
-                string fileName = dialog.FileName;
-                BufferClass.fileName = fileName;
-            }
-            renderGrid.CleanUp();
-            BufferClass.unstructedGridMode = false;
-            // TODO:
-            // При загрузке новой сетки название кнопки не меняется
-            BufferClass.ResetPosition();
-            Grid2D grid2D = new Grid2D(BufferClass.fileName);
-            grid2D.MakeUnStructedGrid();
-            renderGrid = new RenderGrid(grid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
-        }
-
-        private void AxisOpenTkControl_OnRender(TimeSpan obj)
-        {
-            if (renderGrid == null)
-                return;
-            GL.ClearColor(Color4.Black);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            renderGrid.shader.Use();
-            axis.Use();
-            renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
-            axis.DrawElems(6, 0, PrimitiveType.Lines);
-            renderGrid.shader.SetColor4("current_color", Color4.Red);
-            axis.DrawElems(6, 6, PrimitiveType.Lines);
-        }
-
         private void SelectedElemOpenTkControl_OnRender(TimeSpan obj)
         {
             if (renderGrid == null)
@@ -225,47 +224,10 @@ namespace MakeGrid3D
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
 
-            if (selectedElemMesh != null)
+            if (selectedElemMesh != null && selectedElemLines != null)
             {
-                float left = renderGrid.grid2D.XY[selectedElem.n1].X;
-                float right = renderGrid.grid2D.XY[selectedElem.n4].X;
-                float bottom = renderGrid.grid2D.XY[selectedElem.n1].Y;
-                float top = renderGrid.grid2D.XY[selectedElem.n4].Y;
-
-                float width = right - left;
-                float height = top - bottom;
-
-                float indent = 0.2f;
-                float hor_offset = width * indent;
-                float ver_offset = height * indent;
-
-                float left_ = left - hor_offset;
-                float right_ = right + hor_offset;
-                float bottom_ = bottom - ver_offset;
-                float top_ = top + ver_offset;
-
-                float w, left__, right__, bottom__, top__;
-                float windowWidth = (float)SelectedElemOpenTkControl.ActualWidth;
-                float windowHeight = (float)SelectedElemOpenTkControl.ActualHeight;
-                if ((right_ - left_) >= (top_ - bottom_))
-                {
-                    left__ = left_;
-                    right__ = right_;
-                    w = (windowHeight / windowWidth * (right__ - left__) - (top - bottom)) / 2;
-                    top__ = top + w;
-                    bottom__ = bottom - w;
-                }
-                else
-                {
-                    top__ = top_;
-                    bottom__ = bottom_;
-                    w = (windowWidth / windowHeight * (top__ - bottom__) - (right - left)) / 2;
-                    right__ = right + w;
-                    left__ = left - w;
-                }
-                Matrix4 projection = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
                 renderGrid.shader.Use();
-                renderGrid.shader.SetMatrix4("projection", ref projection);
+                renderGrid.shader.SetMatrix4("projection", ref projectionSelectedElem);
                 Matrix4 model = Matrix4.Identity;
                 renderGrid.shader.SetMatrix4("model", ref model);
                 if (!BufferClass.wireframeMode)
@@ -301,14 +263,48 @@ namespace MakeGrid3D
                 if (x >= xAreaMin && x <= xAreaMax && y >= yAreaMin && y <= yAreaMax)
                 {
                     selectedElem = elem;
-                    float xmin = renderGrid.grid2D.XY[selectedElem.n1].X;
-                    float xmax = renderGrid.grid2D.XY[selectedElem.n4].X;
-                    float ymin = renderGrid.grid2D.XY[selectedElem.n1].Y;
-                    float ymax = renderGrid.grid2D.XY[selectedElem.n4].Y;
-                    float[] vertices = { xmin, ymin, 0,  // 0
-                                         xmax, ymin, 0,  // 1
-                                         xmin, ymax, 0,  // 2
-                                         xmax, ymax, 0}; // 3
+
+                    float left = renderGrid.grid2D.XY[selectedElem.n1].X;
+                    float right = renderGrid.grid2D.XY[selectedElem.n4].X;
+                    float bottom = renderGrid.grid2D.XY[selectedElem.n1].Y;
+                    float top = renderGrid.grid2D.XY[selectedElem.n4].Y;
+
+                    float width = right - left;
+                    float height = top - bottom;
+
+                    float indent = 0.2f;
+                    float hor_offset = width * indent;
+                    float ver_offset = height * indent;
+
+                    float left_ = left - hor_offset;
+                    float right_ = right + hor_offset;
+                    float bottom_ = bottom - ver_offset;
+                    float top_ = top + ver_offset;
+
+                    float w, left__, right__, bottom__, top__;
+                    float windowWidth = (float)SelectedElemOpenTkControl.ActualWidth;
+                    float windowHeight = (float)SelectedElemOpenTkControl.ActualHeight;
+                    if ((right_ - left_) >= (top_ - bottom_))
+                    {
+                        left__ = left_;
+                        right__ = right_;
+                        w = (windowHeight / windowWidth * (right__ - left__) - (top - bottom)) / 2;
+                        top__ = top + w;
+                        bottom__ = bottom - w;
+                    }
+                    else
+                    {
+                        top__ = top_;
+                        bottom__ = bottom_;
+                        w = (windowWidth / windowHeight * (top__ - bottom__) - (right - left)) / 2;
+                        right__ = right + w;
+                        left__ = left - w;
+                    }
+                    projectionSelectedElem = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
+                    float[] vertices = { left,  bottom, 0,  // 0
+                                         right, bottom, 0,  // 1
+                                         left,  top,    0,  // 2
+                                         right, top,    0}; // 3
                     uint[] indices = { 0, 1, 3, 0, 2, 3 };
                     uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
                    
@@ -318,6 +314,8 @@ namespace MakeGrid3D
                         selectedElemLines.Dispose();
                     selectedElemMesh = new Mesh(vertices, indices);
                     selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
+
+
 
                     BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem.wi + 1).ToString();
                     BlockNodesNum1.Text = "Л.Н. №: " + selectedElem.n1;
@@ -334,7 +332,17 @@ namespace MakeGrid3D
                                            + " y: " + renderGrid.grid2D.XY[selectedElem.n4].Y.ToString("0.00");
                     return;
                 }
-                selectedElemMesh = null;
+                if (selectedElemMesh != null)
+                {
+                    selectedElemMesh.Dispose();
+                    selectedElemMesh = null;
+                }
+                if (selectedElemLines != null)
+                {
+                    selectedElemLines.Dispose();
+                    selectedElemLines = null;
+                }
+
                 BlockSubAreaNum.Text = "";
                 BlockNodesNum1.Text = "";
                 BlockNodesCoords1.Text = "";
@@ -345,27 +353,24 @@ namespace MakeGrid3D
                 BlockNodesNum4.Text = "";
                 BlockNodesCoords4.Text = "";
             }
+        }
+        private void AxisOpenTkControl_OnRender(TimeSpan obj)
+        {
+            if (renderGrid == null)
+                return;
+            GL.ClearColor(Color4.Black);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+            renderGrid.shader.Use();
+            axis.Use();
+            renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
+            axis.DrawElems(6, 0, PrimitiveType.Lines);
+            renderGrid.shader.SetColor4("current_color", Color4.Red);
+            axis.DrawElems(6, 6, PrimitiveType.Lines);
         }
 
-        private void OpenTkControl_OnLoad(object sender, RoutedEventArgs e)
+        private void SetAxis()
         {
-            Grid2D grid2D = new Grid2D(BufferClass.fileName);
-            grid2D.MakeUnStructedGrid();
-            renderGrid = new RenderGrid(grid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
-            // если удалить отсюда то не будет показываться в статус баре
-            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas;
-            BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.UnStrNnodes;
-            BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.UnStrNelems;
-            BlockRemovedNodesCount.Text = "***";
-            BlockRemovedElemsCount.Text = "***";
-            //-------------------------------------------------------------------------------
-
-            // Множители скорости = 1 процент от ширины(высоты) мира
-            BufferClass.speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
-            BufferClass.speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
-
-            // TODO: При открытии новой сетки оси меняют своё положение
             float mid_x = (renderGrid.Right + renderGrid.Left) / 2f;
             float mid_y = (renderGrid.Top + renderGrid.Bottom) / 2f;
             float offset_x = (renderGrid.Right - renderGrid.Left) * 0.05f;
@@ -382,14 +387,46 @@ namespace MakeGrid3D
                                  renderGrid.Right - offset_x, mid_y + offset_y, 0, // 6
                                  renderGrid.Right - offset_x, mid_y - offset_y, 0 }; // 7
             uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7 };
+            if (axis != null)
+                axis.Dispose();
             axis = new Mesh(vertices, indices);
         }
-
-        private void OpenTkControl_Resize(object sender, SizeChangedEventArgs e)
+        private void OpenFileClick(object sender, RoutedEventArgs e)
         {
-            if (renderGrid == null)
-                return;
-            renderGrid.SetSize((float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+            // Configure open file dialog box
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.DefaultExt = ".txt"; // Default file extension
+            dialog.Filter = "Text documents (.txt)|*.txt"; // Filter files by extension
+
+            // Show open file dialog box
+            bool? result = dialog.ShowDialog();
+
+            // Process open file dialog box results
+            if (result == true)
+            {
+                // Open document
+                string fileName = dialog.FileName;
+                BufferClass.fileName = fileName;
+            }
+            renderGrid.CleanUp();
+            BufferClass.unstructedGridMode = false;
+            // TODO:
+            // При загрузке новой сетки название кнопки не меняется
+            BufferClass.ResetPosition();
+            Grid2D grid2D = new Grid2D(BufferClass.fileName);
+            grid2D.MakeUnStructedGrid();
+            renderGrid = new RenderGrid(grid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+            SetAxis();
+            if (selectedElemMesh != null)
+            {
+                selectedElemMesh.Dispose();
+                selectedElemMesh = null;
+            }
+            if (selectedElemLines != null)
+            {
+                selectedElemLines.Dispose();
+                selectedElemLines = null;
+            }
         }
     }
 }

@@ -54,7 +54,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="Скорость зума:          " Foreground="Black" FontSize="14"/>
-                <Slider Name="SpeedZoomSlider" Grid.Column="1" Minimum="1" Maximum="1.5" ValueChanged="SpeedZoomChanged"/>
+                <Slider Name="SpeedZoomSlider" Grid.Column="1" Minimum="0.001" Maximum="1" ValueChanged="SpeedZoomChanged"/>
             </Grid>
 
             <Grid Grid.Row="2">
@@ -144,9 +144,13 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Каркасный режим: " Foreground="Black"/>
             <CheckBox Name="WiremodeCheckBox" Grid.Column="1" Checked="WiremodeChecked" Unchecked="WiremodeUnChecked"/>
+            <TextBlock Grid.Column="2" Text="Отображать сетку: " Foreground="Black"/>
+            <CheckBox Name="ShowGridCheckBox" Grid.Column="3" Checked="ShowGridChecked" Unchecked="ShowGridUnChecked"/>
         </Grid>
 
         <!--Reset Settings-->

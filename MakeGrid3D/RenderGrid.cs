@@ -263,31 +263,28 @@ namespace MakeGrid3D
         private uint[] indices_unstr;
         private Matrix4 projection;
         private Matrix4 model;
-        private List<Color4> AreaColors;
 
         public readonly Grid2D grid2D;
         public float Left { get; private set; }
         public float Right { get; private set; }
         public float Bottom { get; private set; }
-        public float Top { get; private set; }
+        public float Top { get; private set;}
+
+        public float WindowWidth { get; set; }
+        public float WindowHeight { get; set; }
 
         public RenderGrid(Grid2D grid2D, float windowWidth, float windowHeight)
         {
             this.grid2D = grid2D;
-            AreaColors = new List<Color4>()
-            {
-                Default.area1Color,
-                Default.area2Color,
-                Default.area3Color
-            };
-            
             AssembleVertices();
             FillBuffers();
+            WindowWidth= windowWidth;
+            WindowHeight = windowHeight; 
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
-            SetSize(windowWidth, windowHeight);
+            SetSize();
         }
 
-        public void SetSize(float windowWidth, float windowHeight)
+        public void SetSize()
         {
             float left = grid2D.X0;
             float right = grid2D.Xn;
@@ -297,7 +294,7 @@ namespace MakeGrid3D
             float width = right - left;
             float height = top - bottom;
 
-            float indent = 0.2f;
+            float indent = BufferClass.indent;
             float hor_offset = width * indent;
             float ver_offset = height * indent;
 
@@ -311,7 +308,7 @@ namespace MakeGrid3D
             {
                 Left = left_;
                 Right = right_;
-                w = (windowHeight / windowWidth * (Right - Left) - (top - bottom)) / 2;
+                w = (WindowHeight / WindowWidth * (Right - Left) - (top - bottom)) / 2;
                 Top = top + w;
                 Bottom = bottom - w;
             }
@@ -319,11 +316,11 @@ namespace MakeGrid3D
             {
                 Top = top_;
                 Bottom = bottom_;
-                w = (windowWidth / windowHeight * (Top - Bottom) - (right - left)) / 2;
+                w = (WindowWidth / WindowHeight * (Top - Bottom) - (right - left)) / 2;
                 Right = right + w;
                 Left = left - w;
             }
-            projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
+           projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
         }
 
         private void AssembleVertices(bool re=true, bool irre=true)
@@ -440,6 +437,7 @@ namespace MakeGrid3D
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
 
+            SetSize(); // TODO: Сделать так, чтобы вызов был только во время нажатия кнопки зумирования
             shader.Use();
             shader.SetMatrix4("projection", ref projection);
             model = BufferClass.translate * BufferClass.scale;
@@ -454,26 +452,29 @@ namespace MakeGrid3D
                 GL.BindVertexArray(area.Vao);
                 foreach (SubArea subArea in grid2D.Mw)
                 {
-                    shader.SetColor4("current_color", AreaColors[subArea.wi]);
+                    shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
                     area.DrawElems(6, s, PrimitiveType.Triangles);
                     s += 6;
                 }
             }
-            if (BufferClass.unstructedGridMode)
+            if (BufferClass.showGrid)
             {
-                if (BufferClass.drawRemovedLinesMode)
+                if (BufferClass.unstructedGridMode)
                 {
-                    shader.DashedLines(true);
-                    DrawLines(regularGrid);
-                    shader.DashedLines(false);
+                    if (BufferClass.drawRemovedLinesMode)
+                    {
+                        shader.DashedLines(true);
+                        DrawLines(regularGrid);
+                        shader.DashedLines(false);
+                    }
+                    DrawLines(irregularGrid);
+                    DrawNodes(irregularGrid);
                 }
-                DrawLines(irregularGrid);
-                DrawNodes(irregularGrid);
-            }
-            else
-            {
-                DrawLines(regularGrid);
-                DrawNodes(regularGrid);
+                else
+                {
+                    DrawLines(regularGrid);
+                    DrawNodes(regularGrid);
+                }
             }
         }
 
