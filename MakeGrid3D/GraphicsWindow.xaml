@@ -31,7 +31,7 @@
             </Grid.ColumnDefinitions>
 
             <glWpfControl:GLWpfControl 
-            x:Name="OpenTkControl" 
+            x:Name="OpenTkControl" RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
             Render="OpenTkControl_OnRender" Loaded="OpenTkControl_OnLoad" SizeChanged="OpenTkControl_Resize" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" Grid.ColumnSpan="3"/>
 
             <Grid Grid.Column="3">
@@ -51,7 +51,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <glWpfControl:GLWpfControl 
+                    <glWpfControl:GLWpfControl RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
                      x:Name="SelectedElemOpenTkControl" Grid.RowSpan="2" Grid.Column="0" Render="SelectedElemOpenTkControl_OnRender"/>
                     <Grid Grid.Row="0" Grid.Column="1">
                         <Grid.RowDefinitions>
@@ -75,7 +75,7 @@
                         <TextBlock Name="BlockNodesNum4" Grid.Row="4" Grid.Column="0" Text=""/>
                         <TextBlock Name="BlockNodesCoords4" Grid.Row="4" Grid.Column="1" Text=""/>
                     </Grid>
-                    <glWpfControl:GLWpfControl 
+                    <glWpfControl:GLWpfControl RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
                      x:Name="AxisOpenTkControl" Grid.Row="1" Grid.Column="1" Render="AxisOpenTkControl_OnRender"/>
                 </Grid>
             </Grid>
