@@ -132,7 +132,7 @@ namespace MakeGrid3D
         }
 
 
-        public void DashedLines(bool dash, float dash_size=0.2f, float gap_size=0.5f)
+        public void DashedLines(bool dash, float linesSize=0f, float dash_size=0.2f, float gap_size=0.5f)
         {
             if (dash)
             {
@@ -141,7 +141,7 @@ namespace MakeGrid3D
             }
             else
             {
-                SetFloat("u_dashSize", BufferClass.linesSize);
+                SetFloat("u_dashSize", linesSize);
                 SetFloat("u_gapSize", 0f);
             }
             Use();
@@ -260,7 +260,17 @@ namespace MakeGrid3D
         private float[] vertices_area;
         private uint[] indices_area;
         private Matrix4 projection;
-        private Matrix4 model;
+
+        public Matrix4 translate = Matrix4.Identity;
+        public Matrix4 scale = Matrix4.Identity;
+        public float indent = Default.indent;
+        public float linesSize = Default.linesSize;
+        public float pointsSize = Default.pointsSize;
+        public Color4 linesColor = Default.linesColor;
+        public Color4 pointsColor = Default.pointsColor;
+        public bool wireframeMode = Default.wireframeMode;
+        public bool showGrid = Default.showGrid;
+        public bool drawRemovedLinesMode = Default.drawRemovedLinesMode;
 
         private Grid2D grid2D;
         public Grid2D Grid2D
@@ -300,7 +310,6 @@ namespace MakeGrid3D
             float width = right - left;
             float height = top - bottom;
 
-            float indent = BufferClass.indent;
             float hor_offset = width * indent;
             float ver_offset = height * indent;
 
@@ -391,13 +400,13 @@ namespace MakeGrid3D
         }
 
         public void DrawLines(Mesh mesh) {
-            shader.SetColor4("current_color", BufferClass.linesColor);
+            shader.SetColor4("current_color", linesColor);
             mesh.DrawElems(PrimitiveType.Lines);
         }
 
         public void DrawNodes(Mesh mesh)
         {
-            shader.SetColor4("current_color", BufferClass.pointsColor);
+            shader.SetColor4("current_color", pointsColor);
             mesh.DrawVerices(PrimitiveType.Points);
         }
 
@@ -406,13 +415,13 @@ namespace MakeGrid3D
             SetSize(); // TODO: Сделать так, чтобы вызов был только во время нажатия кнопки зумирования
             shader.Use();
             shader.SetMatrix4("projection", ref projection);
-            model = BufferClass.translate * BufferClass.scale;
+            Matrix4 model = translate * scale;
             shader.SetMatrix4("model", ref model);
             shader.SetVector2("u_resolution", new Vector2(Right - Left, Top - Bottom));
-            GL.LineWidth(BufferClass.linesSize);
-            GL.PointSize(BufferClass.pointsSize);
+            GL.LineWidth(linesSize);
+            GL.PointSize(pointsSize);
 
-            if (!BufferClass.wireframeMode && drawArea)
+            if (!wireframeMode && drawArea)
             {
                 int s = 0;
                 areaMesh.Use();
@@ -423,7 +432,7 @@ namespace MakeGrid3D
                     s += 6;
                 }
             }
-            if (BufferClass.showGrid)
+            if (showGrid)
             {
                 if (drawLines)
                     DrawLines(gridMesh);

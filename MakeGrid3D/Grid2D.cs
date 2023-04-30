@@ -339,6 +339,7 @@ namespace MakeGrid3D
     {
         public Grid2D grid2D;
         int Nx, Ny;
+        public float maxAR = (float)Default.maxAR_width / Default.maxAR_height;
         public IrregularGridMaker(Grid2D grid2D)
         {
             this.grid2D = grid2D;
@@ -402,7 +403,7 @@ namespace MakeGrid3D
                     float al = CalcAR(nlb, nu);
 
                     // bottom
-                    if (CompareAR(alb, BufferClass.maxAR) && CompareAR(arb, BufferClass.maxAR) &&
+                    if (CompareAR(alb, maxAR) && CompareAR(arb, maxAR) &&
                         CompareAR(alb, ab) && CompareAR(arb, ab))
                     {
                         IJ_new[i][j] = NodeType.Top;
@@ -413,7 +414,7 @@ namespace MakeGrid3D
                         continue;
                     }
                     // top
-                    if (CompareAR(alu, BufferClass.maxAR) && CompareAR(aru, BufferClass.maxAR) &&
+                    if (CompareAR(alu, maxAR) && CompareAR(aru, maxAR) &&
                         CompareAR(alu, au) && CompareAR(aru, au))
                     {
                         IJ_new[i][j] = NodeType.Bottom;
@@ -424,7 +425,7 @@ namespace MakeGrid3D
                         continue;
                     }
                     // left
-                    if (CompareAR(alb, BufferClass.maxAR) && CompareAR(alu, BufferClass.maxAR) &&
+                    if (CompareAR(alb, maxAR) && CompareAR(alu, maxAR) &&
                         CompareAR(alb, al) && CompareAR(alu, al))
                     {
                         IJ_new[i][j] = NodeType.Right;
@@ -435,7 +436,7 @@ namespace MakeGrid3D
                         continue;
                     }
                     // right
-                    if (CompareAR(arb, BufferClass.maxAR) && CompareAR(aru, BufferClass.maxAR) &&
+                    if (CompareAR(arb, maxAR) && CompareAR(aru, maxAR) &&
                         CompareAR(arb, ar) && CompareAR(aru, ar))
                     {
                         IJ_new[i][j] = NodeType.Left;

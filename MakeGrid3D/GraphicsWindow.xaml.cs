@@ -17,84 +17,15 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.IO;
 using System.Diagnostics;
-using MakeGrid3D.Pages;
 using System.Windows.Media.Media3D;
 using System.Reflection;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace MakeGrid3D
 {
     /// <summary>
     /// Interaction logic for GraphicsWindow.xaml
     /// </summary>
-
-    static public class BufferClass
-    {
-        static public Matrix4 translate = Matrix4.Identity;
-        static public Matrix4 scale = Matrix4.Identity;
-        static public Matrix4 rtranslate = Matrix4.Identity;
-        static public Matrix4 rscale = Matrix4.Identity; // TODO: не используется вообще все матрицы scale
-
-        static public float horOffset = 0;
-        static public float verOffset = 0;
-        static public float scaleX = 1;
-        static public float scaleY = 1;
-
-        static public float mouse_horOffset = 0;
-        static public float mouse_verOffset = 0;
-        static public float mouse_scaleX = 1;
-        static public float mouse_scaleY = 1;
-
-        static public float speedTranslate = Default.speedTranslate;
-        static public float speedZoom = Default.speedZoom;
-        static public float speedHor = 0;
-        static public float speedVer = 0;
-
-        static public float linesSize = Default.linesSize;
-        static public float pointsSize = Default.pointsSize;
-        static public Color4 linesColor = Default.linesColor;
-        static public Color4 pointsColor = Default.pointsColor;
-        static public Color4 bgColor = Default.bgColor;
-        static public bool wireframeMode = Default.wireframeMode;
-        static public bool showGrid = Default.showGrid;
-        static public bool drawRemovedLinesMode = Default.drawRemovedLinesMode;
-        static public bool unstructedGridMode = Default.unstructedGridMode;
-
-        static public string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
-        static public float maxAR = (float)Default.maxAR_width / Default.maxAR_height;
-        static public bool rebuildUnStructedGrid = false;
-        static public float indent = Default.indent;
-
-        static public void Reset()
-        {
-            speedTranslate = Default.speedTranslate;
-            speedZoom = Default.speedZoom;
-            linesSize = Default.linesSize;
-            pointsSize = Default.pointsSize;
-            linesColor = Default.linesColor;
-            pointsColor = Default.pointsColor;
-            bgColor = Default.bgColor;
-            wireframeMode = Default.wireframeMode;
-            showGrid = Default.showGrid;
-            drawRemovedLinesMode = Default.drawRemovedLinesMode;
-            maxAR = (float)Default.maxAR_width / Default.maxAR_height;
-        }
-        static public void ResetPosition()
-        {
-            translate = Matrix4.Identity;
-            scale = Matrix4.Identity;
-            rtranslate = Matrix4.Identity;
-            rscale = Matrix4.Identity;
-            horOffset = 0;
-            verOffset = 0;
-            scaleX = 1;
-            scaleY = 1;
-            mouse_horOffset = 0;
-            mouse_verOffset = 0;
-            mouse_scaleX = 1;
-            mouse_scaleY = 1;
-            indent = Default.indent;
-        }
-    }
 
     public partial class GraphicsWindow : Window
     {
@@ -104,7 +35,26 @@ namespace MakeGrid3D
         Mesh axis;
         Mesh? selectedElemMesh = null;
         Mesh? selectedElemLines = null;
+
         Matrix4 projectionSelectedElem = Matrix4.Identity;
+        Matrix4 rtranslate = Matrix4.Identity;
+        Matrix4 rscale = Matrix4.Identity; // TODO: не используется вообще все матрицы scale
+        float horOffset = 0;
+        float verOffset = 0;
+        float scaleX = 1;
+        float scaleY = 1;
+        float mouse_horOffset = 0;
+        float mouse_verOffset = 0;
+        float mouse_scaleX = 1;
+        float mouse_scaleY = 1;
+        float speedTranslate = Default.speedTranslate;
+        float speedZoom = Default.speedZoom;
+        float speedHor = 0;
+        float speedVer = 0;
+        Color4 bgColor = Default.bgColor;
+        bool unstructedGridMode = Default.unstructedGridMode;
+        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
+
         Elem selectedElem;
         public GraphicsWindow()
         {
@@ -117,12 +67,13 @@ namespace MakeGrid3D
             OpenTkControl.Start(settings);
             AxisOpenTkControl.Start(settings);
             SelectedElemOpenTkControl.Start(settings);
+            ResetUI();
         }
 
         private void OpenTkControl_OnLoad(object sender, RoutedEventArgs e)
         {
-            Area area = new Area(BufferClass.fileName);
-            regularGrid2D = new Grid2D(BufferClass.fileName, area);
+            Area area = new Area(fileName);
+            regularGrid2D = new Grid2D(fileName, area);
             irregularGridMaker = new IrregularGridMaker(regularGrid2D);
             irregularGrid2D = irregularGridMaker.MakeUnStructedGrid();
             renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
@@ -134,8 +85,8 @@ namespace MakeGrid3D
             BlockRemovedElemsCount.Text = "***";
             //-----------------------------------------------------------------------------
             // Множители скорости = 1 процент от ширины(высоты) мира
-            BufferClass.speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
-            BufferClass.speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
+            speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
+            speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
             SetAxis();
         }
 
@@ -156,24 +107,24 @@ namespace MakeGrid3D
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid2D.Nnodes;
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid2D.Nelems;
 
-            GL.ClearColor(BufferClass.bgColor);
+            GL.ClearColor(bgColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             // Чтобы работали прозрачные цвета
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
-            renderGrid.RenderFrame();
-            if (BufferClass.unstructedGridMode)
-            {
-                renderGrid.Grid2D = irregularGrid2D;
-                BufferClass.unstructedGridMode = false;
-            }
-            if (BufferClass.drawRemovedLinesMode)
+            if (renderGrid.drawRemovedLinesMode)
             {
                 renderGrid.Grid2D = regularGrid2D;
                 renderGrid.shader.DashedLines(true);
                 renderGrid.RenderFrame(drawArea:false, drawNodes:false);
-                renderGrid.shader.DashedLines(false);
+                renderGrid.shader.DashedLines(false, renderGrid.linesSize);
                 renderGrid.Grid2D = irregularGrid2D;
+            }
+            renderGrid.RenderFrame();
+            if (unstructedGridMode)
+            {
+                renderGrid.Grid2D = irregularGrid2D;
+                unstructedGridMode = false;
             }
         }
 
@@ -193,6 +144,38 @@ namespace MakeGrid3D
             }
         }
 
+        private void Reset()
+        {
+            speedTranslate = Default.speedTranslate;
+            speedZoom = Default.speedZoom;
+            renderGrid.linesSize = Default.linesSize;
+            renderGrid.pointsSize = Default.pointsSize;
+            renderGrid.linesColor = Default.linesColor;
+            renderGrid.pointsColor = Default.pointsColor;
+            bgColor = Default.bgColor;
+            renderGrid.wireframeMode = Default.wireframeMode;
+            renderGrid.showGrid = Default.showGrid;
+            renderGrid.drawRemovedLinesMode = Default.drawRemovedLinesMode;
+            irregularGridMaker.maxAR = (float)Default.maxAR_width / Default.maxAR_height;
+        }
+
+        private void ResetPosition()
+        {
+            renderGrid.translate = Matrix4.Identity;
+            renderGrid.scale = Matrix4.Identity;
+            rtranslate = Matrix4.Identity;
+            rscale = Matrix4.Identity;
+            horOffset = 0;
+            verOffset = 0;
+            scaleX = 1;
+            scaleY = 1;
+            mouse_horOffset = 0;
+            mouse_verOffset = 0;
+            mouse_scaleX = 1;
+            mouse_scaleY = 1;
+            renderGrid.indent = Default.indent;
+        }
+
         private Point MouseMap(Point pos)
         {
             float left = renderGrid.Left;
@@ -206,7 +189,7 @@ namespace MakeGrid3D
             double x = pos.X * (right - left) / width + left;
             double y = pos.Y * (bottom - top) / height + top;
             Vector4 v = new Vector4((float)x, (float)y, 0, 1);
-            Vector4 u = v * BufferClass.rscale * BufferClass.rtranslate;
+            Vector4 u = v * rscale * rtranslate;
 
             return new Point(u.X, u.Y);
         }
@@ -224,7 +207,7 @@ namespace MakeGrid3D
         {
             if (renderGrid == null)
                 return;
-            GL.ClearColor(new Color4(BufferClass.bgColor.R / 2, BufferClass.bgColor.G / 2, BufferClass.bgColor.B / 2, BufferClass.bgColor.A));
+            GL.ClearColor(new Color4(bgColor.R / 2, bgColor.G / 2, bgColor.B / 2, bgColor.A));
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             // Чтобы работали прозрачные цвета
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -236,7 +219,7 @@ namespace MakeGrid3D
                 renderGrid.shader.SetMatrix4("projection", ref projectionSelectedElem);
                 Matrix4 model = Matrix4.Identity;
                 renderGrid.shader.SetMatrix4("model", ref model);
-                if (!BufferClass.wireframeMode)
+                if (!renderGrid.wireframeMode)
                 {
                     selectedElemMesh.Use();
                     renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem.wi]);
@@ -244,9 +227,9 @@ namespace MakeGrid3D
                 }
 
                 selectedElemLines.Use();
-                renderGrid.shader.SetColor4("current_color", BufferClass.linesColor);
+                renderGrid.shader.SetColor4("current_color", renderGrid.linesColor);
                 selectedElemLines.DrawElems(8, 0, PrimitiveType.Lines);
-                renderGrid.shader.SetColor4("current_color", BufferClass.pointsColor);
+                renderGrid.shader.SetColor4("current_color", renderGrid.pointsColor);
                 selectedElemLines.DrawVerices(4 * 3, 0, PrimitiveType.Points);
             }
         }
@@ -411,16 +394,17 @@ namespace MakeGrid3D
             if (result == true)
             {
                 // Open document
-                string fileName = dialog.FileName;
-                BufferClass.fileName = fileName;
+                fileName = dialog.FileName;
             }
             renderGrid.CleanUp();
-            BufferClass.unstructedGridMode = false;
+            unstructedGridMode = false;
             // TODO:
             // При загрузке новой сетки название кнопки не меняется
-            BufferClass.ResetPosition();
-            Area area = new Area(BufferClass.fileName);
-            regularGrid2D = new Grid2D(BufferClass.fileName, area);
+            ResetPosition();
+            Reset();
+            ResetUI();
+            Area area = new Area(fileName);
+            regularGrid2D = new Grid2D(fileName, area);
             irregularGridMaker = new IrregularGridMaker(regularGrid2D);
             irregularGrid2D = irregularGridMaker.MakeUnStructedGrid();
             renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
@@ -435,6 +419,242 @@ namespace MakeGrid3D
                 selectedElemLines.Dispose();
                 selectedElemLines = null;
             }
+        }
+
+        private Color ColorFloatToByte(Color4 color4)
+        {
+            Color color = new Color();
+            color.R = (byte)(color4.R * 255);
+            color.G = (byte)(color4.G * 255);
+            color.B = (byte)(color4.B * 255);
+            color.A = (byte)(color4.A * 255);
+            return color;
+        }
+        private Color4 ColorByteToFloat(Color color)
+        {
+            Color4 color4 = new Color4();
+            color4.R = color.R / 255f;
+            color4.G = color.G / 255f;
+            color4.B = color.B / 255f;
+            color4.A = color.A / 255f;
+            return color4;
+        }
+
+        private void ResetUI()
+        {
+            LinesSizeSlider.Value = Default.linesSize;
+            PointsSizeSlider.Value = Default.pointsSize;
+            SpeedTranslateSlider.Value = Default.speedTranslate;
+            SpeedZoomSlider.Value = Default.speedZoom;
+
+            PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
+            LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
+            BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
+            WiremodeCheckBox.IsChecked = Default.wireframeMode;
+            ShowGridCheckBox.IsChecked = Default.showGrid;
+
+            DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
+            WidthInput.Text = Default.maxAR_width.ToString();
+            HeightInput.Text = Default.maxAR_height.ToString();
+        }
+
+        private void RotateLeftClick(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void MoveLeftClick(object sender, RoutedEventArgs e)
+        {
+
+            horOffset += speedHor * speedTranslate;
+            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+
+            mouse_horOffset -= speedHor * speedTranslate;
+            rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
+        }
+
+        private void MoveRightClick(object sender, RoutedEventArgs e)
+        {
+            horOffset -= speedHor * speedTranslate;
+            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+
+            mouse_horOffset += speedHor * speedTranslate;
+            rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
+        }
+
+        private void MoveDownClick(object sender, RoutedEventArgs e)
+        {
+            verOffset += speedVer * speedTranslate;
+            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+
+            mouse_verOffset -= speedVer * speedTranslate;
+            rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
+        }
+
+        private void MoveUpClick(object sender, RoutedEventArgs e)
+        {
+            verOffset -= speedVer * speedTranslate;
+            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+
+            mouse_verOffset += speedVer * speedTranslate;
+            rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
+        }
+
+        private void ZoomInClick(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid.indent >= -0.5f)
+                renderGrid.indent -= speedZoom;
+            //MessageBox.Show(BufferClass.indent.ToString());
+            //BufferClass.scaleX *= BufferClass.speedZoom;
+            //BufferClass.scaleY *= BufferClass.speedZoom;
+            //BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
+
+            //BufferClass.mouse_scaleX /= BufferClass.speedZoom;
+            //BufferClass.mouse_scaleY /= BufferClass.speedZoom;
+        }
+
+        private void ZoomOutClick(object sender, RoutedEventArgs e)
+        {
+            renderGrid.indent += speedZoom;
+            //BufferClass.scaleX /= BufferClass.speedZoom;
+            //BufferClass.scaleY /= BufferClass.speedZoom;
+            //BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
+
+            //BufferClass.mouse_scaleX *= BufferClass.speedZoom;
+            //BufferClass.mouse_scaleY *= BufferClass.speedZoom;
+        }
+
+        private void ResetPositionClick(object sender, RoutedEventArgs e)
+        {
+            ResetPosition();
+        }
+
+        private void LinesSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.linesSize = (float)e.NewValue;
+        }
+
+        private void PointsSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.pointsSize = (float)e.NewValue;
+        }
+
+        private void PointsColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.pointsColor = ColorByteToFloat((Color)e.NewValue);
+        }
+
+        private void LinesColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.linesColor = ColorByteToFloat((Color)e.NewValue);
+        }
+
+        private void BgColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            bgColor = ColorByteToFloat((Color)e.NewValue);
+        }
+
+        private void SpeedTranslateChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            speedTranslate = (float)e.NewValue;
+        }
+
+        private void SpeedZoomChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            speedZoom = (float)e.NewValue;
+        }
+
+        private void ResetSettingsClick(object sender, RoutedEventArgs e)
+        {
+            Reset();
+            ResetUI();
+        }
+
+        private void WiremodeChecked(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.wireframeMode = true;
+        }
+
+        private void WiremodeUnChecked(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.wireframeMode = false;
+        }
+
+        private void DrawRemovedLinesChecked(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.drawRemovedLinesMode = true;
+        }
+
+        private void DrawRemovedLinesUnChecked(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.drawRemovedLinesMode = false;
+        }
+
+        private void MakeUnstructedGridClick(object sender, RoutedEventArgs e)
+        {
+            if (!unstructedGridMode)
+            {
+                unstructedGridMode = true;
+                BuildGridButton.Content = "Построить регулярную сетку";
+            }
+            else
+            {
+                unstructedGridMode = false;
+                BuildGridButton.Content = "Построить нерегулярную сетку";
+            }
+        }
+
+        private void MaxARClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int w = int.Parse(WidthInput.Text);
+                int h = int.Parse(HeightInput.Text);
+                if (w <= 0 || h <= 0)
+                {
+                    throw new BelowZeroException("Числа в полях меньше или равны нулю");
+                }
+                float maxAr = (float)w / h;
+                if (maxAr < 1f) maxAr = 1f / maxAr;
+                irregularGridMaker.maxAR = maxAr;
+            }
+            catch (Exception ex)
+            {
+                if (ex is ArgumentNullException || ex is FormatException)
+                {
+                    ErrorHandler.DataErrorMessage("Данные в полях должны быть целыми положительными числами", false);
+                }
+                else if (ex is BelowZeroException)
+                {
+                    ErrorHandler.DataErrorMessage(ex.Message, false);
+                }
+                else
+                {
+                    ErrorHandler.DataErrorMessage("Не удалось прочитать данные из полей", false);
+                }
+                WidthInput.Text = "";
+                HeightInput.Text = "";
+            }
+        }
+
+        private void ShowGridChecked(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.showGrid = true;
+        }
+
+        private void ShowGridUnChecked(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.showGrid = false;
         }
     }
 }

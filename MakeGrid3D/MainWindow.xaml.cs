@@ -50,7 +50,6 @@ namespace MakeGrid3D
             {
                 // Open document
                 string fileName = dialog.FileName;
-                BufferClass.fileName= fileName;
             }
             GraphicsWindow graphicsWindow = new GraphicsWindow();
             graphicsWindow.Show();
