@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
+using System.Reflection.PortableExecutable;
 
 namespace MakeGrid3D
 {
-    
     struct SubArea
     {
         public int wi; // Номер подобласти
@@ -41,162 +41,44 @@ namespace MakeGrid3D
         Removed
     }
 
-    struct Elem5
+    // Прямоугольный конечный элемент
+    struct Elem
     {
-        public NodeType e;
-        public int wi = -1;
-        public int n1; public int n2; public int n3; public int n4; public int n5;
+        public int wi;
+        public int n1; public int n2; public int n3; public int n4;
 
-        public Elem5(NodeType e, int n1, int n2, int n3, int n4, int n5=-1)
+        public Elem(int wi, int n1, int n2, int n3, int n4)
         {
-            this.e = e;
+            this.wi = wi;
             this.n1 = n1;
             this.n2 = n2;
             this.n3 = n3;
             this.n4 = n4;
-            this.n5 = n5;
-        }
-        public Elem5(int wi, NodeType e, int n1, int n2, int n3, int n4, int n5 = -1)
-        {
-            this = new Elem5(e, n1, n2, n3, n4);
-            this.wi = wi;
-        }
-        public void set_subarea(int wi)
-        {
-            this.wi = wi;
         }
     }
 
-
-    class Grid2D
+    // Расчётная область
+    class Area
     {
-        public int Nareas { get; private set; }
-        public int Nnodes { get;}
-        public int Nelems { get;}
-        public int UnStrNnodes { get; private set; }
-        public int UnStrNelems { get; private set; }
-        public int Nx { get; private set; }
-        public int Ny { get; private set; }
+        // Количество подобластей
+        public int Nareas { get; }
+        // Количество различных номеров подобластей(материалов)
+        public int Nmats { get; }
+        // Границы области
+        public float X0 { get; }
+        public float Xn { get; }
+        public float Y0 { get; }
+        public float Yn { get; }
+        public int nXw { get; }
+        public int nYw { get; }
+        // Массивы содержащие координаты подобластей
+        public List<float> Xw { get; }
+        public List<float> Yw { get; }
+        // Массив, содержащий подобласти
+        public List<SubArea> Mw { get; }
 
-        public float X0 { get;}
-        public float Xn { get;}
-        public float Y0 { get;}
-        public float Yn { get;}
-
-        public List<Elem5> Elems { get; private set; }
-        public List<Elem5> UnStrElems { get; private set; }
-        public List<Vector2> XY { get; private set; }
-        public List<Vector2> UnStrXY { get; private set; }
-        private List<float> Xw, Yw; // Массивы содержащие координаты подобластей
-        public List<SubArea> Mw { get; private set; } // Массив, содержащий подобласти
-        public List<int> IXw { get; private set; }
-        public List<int> IYw { get; private set; }
-        public List<List<NodeType>> IJ { get; private set; }
-
-        public Grid2D(string path) 
+        public Area(string path)
         {
-            List<float> X = new List<float>();
-            List<float> Y = new List<float>();
-            ReadGrid2D(path, X, Y);
-
-            Nnodes = Nx * Ny;
-            Nelems = (Nx - 1) * (Ny - 1);
-
-            Elems = new List<Elem5>(Nelems);
-            XY = new List<Vector2>(Nnodes);
-
-            for (int j = 0; j < Ny - 1; j++)
-                for (int i = 0; i < Nx - 1; i++)
-                {
-                    int n1 = global_num(i, j);
-                    int n2 = global_num(i + 1, j);
-                    int n3 = global_num(i, j + 1);
-                    int n4 = global_num(i + 1, j + 1);
-                    Elem5 elem = new Elem5(NodeType.Regular, n1, n2, n3, n4);
-                    Elems.Add(elem);
-                }
-
-            for (int j = 0; j < Ny; j++)
-                for (int i = 0; i < Nx; i++)
-                {
-                    Vector2 Vector2 = new Vector2(X[i], Y[j]);
-                    XY.Add(Vector2);
-                }
-
-
-            X0 = XY[0].X;
-            Xn = XY[XY.Count - 1].X;
-            Y0 = XY[0].Y;
-            Yn = XY[XY.Count - 1].Y;
-
-            for (int i = 0; i < Nelems; i++)
-            {
-                int nl = Elems[i].n1;
-                int nr = Elems[i].n4;
-                // почему то нельзя сделать напрямую
-                Elems[i] = new Elem5(FindSubArea(nl, nr), NodeType.Regular, Elems[i].n1, Elems[i].n2, Elems[i].n3, Elems[i].n4);
-            }
-
-            IJ = new List<List<NodeType>>(Nx);
-            for (int i = 0; i < Nx; i++)
-            {
-                IJ.Add(new List<NodeType>(Ny));
-                for (int j = 0; j < Ny; j++)
-                    IJ[i].Add(NodeType.Regular);
-            }
-        }
-
-        private void MakeGrid1D(List<float> X_Y, float left, float right, int n, float qxy, ref int i0, ref int j,
-            List<int> IXYw)
-        {
-            float h0;
-            if (qxy - 1 < 1E-16)
-                h0 = (right - left) / n;
-            else
-                h0 = (right - left) * (1 - qxy) / (1 - MathF.Pow(qxy, n));
-
-            X_Y[i0] = left;
-            IXYw[j] = i0; j++;
-            for (int i = i0 + 1; i < n + i0; i++)
-            {
-                X_Y[i] = X_Y[i - 1] + h0;
-                h0 *= qxy;
-            }
-            i0 = n + i0;
-        }
-
-
-        private int FindSubArea(int nlb, int nru)
-        {
-            foreach (SubArea subArea in Mw)
-            {
-                float xAreaMin = Xw[subArea.nx1];
-                float yAreaMin = Yw[subArea.ny1];
-                float xAreaMax = Xw[subArea.nx2];
-                float yAreaMax = Yw[subArea.ny2];
-
-                float xElemMin = XY[nlb].X;
-                float yElemMin = XY[nlb].Y;
-                float xElemMax = XY[nru].X;
-                float yElemMax = XY[nru].Y;
-
-                if (xAreaMin <= xElemMin && xElemMin <= xAreaMax &&
-                    yAreaMin <= yElemMin && yElemMin <= yAreaMax &&
-                    xAreaMin <= xElemMax && xElemMax <= xAreaMax &&
-                    yAreaMin <= yElemMax && yElemMax <= yAreaMax)
-                {
-                    return subArea.wi;
-                }
-            }
-                return -1;
-        }
-
-        private void ReadGrid2D(string path, List<float> X, List<float> Y)
-        {
-            int nXw, nYw;
-            List<int> nx, ny;
-            List<float> qx, qy;
-            Nx = 0; Ny = 0;
             try
             {
                 using (TextReader reader = File.OpenText(path))
@@ -217,8 +99,15 @@ namespace MakeGrid3D
                     for (int i = 0; i < nYw; i++)
                         Yw.Add(float.Parse(Ywi[i], CultureInfo.InvariantCulture));
 
-                    string nw_txt = reader.ReadLine();
-                    Nareas = int.Parse(nw_txt);
+                    X0 = Xw[0];
+                    Xn = Xw[nXw - 1];
+                    Y0 = Yw[0];
+                    Yn = Yw[nYw - 1];
+
+                    string nmat_nw_txt = reader.ReadLine();
+                    string[] nmat_nw = nmat_nw_txt.Split(' ');
+                    Nmats = int.Parse(nmat_nw[0]);
+                    Nareas = int.Parse(nmat_nw[1]);
                     Mw = new List<SubArea>(Nareas);
 
                     for (int i = 0; i < Nareas; i++)
@@ -232,67 +121,6 @@ namespace MakeGrid3D
                         int ny2 = int.Parse(Mwi[4]) - 1;
                         Mw.Add(new SubArea(wi, nx1, nx2, ny1, ny2));
                     }
-
-                    nx = new List<int>(nXw - 1);
-                    string nxi_txt = reader.ReadLine();
-                    string[] nxi = nxi_txt.Split(' ');
-                    for (int i = 0; i < nXw - 1; i++)
-                    {
-                        int current_nx = int.Parse(nxi[i]);
-                        Nx += current_nx;
-                        nx.Add(current_nx);
-                    }
-                    Nx++;
-
-                    qx = new List<float>(nXw - 1);
-                    string qxi_txt = reader.ReadLine();
-                    string[] qxi = qxi_txt.Split(' ');
-                    for (int i = 0; i < nXw - 1; i++)
-                        qx.Add(float.Parse(qxi[i], CultureInfo.InvariantCulture));
-
-                    ny = new List<int>(nYw - 1);
-                    string nyi_txt = reader.ReadLine();
-                    string[] nyi = nyi_txt.Split(' ');
-                    for (int i = 0; i < nYw - 1; i++)
-                    {
-                        int current_ny = int.Parse(nyi[i]);
-                        Ny += current_ny;
-                        ny.Add(current_ny);
-                    }
-                    Ny++;
-
-                    qy = new List<float>(nYw - 1);
-                    string qyi_txt = reader.ReadLine();
-                    string[] qyi = qyi_txt.Split(' ');
-                    for (int i = 0; i < nYw - 1; i++)
-                        qy.Add(float.Parse(qyi[i], CultureInfo.InvariantCulture));
-
-
-                    X.Capacity = Nx;
-                    Y.Capacity = Ny;
-                    for (int i = 0; i < X.Capacity; i++)
-                        X.Add(0);
-                    for (int i = 0; i < Y.Capacity; i++)
-                        Y.Add(0);
-
-                    int ix0 = 0, iy0 = 0;
-                    int jx = 0, jy = 0;
-                    IXw = new List<int>(nXw);
-                    IYw = new List<int>(nYw);
-                    for (int i = 0; i < IXw.Capacity; i++)
-                        IXw.Add(0);
-                    for (int i = 0; i < IYw.Capacity; i++)
-                        IYw.Add(0);
-
-                    for (int i = 0; i < nXw - 1; i++)
-                        MakeGrid1D(X, Xw[i], Xw[i + 1], nx[i], qx[i], ref ix0, ref jx, IXw);
-                    for (int i = 0; i < nYw - 1; i++)
-                        MakeGrid1D(Y, Yw[i], Yw[i + 1], ny[i], qy[i], ref iy0, ref jy, IYw);
-                    X[Nx - 1] = Xw[nXw - 1];
-                    Y[Ny - 1] = Yw[nYw - 1];
-                    IXw[nXw - 1] = ix0;
-                    IYw[nYw - 1] = iy0;
-
                 }
             }
             catch (Exception e)
@@ -312,19 +140,220 @@ namespace MakeGrid3D
             }
         }
 
+        public int FindSubArea(float xElemMin, float xElemMax, float yElemMin, float yElemMax)
+        {
+            foreach (SubArea subArea in Mw)
+            {
+                float xAreaMin = Xw[subArea.nx1];
+                float yAreaMin = Yw[subArea.ny1];
+                float xAreaMax = Xw[subArea.nx2];
+                float yAreaMax = Yw[subArea.ny2];
+
+                if (xAreaMin <= xElemMin && xElemMin <= xAreaMax &&
+                    yAreaMin <= yElemMin && yElemMin <= yAreaMax &&
+                    xAreaMin <= xElemMax && xElemMax <= xAreaMax &&
+                    yAreaMin <= yElemMax && yElemMax <= yAreaMax)
+                {
+                    return subArea.wi;
+                }
+            }
+            return -1;
+        }
+    }
+
+    class Grid2D
+    {
+        public Area area { get; }
+        public int Nnodes { get; }
+        public int Nelems { get; }
+        public int Nx { get; private set; }
+        public int Ny { get; private set; }
+
+        public List<Elem> Elems { get; }
+        public List<Vector2> XY { get; }
+        public List<List<NodeType>> IJ { get; }
+
+        public Grid2D(Area area, List<Vector2> XY, List<Elem> elems, List<List<NodeType>> IJ)
+        {
+            this.area = area;
+            this.XY = XY;
+            Nnodes = XY.Count;
+            Nelems = elems.Count;
+            this.Elems = elems;
+            this.IJ = IJ;
+            Nx = IJ.Count;
+            Ny = IJ[0].Count;
+        }
+
+        // Создание регулярной сетки
+        public Grid2D(string path, Area area) 
+        {
+            this.area = area;
+            List<float> X = new List<float>();
+            List<float> Y = new List<float>();
+            ReadGrid2D(path, X, Y);
+
+            Nnodes = Nx * Ny;
+            Nelems = (Nx - 1) * (Ny - 1);
+
+            Elems = new List<Elem>(Nelems);
+            XY = new List<Vector2>(Nnodes);
+
+            for (int j = 0; j < Ny; j++)
+                for (int i = 0; i < Nx; i++)
+                {
+                    Vector2 Vector2 = new Vector2(X[i], Y[j]);
+                    XY.Add(Vector2);
+                };
+            
+            for (int j = 0; j < Ny - 1; j++)
+                for (int i = 0; i < Nx - 1; i++)
+                {
+                    int n1 = global_num(i, j);
+                    int n2 = global_num(i + 1, j);
+                    int n3 = global_num(i, j + 1);
+                    int n4 = global_num(i + 1, j + 1);
+                    float xmin = XY[n1].X; float xmax = XY[n4].X;
+                    float ymin = XY[n1].Y; float ymax = XY[n4].Y;
+                    int wi = area.FindSubArea(xmin, xmax, ymin, ymax);
+                    Elem elem = new Elem(wi, n1, n2, n3, n4);
+                    Elems.Add(elem);
+                }
+
+            IJ = new List<List<NodeType>>(Nx);
+            for (int i = 0; i < Nx; i++)
+            {
+                IJ.Add(new List<NodeType>(Ny));
+                for (int j = 0; j < Ny; j++)
+                    IJ[i].Add(NodeType.Regular);
+            }
+        }
+
+        private void ReadGrid2D(string path, List<float> X, List<float> Y)
+        {
+            List<int> nx, ny;
+            List<float> qx, qy;
+            Nx = 0; Ny = 0;
+            try
+            {
+                using (TextReader reader = File.OpenText(path))
+                {
+                    string line = "*";
+                    while (line != "")
+                        line = reader.ReadLine();
+                    nx = new List<int>(area.nXw - 1);
+                    string nxi_txt = reader.ReadLine();
+                    string[] nxi = nxi_txt.Split(' ');
+                    for (int i = 0; i < area.nXw - 1; i++)
+                    {
+                        int current_nx = int.Parse(nxi[i]);
+                        Nx += current_nx;
+                        nx.Add(current_nx);
+                    }
+                    Nx++;
+
+                    qx = new List<float>(area.nXw - 1);
+                    string qxi_txt = reader.ReadLine();
+                    string[] qxi = qxi_txt.Split(' ');
+                    for (int i = 0; i < area.nXw - 1; i++)
+                        qx.Add(float.Parse(qxi[i], CultureInfo.InvariantCulture));
+
+                    ny = new List<int>(area.nYw - 1);
+                    string nyi_txt = reader.ReadLine();
+                    string[] nyi = nyi_txt.Split(' ');
+                    for (int i = 0; i < area.nYw - 1; i++)
+                    {
+                        int current_ny = int.Parse(nyi[i]);
+                        Ny += current_ny;
+                        ny.Add(current_ny);
+                    }
+                    Ny++;
+
+                    qy = new List<float>(area.nYw - 1);
+                    string qyi_txt = reader.ReadLine();
+                    string[] qyi = qyi_txt.Split(' ');
+                    for (int i = 0; i < area.nYw - 1; i++)
+                        qy.Add(float.Parse(qyi[i], CultureInfo.InvariantCulture));
+
+
+                    X.Capacity = Nx;
+                    Y.Capacity = Ny;
+                    for (int i = 0; i < X.Capacity; i++)
+                        X.Add(0);
+                    for (int i = 0; i < Y.Capacity; i++)
+                        Y.Add(0);
+
+                    int ix0 = 0, iy0 = 0;
+                    int jx = 0, jy = 0;
+
+                    for (int i = 0; i < area.nXw - 1; i++)
+                        MakeGrid1D(X, area.Xw[i], area.Xw[i + 1], nx[i], qx[i], ref ix0, ref jx);
+                    for (int i = 0; i < area.nYw - 1; i++)
+                        MakeGrid1D(Y, area.Yw[i], area.Yw[i + 1], ny[i], qy[i], ref iy0, ref jy);
+                    X[Nx - 1] = area.Xw[area.nXw - 1];
+                    Y[Ny - 1] = area.Yw[area.nYw - 1];
+                }
+            }
+            catch (Exception e)
+            {
+                if (e is DirectoryNotFoundException || e is FileNotFoundException)
+                {
+                    ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
+                }
+                else if (e is FormatException)
+                {
+                    ErrorHandler.FileReadingErrorMessage("Некорректный формат файла");
+                }
+                else
+                {
+                    ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл");
+                }
+            }
+        }
+
+        private void MakeGrid1D(List<float> X_Y, float left, float right, int n, float qxy, ref int i0, ref int j)
+        {
+            float h0;
+            if (qxy - 1 < 1E-16)
+                h0 = (right - left) / n;
+            else
+                h0 = (right - left) * (1 - qxy) / (1 - MathF.Pow(qxy, n));
+
+            X_Y[i0] = left;
+            j++;
+            for (int i = i0 + 1; i < n + i0; i++)
+            {
+                X_Y[i] = X_Y[i - 1] + h0;
+                h0 *= qxy;
+            }
+            i0 = n + i0;
+        }
+
         public int global_num(int i, int j)
         {
             return j * Nx + i;
+        }
+    }
+
+    class IrregularGridMaker
+    {
+        public Grid2D grid2D;
+        int Nx, Ny;
+        public IrregularGridMaker(Grid2D grid2D)
+        {
+            this.grid2D = grid2D;
+            Nx = grid2D.Nx;
+            Ny = grid2D.Ny;
         }
 
         // Calculate Aspect Ratio
         private float CalcAR(int n1, int n4)
         {
-            float x1 = XY[n1].X;
-            float y1 = XY[n1].Y;
+            float x1 = grid2D.XY[n1].X;
+            float y1 = grid2D.XY[n1].Y;
 
-            float x2 = XY[n4].X;
-            float y2 = XY[n4].Y;
+            float x2 = grid2D.XY[n4].X;
+            float y2 = grid2D.XY[n4].Y;
 
             float width = (x2 - x1);
             float height = (y2 - y1);
@@ -339,29 +368,29 @@ namespace MakeGrid3D
             return a1 >= a2;
         }
 
-        private void MakeUnStructedMatrix()
+        private List<List<NodeType>> MakeUnStructedMatrix()
         {
-            IJ = new List<List<NodeType>>(Nx);
+            List<List<NodeType>> IJ_new = new List<List<NodeType>>(Nx);
             for (int i = 0; i < Nx; i++)
             {
-                IJ.Add(new List<NodeType>(Ny));
+                IJ_new.Add(new List<NodeType>(Ny));
                 for (int j = 0; j < Ny; j++)
-                    IJ[i].Add(NodeType.Regular);
+                    IJ_new[i].Add(grid2D.IJ[i][j]);
             }
             // Изменение матрицы IJ
             for (int j = 1; j < Ny - 1; j++)
             {
                 for (int i = 1; i < Nx - 1; i++)
                 {
-                    if (IJ[i][j] != NodeType.Regular)
+                    if (IJ_new[i][j] != NodeType.Regular)
                         continue;
-                    int n = global_num(i, j);
-                    int nlb = global_num(i - 1, j - 1);
-                    int nb = global_num(i, j - 1);
-                    int nr = global_num(i + 1, j);
-                    int nru = global_num(i + 1, j + 1);
-                    int nl = global_num(i - 1, j);
-                    int nu = global_num(i, j + 1);
+                    int n = grid2D.global_num(i, j);
+                    int nlb = grid2D.global_num(i - 1, j - 1);
+                    int nb = grid2D.global_num(i, j - 1);
+                    int nr = grid2D.global_num(i + 1, j);
+                    int nru = grid2D.global_num(i + 1, j + 1);
+                    int nl = grid2D.global_num(i - 1, j);
+                    int nu = grid2D.global_num(i, j + 1);
 
                     float alb = CalcAR(nlb, n);
                     float arb = CalcAR(nb, nr);
@@ -373,13 +402,13 @@ namespace MakeGrid3D
                     float al = CalcAR(nlb, nu);
 
                     // bottom
-                    if (CompareAR(alb, BufferClass.maxAR) && CompareAR(arb, BufferClass.maxAR) && 
-                        CompareAR(alb, ab) && CompareAR(arb, ab)) 
+                    if (CompareAR(alb, BufferClass.maxAR) && CompareAR(arb, BufferClass.maxAR) &&
+                        CompareAR(alb, ab) && CompareAR(arb, ab))
                     {
-                        IJ[i][j] = NodeType.Top;
-                        for (int jk = j - 1; jk >=0; jk--)
+                        IJ_new[i][j] = NodeType.Top;
+                        for (int jk = j - 1; jk >= 0; jk--)
                         {
-                            IJ[i][jk] = NodeType.Removed;
+                            IJ_new[i][jk] = NodeType.Removed;
                         }
                         continue;
                     }
@@ -387,10 +416,10 @@ namespace MakeGrid3D
                     if (CompareAR(alu, BufferClass.maxAR) && CompareAR(aru, BufferClass.maxAR) &&
                         CompareAR(alu, au) && CompareAR(aru, au))
                     {
-                        IJ[i][j] = NodeType.Bottom;
+                        IJ_new[i][j] = NodeType.Bottom;
                         for (int jk = j + 1; jk < Ny; jk++)
-                        {
-                            IJ[i][jk] = NodeType.Removed;
+                        {   
+                            IJ_new[i][jk] = NodeType.Removed;
                         }
                         continue;
                     }
@@ -398,10 +427,10 @@ namespace MakeGrid3D
                     if (CompareAR(alb, BufferClass.maxAR) && CompareAR(alu, BufferClass.maxAR) &&
                         CompareAR(alb, al) && CompareAR(alu, al))
                     {
-                        IJ[i][j] = NodeType.Right;
+                        IJ_new[i][j] = NodeType.Right;
                         for (int ik = i - 1; ik >= 0; ik--)
                         {
-                            IJ[ik][j] = NodeType.Removed;
+                            IJ_new[ik][j] = NodeType.Removed;
                         }
                         continue;
                     }
@@ -409,79 +438,85 @@ namespace MakeGrid3D
                     if (CompareAR(arb, BufferClass.maxAR) && CompareAR(aru, BufferClass.maxAR) &&
                         CompareAR(arb, ar) && CompareAR(aru, ar))
                     {
-                        IJ[i][j] = NodeType.Left;
+                        IJ_new[i][j] = NodeType.Left;
                         for (int ik = i + 1; ik < Nx; ik++)
                         {
-                            IJ[ik][j] = NodeType.Removed;
+                            IJ_new[ik][j] = NodeType.Removed;
                         }
                         continue;
                     }
                 }
             }
+            return IJ_new;
         }
 
-        public void MakeUnStructedGrid()
+        public Grid2D MakeUnStructedGrid()
         {
-            MakeUnStructedMatrix();
-            UnStrXY = new List<Vector2>();
+            List<List<NodeType>> IJ_new = MakeUnStructedMatrix();
+            List<Vector2> XY_new = new List<Vector2>();
+            List<Elem> Elems_new = new List<Elem>();
+
             for (int j = 0; j < Ny; j++)
                 for (int i = 0; i < Nx; i++)
                 {
-                    if (IJ[i][j] == NodeType.Removed)
+                    if (IJ_new[i][j] == NodeType.Removed)
                         continue;
-                    int n = global_num(i, j);
-                    UnStrXY.Add(new Vector2(XY[n].X, XY[n].Y));
+                    int n = grid2D.global_num(i, j);
+                    XY_new.Add(new Vector2(grid2D.XY[n].X, grid2D.XY[n].Y));
                 }
-            UnStrElems = new List<Elem5>();
-            
+            Elems_new = new List<Elem>();
+
             for (int j = 0; j < Ny - 1; j++)
                 for (int i = 0; i < Nx - 1; i++)
                 {
-                    if (IJ[i][j] == NodeType.Removed || IJ[i][j] == NodeType.Left || IJ[i][j] == NodeType.Bottom)
+                    if (IJ_new[i][j] == NodeType.Removed || IJ_new[i][j] == NodeType.Left || IJ_new[i][j] == NodeType.Bottom)
                         continue;
                     int ik;
                     int ik1 = i + 1;
-                    while (ik1 < Nx && (IJ[ik1][j] == NodeType.Removed || IJ[ik1][j] == NodeType.Bottom))
+                    while (ik1 < Nx && (IJ_new[ik1][j] == NodeType.Removed || IJ_new[ik1][j] == NodeType.Bottom))
                     {
                         ik1++;
                     }
                     int ik2 = i + 1;
-                    while (ik2 < Nx && IJ[ik2][j] == NodeType.Removed)
+                    while (ik2 < Nx && IJ_new[ik2][j] == NodeType.Removed)
                     {
                         ik2++;
                     }
                     if (ik1 > ik2) { ik = ik1; } else { ik = ik2; }
-                    if (ik >= Nx ) { ik = i + 1; }
+                    if (ik >= Nx) { ik = i + 1; }
 
 
                     int jk;
                     int jk1 = j + 1;
-                    while (jk1 < Ny && IJ[i][jk1] == NodeType.Removed)
+                    while (jk1 < Ny && IJ_new[i][jk1] == NodeType.Removed)
                     {
                         jk1++;
                     }
                     int jk2 = j + 1;
-                    while (jk2 < Ny && IJ[ik][jk2] == NodeType.Removed)
+                    while (jk2 < Ny && IJ_new[ik][jk2] == NodeType.Removed)
                     {
                         jk2++;
                     }
-                    if (jk1 > jk2) { jk = jk1; } else { jk= jk2; }
+                    if (jk1 > jk2) { jk = jk1; } else { jk = jk2; }
                     if (jk >= Ny) { jk = j + 1; }
-                    int n1 = global_num(i, j);
-                    int n2 = global_num(ik, j);
-                    int n3 = global_num(i, jk);
-                    int n4 = global_num(ik, jk);
+                    int n1 = grid2D.global_num(i, j);
+                    int n2 = grid2D.global_num(ik, j);
+                    int n3 = grid2D.global_num(i, jk);
+                    int n4 = grid2D.global_num(ik, jk);
 
                     // TODO: OPTIMIZE THAT
-                    int n1_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n1].X) < 1e-14f && MathF.Abs(v.Y - XY[n1].Y) < 1e-14f);
-                    int n2_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n2].X) < 1e-14f && MathF.Abs(v.Y - XY[n2].Y) < 1e-14f);
-                    int n3_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n3].X) < 1e-14f && MathF.Abs(v.Y - XY[n3].Y) < 1e-14f);
-                    int n4_new = UnStrXY.FindIndex(v => MathF.Abs(v.X - XY[n4].X) < 1e-14f && MathF.Abs(v.Y - XY[n4].Y) < 1e-14f);
-                    int wi = FindSubArea(n1_new, n4_new);
-                    UnStrElems.Add(new Elem5(wi, NodeType.Regular, n1_new, n2_new, n3_new, n4_new));
+                    int n1_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n1].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n1].Y) < 1e-14f);
+                    int n2_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n2].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n2].Y) < 1e-14f);
+                    int n3_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n3].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n3].Y) < 1e-14f);
+                    int n4_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n4].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n4].Y) < 1e-14f);
+                    float xmin = XY_new[n1_new].X;
+                    float xmax = XY_new[n4_new].X;
+                    float ymin = XY_new[n1_new].Y;
+                    float ymax = XY_new[n4_new].Y;
+                    int wi = grid2D.area.FindSubArea(xmin, xmax, ymin, ymax);
+                    Elems_new.Add(new Elem(wi, n1_new, n2_new, n3_new, n4_new));
                 }
-            UnStrNnodes = UnStrXY.Count;
-            UnStrNelems = UnStrElems.Count;
+            return new Grid2D(grid2D.area, XY_new, Elems_new, IJ_new);
         }
     }
 }

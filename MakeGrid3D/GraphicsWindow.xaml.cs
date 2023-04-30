@@ -59,7 +59,7 @@ namespace MakeGrid3D
         static public bool drawRemovedLinesMode = Default.drawRemovedLinesMode;
         static public bool unstructedGridMode = Default.unstructedGridMode;
 
-        static public string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\Grid2D_2.txt";
+        static public string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
         static public float maxAR = (float)Default.maxAR_width / Default.maxAR_height;
         static public bool rebuildUnStructedGrid = false;
         static public float indent = Default.indent;
@@ -98,12 +98,14 @@ namespace MakeGrid3D
 
     public partial class GraphicsWindow : Window
     {
-        private RenderGrid renderGrid;
+        RenderGrid renderGrid;
+        IrregularGridMaker irregularGridMaker;
+        Grid2D regularGrid2D, irregularGrid2D;
         Mesh axis;
         Mesh? selectedElemMesh = null;
         Mesh? selectedElemLines = null;
         Matrix4 projectionSelectedElem = Matrix4.Identity;
-        Elem5 selectedElem;
+        Elem selectedElem;
         public GraphicsWindow()
         {
             InitializeComponent();
@@ -119,13 +121,15 @@ namespace MakeGrid3D
 
         private void OpenTkControl_OnLoad(object sender, RoutedEventArgs e)
         {
-            Grid2D grid2D = new Grid2D(BufferClass.fileName);
-            grid2D.MakeUnStructedGrid();
-            renderGrid = new RenderGrid(grid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+            Area area = new Area(BufferClass.fileName);
+            regularGrid2D = new Grid2D(BufferClass.fileName, area);
+            irregularGridMaker = new IrregularGridMaker(regularGrid2D);
+            irregularGrid2D = irregularGridMaker.MakeUnStructedGrid();
+            renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             // если удалить отсюда то не будет показываться в статус баре
-            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas;
-            BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.Nnodes;
-            BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.Nelems;
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid2D.area.Nmats;
+            BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid2D.Nnodes;
+            BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid2D.Nelems;
             BlockRemovedNodesCount.Text = "***";
             BlockRemovedElemsCount.Text = "***";
             //-----------------------------------------------------------------------------
@@ -148,27 +152,29 @@ namespace MakeGrid3D
         {
             if (renderGrid == null)
                 return;
-            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.grid2D.Nareas;
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid2D.area.Nareas;
+            BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid2D.Nnodes;
+            BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid2D.Nelems;
+
+            GL.ClearColor(BufferClass.bgColor);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            // Чтобы работали прозрачные цвета
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.Blend);
+            renderGrid.RenderFrame();
             if (BufferClass.unstructedGridMode)
             {
-                BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.UnStrNnodes;
-                BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.UnStrNelems;
-                BlockRemovedNodesCount.Text = "Количество удалённых узлов: " + (renderGrid.grid2D.Nnodes - renderGrid.grid2D.UnStrNnodes);
-                BlockRemovedElemsCount.Text = "Количество удалённых элементов: " + (renderGrid.grid2D.Nelems - renderGrid.grid2D.UnStrNelems);
+                renderGrid.Grid2D = irregularGrid2D;
+                BufferClass.unstructedGridMode = false;
             }
-            else
+            if (BufferClass.drawRemovedLinesMode)
             {
-                BlockNodesCount.Text = "Количество узлов: " + renderGrid.grid2D.Nnodes;
-                BlockElemsCount.Text = "Количество элементов: " + renderGrid.grid2D.Nelems;
-                BlockRemovedNodesCount.Text = "***";
-                BlockRemovedElemsCount.Text = "***";
+                renderGrid.Grid2D = regularGrid2D;
+                renderGrid.shader.DashedLines(true);
+                renderGrid.RenderFrame(drawArea:false, drawNodes:false);
+                renderGrid.shader.DashedLines(false);
+                renderGrid.Grid2D = irregularGrid2D;
             }
-            if (BufferClass.rebuildUnStructedGrid)
-            {
-                renderGrid.RebuildUnStructedGrid();
-                BufferClass.rebuildUnStructedGrid = false;
-            }
-            renderGrid.RenderFrame();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -254,20 +260,20 @@ namespace MakeGrid3D
             float x = (float)new_position.X;
             float y = (float)new_position.Y;
             
-            foreach (Elem5 elem in renderGrid.grid2D.Elems)
+            foreach (Elem elem in renderGrid.Grid2D.Elems)
             {
-                float xAreaMin = renderGrid.grid2D.XY[elem.n1].X;
-                float yAreaMin = renderGrid.grid2D.XY[elem.n1].Y;
-                float xAreaMax = renderGrid.grid2D.XY[elem.n4].X;
-                float yAreaMax = renderGrid.grid2D.XY[elem.n4].Y;
+                float xAreaMin = renderGrid.Grid2D.XY[elem.n1].X;
+                float yAreaMin = renderGrid.Grid2D.XY[elem.n1].Y;
+                float xAreaMax = renderGrid.Grid2D.XY[elem.n4].X;
+                float yAreaMax = renderGrid.Grid2D.XY[elem.n4].Y;
                 if (x >= xAreaMin && x <= xAreaMax && y >= yAreaMin && y <= yAreaMax)
                 {
                     selectedElem = elem;
 
-                    float left = renderGrid.grid2D.XY[selectedElem.n1].X;
-                    float right = renderGrid.grid2D.XY[selectedElem.n4].X;
-                    float bottom = renderGrid.grid2D.XY[selectedElem.n1].Y;
-                    float top = renderGrid.grid2D.XY[selectedElem.n4].Y;
+                    float left = renderGrid.Grid2D.XY[selectedElem.n1].X;
+                    float right = renderGrid.Grid2D.XY[selectedElem.n4].X;
+                    float bottom = renderGrid.Grid2D.XY[selectedElem.n1].Y;
+                    float top = renderGrid.Grid2D.XY[selectedElem.n4].Y;
 
                     float width = right - left;
                     float height = top - bottom;
@@ -319,17 +325,17 @@ namespace MakeGrid3D
 
                     BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem.wi + 1).ToString();
                     BlockNodesNum1.Text = "Л.Н. №: " + selectedElem.n1;
-                    BlockNodesCoords1.Text = "x: " + renderGrid.grid2D.XY[selectedElem.n1].X.ToString("0.00")
-                                           + " y: " + renderGrid.grid2D.XY[selectedElem.n1].Y.ToString("0.00");
+                    BlockNodesCoords1.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n1].X.ToString("0.00")
+                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n1].Y.ToString("0.00");
                     BlockNodesNum2.Text = "П.Н. №: " + selectedElem.n2;
-                    BlockNodesCoords2.Text = "x: " + renderGrid.grid2D.XY[selectedElem.n2].X.ToString("0.00")
-                                           + " y: " + renderGrid.grid2D.XY[selectedElem.n2].Y.ToString("0.00");
+                    BlockNodesCoords2.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n2].X.ToString("0.00")
+                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n2].Y.ToString("0.00");
                     BlockNodesNum3.Text = "Л.В. №: " + selectedElem.n3;
-                    BlockNodesCoords3.Text = "x: " + renderGrid.grid2D.XY[selectedElem.n3].X.ToString("0.00")
-                                           + " y: " + renderGrid.grid2D.XY[selectedElem.n3].Y.ToString("0.00");
+                    BlockNodesCoords3.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n3].X.ToString("0.00")
+                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n3].Y.ToString("0.00");
                     BlockNodesNum4.Text = "П.В. №: " + selectedElem.n4;
-                    BlockNodesCoords4.Text = "x: " + renderGrid.grid2D.XY[selectedElem.n4].X.ToString("0.00")
-                                           + " y: " + renderGrid.grid2D.XY[selectedElem.n4].Y.ToString("0.00");
+                    BlockNodesCoords4.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n4].X.ToString("0.00")
+                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n4].Y.ToString("0.00");
                     return;
                 }
                 if (selectedElemMesh != null)
@@ -413,9 +419,11 @@ namespace MakeGrid3D
             // TODO:
             // При загрузке новой сетки название кнопки не меняется
             BufferClass.ResetPosition();
-            Grid2D grid2D = new Grid2D(BufferClass.fileName);
-            grid2D.MakeUnStructedGrid();
-            renderGrid = new RenderGrid(grid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+            Area area = new Area(BufferClass.fileName);
+            regularGrid2D = new Grid2D(BufferClass.fileName, area);
+            irregularGridMaker = new IrregularGridMaker(regularGrid2D);
+            irregularGrid2D = irregularGridMaker.MakeUnStructedGrid();
+            renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             SetAxis();
             if (selectedElemMesh != null)
             {

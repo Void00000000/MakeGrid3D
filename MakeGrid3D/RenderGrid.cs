@@ -251,20 +251,27 @@ namespace MakeGrid3D
 
     class RenderGrid
     {
-        Mesh regularGrid;
-        Mesh irregularGrid;
-        Mesh area;
+        Mesh gridMesh;
+        Mesh areaMesh;
 
         public readonly Shader shader;
         private float[] vertices;
-        private float[] vertices_unstr;
         private uint[] indices;
+        private float[] vertices_area;
         private uint[] indices_area;
-        private uint[] indices_unstr;
         private Matrix4 projection;
         private Matrix4 model;
 
-        public readonly Grid2D grid2D;
+        private Grid2D grid2D;
+        public Grid2D Grid2D
+        {
+            get { return grid2D; }
+            set 
+            {
+                grid2D = value; 
+                AssembleVertices(false);
+            }
+        }
         public float Left { get; private set; }
         public float Right { get; private set; }
         public float Bottom { get; private set; }
@@ -276,8 +283,7 @@ namespace MakeGrid3D
         public RenderGrid(Grid2D grid2D, float windowWidth, float windowHeight)
         {
             this.grid2D = grid2D;
-            AssembleVertices();
-            FillBuffers();
+            AssembleVertices(true);
             WindowWidth= windowWidth;
             WindowHeight = windowHeight; 
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
@@ -286,10 +292,10 @@ namespace MakeGrid3D
 
         public void SetSize()
         {
-            float left = grid2D.X0;
-            float right = grid2D.Xn;
-            float bottom = grid2D.Y0;
-            float top = grid2D.Yn;
+            float left = grid2D.area.X0;
+            float right = grid2D.area.Xn;
+            float bottom = grid2D.area.Y0;
+            float top = grid2D.area.Yn;
 
             float width = right - left;
             float height = top - bottom;
@@ -323,99 +329,65 @@ namespace MakeGrid3D
            projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
         }
 
-        private void AssembleVertices(bool re=true, bool irre=true)
+        private void AssembleVertices(bool area)
         {
             int Nelems = grid2D.Nelems;
             int Nnodes = grid2D.Nnodes;
-            int Nareas = grid2D.Nareas;
+            int Nareas = grid2D.area.Nareas;
 
-            if (re)
+            vertices = new float[Nnodes * 3];
+            int n = 0;
+            foreach (Vector2 node in grid2D.XY)
             {
-                vertices = new float[Nnodes * 3];
-                int n = 0;
-                foreach (Vector2 node in grid2D.XY)
-                {
-                    vertices[n] = node.X; vertices[n + 1] = node.Y; vertices[n + 2] = 0;
-                    n += 3;
-                }
+                vertices[n] = node.X; vertices[n + 1] = node.Y; vertices[n + 2] = 0;
+                n += 3;
+            }
 
-                indices = new uint[Nelems * 4 * 2];
-                int e = 0;
-                foreach (Elem5 elem5 in grid2D.Elems)
-                {
-                    uint n1 = (uint)elem5.n1;
-                    uint n2 = (uint)elem5.n2;
-                    uint n3 = (uint)elem5.n3;
-                    uint n4 = (uint)elem5.n4;
-                    indices[e] = n1; indices[e + 1] = n2; indices[e + 2] = n2; indices[e + 3] = n4;
-                    indices[e + 4] = n3; indices[e + 5] = n4; indices[e + 6] = n1; indices[e + 7] = n3;
-                    e += 8;
-                }
+            indices = new uint[Nelems * 4 * 2];
+            int e = 0;
+            foreach (Elem elem in grid2D.Elems)
+            {
+                uint n1 = (uint)elem.n1;
+                uint n2 = (uint)elem.n2;
+                uint n3 = (uint)elem.n3;
+                uint n4 = (uint)elem.n4;
+                indices[e] = n1; indices[e + 1] = n2; indices[e + 2] = n2; indices[e + 3] = n4;
+                indices[e + 4] = n3; indices[e + 5] = n4; indices[e + 6] = n1; indices[e + 7] = n3;
+                e += 8;
+            }
+            gridMesh = new Mesh(vertices, indices);
+
+            if (area)
+            {
+                vertices_area = new float[grid2D.area.nXw * grid2D.area.nYw * 3];
+                int yx = 0;
+                foreach (float y in grid2D.area.Yw)
+                    foreach (float x in grid2D.area.Xw)
+                    {
+                        vertices_area[yx] = x; vertices_area[yx + 1] = y; vertices_area[yx + 2] = 0;
+                        yx += 3;
+                    }
 
                 indices_area = new uint[Nareas * 6];
                 int s = 0;
-                foreach (SubArea subArea in grid2D.Mw)
+                foreach (SubArea subArea in grid2D.area.Mw)
                 {
-                    int ix1 = grid2D.IXw[subArea.nx1];
-                    int iy1 = grid2D.IYw[subArea.ny1];
-                    int ix2 = grid2D.IXw[subArea.nx2];
-                    int iy2 = grid2D.IYw[subArea.ny2];
+                    int ix1 = subArea.nx1;
+                    int iy1 = subArea.ny1;
+                    int ix2 = subArea.nx2;
+                    int iy2 = subArea.ny2;
 
-                    uint n1 = (uint)grid2D.global_num(ix1, iy1);
-                    uint n2 = (uint)grid2D.global_num(ix2, iy1);
-                    uint n3 = (uint)grid2D.global_num(ix1, iy2);
-                    uint n4 = (uint)grid2D.global_num(ix2, iy2);
+                    uint n1 = (uint)(iy1 * grid2D.area.nXw + ix1);
+                    uint n2 = (uint)(iy1 * grid2D.area.nXw + ix2);
+                    uint n3 = (uint)(iy2 * grid2D.area.nXw + ix1);
+                    uint n4 = (uint)(iy2 * grid2D.area.nXw + ix2);
 
                     indices_area[s] = n1; indices_area[s + 1] = n2; indices_area[s + 2] = n4;
                     indices_area[s + 3] = n1; indices_area[s + 4] = n3; indices_area[s + 5] = n4;
                     s += 6;
                 }
+                areaMesh = new Mesh(vertices_area, indices_area);
             }
-
-            if (irre)
-            {
-                vertices_unstr = new float[grid2D.UnStrXY.Count * 3];
-                int un = 0;
-                foreach (Vector2 node in grid2D.UnStrXY)
-                {
-                    vertices_unstr[un] = node.X; vertices_unstr[un + 1] = node.Y; vertices_unstr[un + 2] = 0;
-                    un += 3;
-                }
-
-                indices_unstr = new uint[grid2D.UnStrElems.Count * 4 * 2];
-                int u = 0;
-                foreach (Elem5 uelem5 in grid2D.UnStrElems)
-                {
-                    uint n1 = (uint)uelem5.n1;
-                    uint n2 = (uint)uelem5.n2;
-                    uint n3 = (uint)uelem5.n3;
-                    uint n4 = (uint)uelem5.n4;
-                    indices_unstr[u] = n1; indices_unstr[u + 1] = n2; indices_unstr[u + 2] = n2; indices_unstr[u + 3] = n4;
-                    indices_unstr[u + 4] = n3; indices_unstr[u + 5] = n4; indices_unstr[u + 6] = n1; indices_unstr[u + 7] = n3;
-                    u += 8;
-                }
-            }
-        }
-
-
-        private void FillBuffers(bool re = true, bool irre = true)
-        {
-            if (re)
-            {
-                regularGrid = new Mesh(vertices, indices);
-                area = new Mesh(regularGrid.Vbo, indices_area, vertices.Length);
-            }
-            if (irre)
-            {
-                irregularGrid = new Mesh(vertices_unstr, indices_unstr);
-            }
-        }
-
-        public void RebuildUnStructedGrid()
-        {
-            grid2D.MakeUnStructedGrid();
-            AssembleVertices(re: false);
-            FillBuffers(re: false);
         }
 
         public void DrawLines(Mesh mesh) {
@@ -429,14 +401,8 @@ namespace MakeGrid3D
             mesh.DrawVerices(PrimitiveType.Points);
         }
 
-        public void RenderFrame()
+        public void RenderFrame(bool drawArea=true, bool drawNodes=true, bool drawLines=true)
         {
-            GL.ClearColor(BufferClass.bgColor);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            // Чтобы работали прозрачные цвета
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.Blend);
-
             SetSize(); // TODO: Сделать так, чтобы вызов был только во время нажатия кнопки зумирования
             shader.Use();
             shader.SetMatrix4("projection", ref projection);
@@ -446,35 +412,23 @@ namespace MakeGrid3D
             GL.LineWidth(BufferClass.linesSize);
             GL.PointSize(BufferClass.pointsSize);
 
-            if (!BufferClass.wireframeMode)
+            if (!BufferClass.wireframeMode && drawArea)
             {
                 int s = 0;
-                GL.BindVertexArray(area.Vao);
-                foreach (SubArea subArea in grid2D.Mw)
+                areaMesh.Use();
+                foreach (SubArea subArea in grid2D.area.Mw)
                 {
                     shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
-                    area.DrawElems(6, s, PrimitiveType.Triangles);
+                    areaMesh.DrawElems(6, s, PrimitiveType.Triangles);
                     s += 6;
                 }
             }
             if (BufferClass.showGrid)
             {
-                if (BufferClass.unstructedGridMode)
-                {
-                    if (BufferClass.drawRemovedLinesMode)
-                    {
-                        shader.DashedLines(true);
-                        DrawLines(regularGrid);
-                        shader.DashedLines(false);
-                    }
-                    DrawLines(irregularGrid);
-                    DrawNodes(irregularGrid);
-                }
-                else
-                {
-                    DrawLines(regularGrid);
-                    DrawNodes(regularGrid);
-                }
+                if (drawLines)
+                    DrawLines(gridMesh);
+                if (drawNodes)
+                    DrawNodes(gridMesh);
             }
         }
 
@@ -485,10 +439,8 @@ namespace MakeGrid3D
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-
-            regularGrid.Dispose();
-            irregularGrid.Dispose();
-            area.Dispose();
+            gridMesh.Dispose();
+            areaMesh.Dispose();
             shader.Dispose();
         }
     }
