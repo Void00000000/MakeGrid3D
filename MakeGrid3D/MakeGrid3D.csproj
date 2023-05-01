@@ -12,6 +12,8 @@
     <None Remove="Images\arrow_left.png" />
     <None Remove="Images\arrow_right.png" />
     <None Remove="Images\arrow_up.png" />
+    <None Remove="Images\do.png" />
+    <None Remove="Images\double_arrow.png" />
     <None Remove="Images\light_purple_gradient.jpg" />
     <None Remove="Images\purple_gradient.jpg" />
     <None Remove="Images\rotate_around_left.png" />
@@ -20,6 +22,8 @@
     <None Remove="Images\rotate_left.png" />
     <None Remove="Images\rotate_right.png" />
     <None Remove="Images\rotate_top.png" />
+    <None Remove="Images\single_arrow.png" />
+    <None Remove="Images\undo.png" />
     <None Remove="Images\zoom_in.png" />
     <None Remove="Images\zoom_out.png" />
   </ItemGroup>
@@ -35,6 +39,8 @@
     <Resource Include="Images\arrow_left.png" />
     <Resource Include="Images\arrow_right.png" />
     <Resource Include="Images\arrow_up.png" />
+    <Resource Include="Images\do.png" />
+    <Resource Include="Images\double_arrow.png" />
     <Resource Include="Images\light_purple_gradient.jpg" />
     <Resource Include="Images\purple_gradient.jpg" />
     <Resource Include="Images\rotate_around_left.png" />
@@ -43,6 +49,8 @@
     <Resource Include="Images\rotate_left.png" />
     <Resource Include="Images\rotate_right.png" />
     <Resource Include="Images\rotate_top.png" />
+    <Resource Include="Images\single_arrow.png" />
+    <Resource Include="Images\undo.png" />
     <Resource Include="Images\zoom_in.png" />
     <Resource Include="Images\zoom_out.png" />
   </ItemGroup>

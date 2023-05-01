@@ -1,37 +1,38 @@
-﻿using OpenTK.Windowing.Common;
-using OpenTK.Graphics.OpenGL;
+﻿using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Wpf;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.IO;
-using System.Diagnostics;
-using System.Windows.Media.Media3D;
-using System.Reflection;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace MakeGrid3D
 {
     /// <summary>
     /// Interaction logic for GraphicsWindow.xaml
     /// </summary>
+    class GridState
+    {
+        public Grid2D Grid2D { get;}
+        public int CurrentI { get; } = 1;
+        public int CurrentJ { get; } = 1;
+        public GridState(Grid2D grid2D, int currentI=1, int currentJ=1)
+        {
+            Grid2D = grid2D;
+            CurrentI = currentI;
+            CurrentJ = currentJ;
+        }
+    }
 
     public partial class GraphicsWindow : Window
     {
         RenderGrid renderGrid;
         IrregularGridMaker irregularGridMaker;
-        Grid2D regularGrid2D, irregularGrid2D;
+        Grid2D regularGrid2D;
+        LinkedList<GridState> grid2DList;
+        LinkedListNode<GridState> currentNode;
+
         Mesh axis;
         Mesh? selectedElemMesh = null;
         Mesh? selectedElemLines = null;
@@ -52,7 +53,6 @@ namespace MakeGrid3D
         float speedHor = 0;
         float speedVer = 0;
         Color4 bgColor = Default.bgColor;
-        bool unstructedGridMode = Default.unstructedGridMode;
         string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
 
         Elem selectedElem;
@@ -70,24 +70,32 @@ namespace MakeGrid3D
             ResetUI();
         }
 
-        private void OpenTkControl_OnLoad(object sender, RoutedEventArgs e)
+        private void Init()
         {
             Area area = new Area(fileName);
             regularGrid2D = new Grid2D(fileName, area);
-            irregularGridMaker = new IrregularGridMaker(regularGrid2D);
-            irregularGrid2D = irregularGridMaker.MakeUnStructedGrid();
             renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+            irregularGridMaker = new IrregularGridMaker(regularGrid2D);
+            grid2DList = new LinkedList<GridState>();
+            grid2DList.AddLast(new GridState(regularGrid2D));
+            currentNode = grid2DList.Last;
+            // Множители скорости = 1 процент от ширины(высоты) мира
+            speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
+            speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
+            SetAxis();
+        }
+
+        private void OpenTkControl_OnLoad(object sender, RoutedEventArgs e)
+        {
+            Init();
             // если удалить отсюда то не будет показываться в статус баре
-            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid2D.area.Nmats;
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid2D.Area.Nmats;
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid2D.Nnodes;
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid2D.Nelems;
             BlockRemovedNodesCount.Text = "***";
             BlockRemovedElemsCount.Text = "***";
             //-----------------------------------------------------------------------------
-            // Множители скорости = 1 процент от ширины(высоты) мира
-            speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
-            speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
-            SetAxis();
+            
         }
 
         private void OpenTkControl_Resize(object sender, SizeChangedEventArgs e)
@@ -103,7 +111,7 @@ namespace MakeGrid3D
         {
             if (renderGrid == null)
                 return;
-            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid2D.area.Nareas;
+            BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid2D.Area.Nmats;
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid2D.Nnodes;
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid2D.Nelems;
 
@@ -112,20 +120,23 @@ namespace MakeGrid3D
             // Чтобы работали прозрачные цвета
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
-            if (renderGrid.drawRemovedLinesMode)
+            if (renderGrid.DrawRemovedLinesMode)
             {
+                
                 renderGrid.Grid2D = regularGrid2D;
+                renderGrid.RenderFrame(drawLines:false, drawNodes:false);
                 renderGrid.shader.DashedLines(true);
                 renderGrid.RenderFrame(drawArea:false, drawNodes:false);
-                renderGrid.shader.DashedLines(false, renderGrid.linesSize);
-                renderGrid.Grid2D = irregularGrid2D;
+                renderGrid.shader.DashedLines(false, renderGrid.LinesSize);
+
+                renderGrid.Grid2D = currentNode.ValueRef.Grid2D;
+                renderGrid.RenderFrame(drawArea:false);
             }
-            renderGrid.RenderFrame();
-            if (unstructedGridMode)
+            else
             {
-                renderGrid.Grid2D = irregularGrid2D;
-                unstructedGridMode = false;
+                renderGrid.RenderFrame();
             }
+            
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -148,21 +159,21 @@ namespace MakeGrid3D
         {
             speedTranslate = Default.speedTranslate;
             speedZoom = Default.speedZoom;
-            renderGrid.linesSize = Default.linesSize;
-            renderGrid.pointsSize = Default.pointsSize;
-            renderGrid.linesColor = Default.linesColor;
-            renderGrid.pointsColor = Default.pointsColor;
+            renderGrid.LinesSize = Default.linesSize;
+            renderGrid.PointsSize = Default.pointsSize;
+            renderGrid.LinesColor = Default.linesColor;
+            renderGrid.PointsColor = Default.pointsColor;
             bgColor = Default.bgColor;
-            renderGrid.wireframeMode = Default.wireframeMode;
-            renderGrid.showGrid = Default.showGrid;
-            renderGrid.drawRemovedLinesMode = Default.drawRemovedLinesMode;
-            irregularGridMaker.maxAR = (float)Default.maxAR_width / Default.maxAR_height;
+            renderGrid.WireframeMode = Default.wireframeMode;
+            renderGrid.ShowGrid = Default.showGrid;
+            renderGrid.DrawRemovedLinesMode = Default.drawRemovedLinesMode;
+            irregularGridMaker.MaxAR = (float)Default.maxAR_width / Default.maxAR_height;
         }
 
         private void ResetPosition()
         {
-            renderGrid.translate = Matrix4.Identity;
-            renderGrid.scale = Matrix4.Identity;
+            renderGrid.Translate = Matrix4.Identity;
+            renderGrid.Scale = Matrix4.Identity;
             rtranslate = Matrix4.Identity;
             rscale = Matrix4.Identity;
             horOffset = 0;
@@ -173,7 +184,8 @@ namespace MakeGrid3D
             mouse_verOffset = 0;
             mouse_scaleX = 1;
             mouse_scaleY = 1;
-            renderGrid.indent = Default.indent;
+            renderGrid.Indent = Default.indent;
+            renderGrid.SetSize();
         }
 
         private Point MouseMap(Point pos)
@@ -219,7 +231,7 @@ namespace MakeGrid3D
                 renderGrid.shader.SetMatrix4("projection", ref projectionSelectedElem);
                 Matrix4 model = Matrix4.Identity;
                 renderGrid.shader.SetMatrix4("model", ref model);
-                if (!renderGrid.wireframeMode)
+                if (!renderGrid.WireframeMode)
                 {
                     selectedElemMesh.Use();
                     renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem.wi]);
@@ -227,9 +239,9 @@ namespace MakeGrid3D
                 }
 
                 selectedElemLines.Use();
-                renderGrid.shader.SetColor4("current_color", renderGrid.linesColor);
+                renderGrid.shader.SetColor4("current_color", renderGrid.LinesColor);
                 selectedElemLines.DrawElems(8, 0, PrimitiveType.Lines);
-                renderGrid.shader.SetColor4("current_color", renderGrid.pointsColor);
+                renderGrid.shader.SetColor4("current_color", renderGrid.PointsColor);
                 selectedElemLines.DrawVerices(4 * 3, 0, PrimitiveType.Points);
             }
         }
@@ -397,18 +409,6 @@ namespace MakeGrid3D
                 fileName = dialog.FileName;
             }
             renderGrid.CleanUp();
-            unstructedGridMode = false;
-            // TODO:
-            // При загрузке новой сетки название кнопки не меняется
-            ResetPosition();
-            Reset();
-            ResetUI();
-            Area area = new Area(fileName);
-            regularGrid2D = new Grid2D(fileName, area);
-            irregularGridMaker = new IrregularGridMaker(regularGrid2D);
-            irregularGrid2D = irregularGridMaker.MakeUnStructedGrid();
-            renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
-            SetAxis();
             if (selectedElemMesh != null)
             {
                 selectedElemMesh.Dispose();
@@ -419,6 +419,10 @@ namespace MakeGrid3D
                 selectedElemLines.Dispose();
                 selectedElemLines = null;
             }
+            ResetPosition();
+            Reset();
+            ResetUI();
+            Init();
         }
 
         private Color ColorFloatToByte(Color4 color4)
@@ -467,7 +471,7 @@ namespace MakeGrid3D
         {
 
             horOffset += speedHor * speedTranslate;
-            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
             mouse_horOffset -= speedHor * speedTranslate;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
@@ -476,7 +480,7 @@ namespace MakeGrid3D
         private void MoveRightClick(object sender, RoutedEventArgs e)
         {
             horOffset -= speedHor * speedTranslate;
-            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
             mouse_horOffset += speedHor * speedTranslate;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
@@ -485,7 +489,7 @@ namespace MakeGrid3D
         private void MoveDownClick(object sender, RoutedEventArgs e)
         {
             verOffset += speedVer * speedTranslate;
-            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
             mouse_verOffset -= speedVer * speedTranslate;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
@@ -494,7 +498,7 @@ namespace MakeGrid3D
         private void MoveUpClick(object sender, RoutedEventArgs e)
         {
             verOffset -= speedVer * speedTranslate;
-            renderGrid.translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
+            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
             mouse_verOffset += speedVer * speedTranslate;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
@@ -502,8 +506,11 @@ namespace MakeGrid3D
 
         private void ZoomInClick(object sender, RoutedEventArgs e)
         {
-            if (renderGrid.indent >= -0.5f)
-                renderGrid.indent -= speedZoom;
+            if (renderGrid.Indent >= -0.5f)
+            {
+                renderGrid.Indent -= speedZoom;
+                renderGrid.SetSize();
+            }
             //MessageBox.Show(BufferClass.indent.ToString());
             //BufferClass.scaleX *= BufferClass.speedZoom;
             //BufferClass.scaleY *= BufferClass.speedZoom;
@@ -515,7 +522,8 @@ namespace MakeGrid3D
 
         private void ZoomOutClick(object sender, RoutedEventArgs e)
         {
-            renderGrid.indent += speedZoom;
+            renderGrid.Indent += speedZoom;
+            renderGrid.SetSize();
             //BufferClass.scaleX /= BufferClass.speedZoom;
             //BufferClass.scaleY /= BufferClass.speedZoom;
             //BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);
@@ -532,25 +540,25 @@ namespace MakeGrid3D
         private void LinesSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (renderGrid == null) return;
-            renderGrid.linesSize = (float)e.NewValue;
+            renderGrid.LinesSize = (float)e.NewValue;
         }
 
         private void PointsSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (renderGrid == null) return;
-            renderGrid.pointsSize = (float)e.NewValue;
+            renderGrid.PointsSize = (float)e.NewValue;
         }
 
         private void PointsColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
             if (renderGrid == null) return;
-            renderGrid.pointsColor = ColorByteToFloat((Color)e.NewValue);
+            renderGrid.PointsColor = ColorByteToFloat((Color)e.NewValue);
         }
 
         private void LinesColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
             if (renderGrid == null) return;
-            renderGrid.linesColor = ColorByteToFloat((Color)e.NewValue);
+            renderGrid.LinesColor = ColorByteToFloat((Color)e.NewValue);
         }
 
         private void BgColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
@@ -577,39 +585,25 @@ namespace MakeGrid3D
         private void WiremodeChecked(object sender, RoutedEventArgs e)
         {
             if (renderGrid == null) return;
-            renderGrid.wireframeMode = true;
+            renderGrid.WireframeMode = true;
         }
 
         private void WiremodeUnChecked(object sender, RoutedEventArgs e)
         {
             if (renderGrid == null) return;
-            renderGrid.wireframeMode = false;
+            renderGrid.WireframeMode = false;
         }
 
         private void DrawRemovedLinesChecked(object sender, RoutedEventArgs e)
         {
             if (renderGrid == null) return;
-            renderGrid.drawRemovedLinesMode = true;
+            renderGrid.DrawRemovedLinesMode = true;
         }
 
         private void DrawRemovedLinesUnChecked(object sender, RoutedEventArgs e)
         {
             if (renderGrid == null) return;
-            renderGrid.drawRemovedLinesMode = false;
-        }
-
-        private void MakeUnstructedGridClick(object sender, RoutedEventArgs e)
-        {
-            if (!unstructedGridMode)
-            {
-                unstructedGridMode = true;
-                BuildGridButton.Content = "Построить регулярную сетку";
-            }
-            else
-            {
-                unstructedGridMode = false;
-                BuildGridButton.Content = "Построить нерегулярную сетку";
-            }
+            renderGrid.DrawRemovedLinesMode = false;
         }
 
         private void MaxARClick(object sender, RoutedEventArgs e)
@@ -624,7 +618,7 @@ namespace MakeGrid3D
                 }
                 float maxAr = (float)w / h;
                 if (maxAr < 1f) maxAr = 1f / maxAr;
-                irregularGridMaker.maxAR = maxAr;
+                irregularGridMaker.MaxAR = maxAr;
             }
             catch (Exception ex)
             {
@@ -648,13 +642,85 @@ namespace MakeGrid3D
         private void ShowGridChecked(object sender, RoutedEventArgs e)
         {
             if (renderGrid == null) return;
-            renderGrid.showGrid = true;
+            renderGrid.ShowGrid = true;
+        }
+
+        private void UndoClick(object sender, RoutedEventArgs e)
+        {
+            if (currentNode != null && currentNode.Previous != null)
+            {
+                currentNode = currentNode.Previous;
+                renderGrid.Grid2D = currentNode.ValueRef.Grid2D;
+                irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
+                irregularGridMaker.CurrentI = currentNode.ValueRef.CurrentI;
+                irregularGridMaker.CurrentJ = currentNode.ValueRef.CurrentJ;
+            }
+        }
+
+        private void DoClick(object sender, RoutedEventArgs e)
+        {
+            if (currentNode != null && currentNode.Next != null)
+            {
+                currentNode = currentNode.Next;
+                renderGrid.Grid2D = currentNode.ValueRef.Grid2D;
+                irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
+                irregularGridMaker.CurrentI = currentNode.ValueRef.CurrentI;
+                irregularGridMaker.CurrentJ = currentNode.ValueRef.CurrentJ;
+            }
+        }
+
+        private void RemoveElemsClick(object sender, RoutedEventArgs e)
+        {
+            if (irregularGridMaker.CurrentI < irregularGridMaker.Grid2D.Nx - 1 &&
+                irregularGridMaker.CurrentJ < irregularGridMaker.Grid2D.Ny - 1) 
+            {
+                //MessageBox.Show($"i = {irregularGridMaker.CurrentI}\tj = {irregularGridMaker.CurrentJ}");
+                irregularGridMaker.AllSteps = false;
+                Grid2D grid2D_new = irregularGridMaker.MakeUnStructedGrid();
+                while (currentNode != null && currentNode.Next != null)
+                    grid2DList.Remove(currentNode.Next);
+                int currentI = irregularGridMaker.CurrentI;
+                int currentJ = irregularGridMaker.CurrentJ;
+
+                grid2DList.AddLast(new GridState(grid2D_new, currentI, currentJ));
+                currentNode = grid2DList.Last;
+                renderGrid.Grid2D = grid2D_new;
+                irregularGridMaker.Grid2D = grid2D_new; 
+            }
+        }
+
+        private void RemoveAllElemsClick(object sender, RoutedEventArgs e)
+        {
+            if (irregularGridMaker.CurrentI < irregularGridMaker.Grid2D.Nx - 1 &&
+                irregularGridMaker.CurrentJ < irregularGridMaker.Grid2D.Ny - 1)
+            {
+                irregularGridMaker.AllSteps = true;
+                Grid2D grid2D_new = irregularGridMaker.MakeUnStructedGrid();
+                while (currentNode != null && currentNode.Next != null)
+                    grid2DList.Remove(currentNode.Next);
+                grid2DList.AddLast(new GridState(grid2D_new));
+                currentNode = grid2DList.Last;
+                renderGrid.Grid2D = grid2D_new;
+                irregularGridMaker.Grid2D = grid2D_new;
+            }
         }
 
         private void ShowGridUnChecked(object sender, RoutedEventArgs e)
         {
             if (renderGrid == null) return;
-            renderGrid.showGrid = false;
+            renderGrid.ShowGrid = false;
+        }
+
+        private void MakeRegularGridClick(object sender, RoutedEventArgs e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.Grid2D = regularGrid2D;
+            irregularGridMaker.Grid2D = regularGrid2D;
+            irregularGridMaker.CurrentI = 1;
+            irregularGridMaker.CurrentJ = 1;
+            grid2DList.Clear();
+            grid2DList.AddLast(new GridState(regularGrid2D));
+            currentNode = grid2DList.Last;
         }
     }
 }

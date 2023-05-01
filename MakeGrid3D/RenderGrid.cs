@@ -1,21 +1,8 @@
-﻿using OpenTK.Compute.OpenCL;
-using OpenTK.Graphics.OpenGL;
+﻿using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using OpenTK.Input;
-using OpenTK.Wpf;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Media3D;
-using System.Xml.Linq;
-using OpenTK.Windowing.GraphicsLibraryFramework;
-using System.Security.RightsManagement;
 
 namespace MakeGrid3D
 {
@@ -261,16 +248,16 @@ namespace MakeGrid3D
         private uint[] indices_area;
         private Matrix4 projection;
 
-        public Matrix4 translate = Matrix4.Identity;
-        public Matrix4 scale = Matrix4.Identity;
-        public float indent = Default.indent;
-        public float linesSize = Default.linesSize;
-        public float pointsSize = Default.pointsSize;
-        public Color4 linesColor = Default.linesColor;
-        public Color4 pointsColor = Default.pointsColor;
-        public bool wireframeMode = Default.wireframeMode;
-        public bool showGrid = Default.showGrid;
-        public bool drawRemovedLinesMode = Default.drawRemovedLinesMode;
+        public Matrix4 Translate { get; set; } = Matrix4.Identity;
+        public Matrix4 Scale { get; set; } = Matrix4.Identity;
+        public float Indent { get; set; } = Default.indent;
+        public float LinesSize { get; set; } = Default.linesSize;
+        public float PointsSize { get; set; } = Default.pointsSize;
+        public Color4 LinesColor { get; set; } = Default.linesColor;
+        public Color4 PointsColor { get; set; } = Default.pointsColor;
+        public bool WireframeMode { get; set; } = Default.wireframeMode;
+        public bool ShowGrid { get; set; } = Default.showGrid;
+        public bool DrawRemovedLinesMode { get; set; } = Default.drawRemovedLinesMode;
 
         private Grid2D grid2D;
         public Grid2D Grid2D
@@ -302,16 +289,16 @@ namespace MakeGrid3D
 
         public void SetSize()
         {
-            float left = grid2D.area.X0;
-            float right = grid2D.area.Xn;
-            float bottom = grid2D.area.Y0;
-            float top = grid2D.area.Yn;
+            float left = grid2D.Area.X0;
+            float right = grid2D.Area.Xn;
+            float bottom = grid2D.Area.Y0;
+            float top = grid2D.Area.Yn;
 
             float width = right - left;
             float height = top - bottom;
 
-            float hor_offset = width * indent;
-            float ver_offset = height * indent;
+            float hor_offset = width * Indent;
+            float ver_offset = height * Indent;
 
             float left_ = left - hor_offset;
             float right_ = right + hor_offset;
@@ -342,7 +329,7 @@ namespace MakeGrid3D
         {
             int Nelems = grid2D.Nelems;
             int Nnodes = grid2D.Nnodes;
-            int Nareas = grid2D.area.Nareas;
+            int Nareas = grid2D.Area.Nareas;
 
             vertices = new float[Nnodes * 3];
             int n = 0;
@@ -368,10 +355,10 @@ namespace MakeGrid3D
 
             if (area)
             {
-                vertices_area = new float[grid2D.area.nXw * grid2D.area.nYw * 3];
+                vertices_area = new float[grid2D.Area.NXw * grid2D.Area.NYw * 3];
                 int yx = 0;
-                foreach (float y in grid2D.area.Yw)
-                    foreach (float x in grid2D.area.Xw)
+                foreach (float y in grid2D.Area.Yw)
+                    foreach (float x in grid2D.Area.Xw)
                     {
                         vertices_area[yx] = x; vertices_area[yx + 1] = y; vertices_area[yx + 2] = 0;
                         yx += 3;
@@ -379,17 +366,17 @@ namespace MakeGrid3D
 
                 indices_area = new uint[Nareas * 6];
                 int s = 0;
-                foreach (SubArea subArea in grid2D.area.Mw)
+                foreach (SubArea subArea in grid2D.Area.Mw)
                 {
                     int ix1 = subArea.nx1;
                     int iy1 = subArea.ny1;
                     int ix2 = subArea.nx2;
                     int iy2 = subArea.ny2;
 
-                    uint n1 = (uint)(iy1 * grid2D.area.nXw + ix1);
-                    uint n2 = (uint)(iy1 * grid2D.area.nXw + ix2);
-                    uint n3 = (uint)(iy2 * grid2D.area.nXw + ix1);
-                    uint n4 = (uint)(iy2 * grid2D.area.nXw + ix2);
+                    uint n1 = (uint)(iy1 * grid2D.Area.NXw + ix1);
+                    uint n2 = (uint)(iy1 * grid2D.Area.NXw + ix2);
+                    uint n3 = (uint)(iy2 * grid2D.Area.NXw + ix1);
+                    uint n4 = (uint)(iy2 * grid2D.Area.NXw + ix2);
 
                     indices_area[s] = n1; indices_area[s + 1] = n2; indices_area[s + 2] = n4;
                     indices_area[s + 3] = n1; indices_area[s + 4] = n3; indices_area[s + 5] = n4;
@@ -399,40 +386,39 @@ namespace MakeGrid3D
             }
         }
 
-        public void DrawLines(Mesh mesh) {
-            shader.SetColor4("current_color", linesColor);
+        private void DrawLines(Mesh mesh) {
+            shader.SetColor4("current_color", LinesColor);
             mesh.DrawElems(PrimitiveType.Lines);
         }
 
-        public void DrawNodes(Mesh mesh)
+        private void DrawNodes(Mesh mesh)
         {
-            shader.SetColor4("current_color", pointsColor);
+            shader.SetColor4("current_color", PointsColor);
             mesh.DrawVerices(PrimitiveType.Points);
         }
 
         public void RenderFrame(bool drawArea=true, bool drawNodes=true, bool drawLines=true)
         {
-            SetSize(); // TODO: Сделать так, чтобы вызов был только во время нажатия кнопки зумирования
             shader.Use();
             shader.SetMatrix4("projection", ref projection);
-            Matrix4 model = translate * scale;
+            Matrix4 model = Translate * Scale;
             shader.SetMatrix4("model", ref model);
             shader.SetVector2("u_resolution", new Vector2(Right - Left, Top - Bottom));
-            GL.LineWidth(linesSize);
-            GL.PointSize(pointsSize);
+            GL.LineWidth(LinesSize);
+            GL.PointSize(PointsSize);
 
-            if (!wireframeMode && drawArea)
+            if (!WireframeMode && drawArea)
             {
                 int s = 0;
                 areaMesh.Use();
-                foreach (SubArea subArea in grid2D.area.Mw)
+                foreach (SubArea subArea in grid2D.Area.Mw)
                 {
                     shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
                     areaMesh.DrawElems(6, s, PrimitiveType.Triangles);
                     s += 6;
                 }
             }
-            if (showGrid)
+            if (ShowGrid)
             {
                 if (drawLines)
                     DrawLines(gridMesh);
