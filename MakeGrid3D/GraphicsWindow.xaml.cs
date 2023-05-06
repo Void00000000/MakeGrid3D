@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using OpenTK.Wpf;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -14,14 +15,22 @@ namespace MakeGrid3D
     /// </summary>
     class GridState
     {
-        public Grid2D Grid2D { get;}
-        public int CurrentI { get; } = 1;
-        public int CurrentJ { get; } = 1;
-        public GridState(Grid2D grid2D, int currentI=1, int currentJ=1)
+        public Grid2D Grid2D { get; }
+        public int I { get; } = Default.I;
+        public int J { get; } = Default.J;
+        public int NodeI { get; } = Default.I;
+        public int NodeJ { get; } = Default.J;
+        public GridState(Grid2D grid2D, int I, int J, int NodeI, int NodeJ)
         {
             Grid2D = grid2D;
-            CurrentI = currentI;
-            CurrentJ = currentJ;
+            this.I = I;
+            this.J = J;
+            this.NodeI = NodeI;
+            this.NodeJ = NodeJ;
+        }
+        public GridState(Grid2D grid2D)
+        {
+            Grid2D = grid2D;
         }
     }
 
@@ -36,6 +45,8 @@ namespace MakeGrid3D
         Mesh axis;
         Mesh? selectedElemMesh = null;
         Mesh? selectedElemLines = null;
+        Mesh currentNodeMesh;
+        Mesh currentPosMesh;
 
         Matrix4 projectionSelectedElem = Matrix4.Identity;
         Matrix4 rtranslate = Matrix4.Identity;
@@ -54,8 +65,10 @@ namespace MakeGrid3D
         float speedVer = 0;
         Color4 bgColor = Default.bgColor;
         string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
-
         Elem selectedElem;
+        bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
+        Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
+
         public GraphicsWindow()
         {
             InitializeComponent();
@@ -77,6 +90,7 @@ namespace MakeGrid3D
             renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             irregularGridMaker = new IrregularGridMaker(regularGrid2D);
             grid2DList = new LinkedList<GridState>();
+            SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.CurrentI, irregularGridMaker.CurrentJ));
             grid2DList.AddLast(new GridState(regularGrid2D));
             currentNode = grid2DList.Last;
             // Множители скорости = 1 процент от ширины(высоты) мира
@@ -95,7 +109,6 @@ namespace MakeGrid3D
             BlockRemovedNodesCount.Text = "***";
             BlockRemovedElemsCount.Text = "***";
             //-----------------------------------------------------------------------------
-            
         }
 
         private void OpenTkControl_Resize(object sender, SizeChangedEventArgs e)
@@ -122,7 +135,6 @@ namespace MakeGrid3D
             GL.Enable(EnableCap.Blend);
             if (renderGrid.DrawRemovedLinesMode)
             {
-                
                 renderGrid.Grid2D = regularGrid2D;
                 renderGrid.RenderFrame(drawLines:false, drawNodes:false);
                 renderGrid.shader.DashedLines(true);
@@ -136,22 +148,40 @@ namespace MakeGrid3D
             {
                 renderGrid.RenderFrame();
             }
-            
+
+            if (showCurrentUnstructedNode)
+            {
+                renderGrid.DrawNodes(currentNodeMesh, currentUnstructedNodeColor);
+                // первый узел почему то тоже красится...
+                float[] vert = { renderGrid.Grid2D.XY[0].X, renderGrid.Grid2D.XY[0].Y, 0 };
+                uint[] index = { 0 };
+                Mesh firstNode = new Mesh(vert, index);
+                renderGrid.DrawNodes(firstNode, renderGrid.PointsColor);
+                firstNode.Dispose();
+                //----------------------
+                int node = renderGrid.Grid2D.global_num(irregularGridMaker.CurrentI, irregularGridMaker.CurrentJ);
+                float x = renderGrid.Grid2D.XY[node].X;
+                float y = renderGrid.Grid2D.XY[node].Y;
+                CurrentUnstructedNodeBlock.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", " + y.ToString("0.00");
+            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            renderGrid.CleanUp();
-            axis.Dispose();
-            if (selectedElemMesh != null)
+            if (renderGrid != null)
             {
-                selectedElemMesh.Dispose();
-                selectedElemMesh = null;
-            }
-            if (selectedElemLines != null)
-            {
-                selectedElemLines.Dispose();
-                selectedElemLines = null;
+                renderGrid.CleanUp();
+                axis.Dispose();
+                if (selectedElemMesh != null)
+                {
+                    selectedElemMesh.Dispose();
+                    selectedElemMesh = null;
+                }
+                if (selectedElemLines != null)
+                {
+                    selectedElemLines.Dispose();
+                    selectedElemLines = null;
+                }
             }
         }
 
@@ -168,6 +198,8 @@ namespace MakeGrid3D
             renderGrid.ShowGrid = Default.showGrid;
             renderGrid.DrawRemovedLinesMode = Default.drawRemovedLinesMode;
             irregularGridMaker.MaxAR = (float)Default.maxAR_width / Default.maxAR_height;
+            showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
+            currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
         }
 
         private void ResetPosition()
@@ -233,16 +265,11 @@ namespace MakeGrid3D
                 renderGrid.shader.SetMatrix4("model", ref model);
                 if (!renderGrid.WireframeMode)
                 {
-                    selectedElemMesh.Use();
                     renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem.wi]);
                     selectedElemMesh.DrawElems(6, 0, PrimitiveType.Triangles);
                 }
-
-                selectedElemLines.Use();
-                renderGrid.shader.SetColor4("current_color", renderGrid.LinesColor);
-                selectedElemLines.DrawElems(8, 0, PrimitiveType.Lines);
-                renderGrid.shader.SetColor4("current_color", renderGrid.PointsColor);
-                selectedElemLines.DrawVerices(4 * 3, 0, PrimitiveType.Points);
+                renderGrid.DrawLines(selectedElemLines, renderGrid.LinesColor);
+                renderGrid.DrawNodes(selectedElemLines, renderGrid.PointsColor);
             }
         }
 
@@ -254,85 +281,99 @@ namespace MakeGrid3D
             Point new_position = MouseMap(position);
             float x = (float)new_position.X;
             float y = (float)new_position.Y;
-            
-            foreach (Elem elem in renderGrid.Grid2D.Elems)
+
+            if (renderGrid.Grid2D.FindElem(x, y, ref selectedElem))
             {
-                float xAreaMin = renderGrid.Grid2D.XY[elem.n1].X;
-                float yAreaMin = renderGrid.Grid2D.XY[elem.n1].Y;
-                float xAreaMax = renderGrid.Grid2D.XY[elem.n4].X;
-                float yAreaMax = renderGrid.Grid2D.XY[elem.n4].Y;
-                if (x >= xAreaMin && x <= xAreaMax && y >= yAreaMin && y <= yAreaMax)
+                float left = renderGrid.Grid2D.XY[selectedElem.n1].X;
+                float right = renderGrid.Grid2D.XY[selectedElem.n4].X;
+                float bottom = renderGrid.Grid2D.XY[selectedElem.n1].Y;
+                float top = renderGrid.Grid2D.XY[selectedElem.n4].Y;
+
+                float width = right - left;
+                float height = top - bottom;
+
+                float indent = 0.2f;
+                float hor_offset = width * indent;
+                float ver_offset = height * indent;
+
+                float left_ = left - hor_offset;
+                float right_ = right + hor_offset;
+                float bottom_ = bottom - ver_offset;
+                float top_ = top + ver_offset;
+
+                float w, left__, right__, bottom__, top__;
+                float windowWidth = (float)SelectedElemOpenTkControl.ActualWidth;
+                float windowHeight = (float)SelectedElemOpenTkControl.ActualHeight;
+                if ((right_ - left_) >= (top_ - bottom_))
                 {
-                    selectedElem = elem;
-
-                    float left = renderGrid.Grid2D.XY[selectedElem.n1].X;
-                    float right = renderGrid.Grid2D.XY[selectedElem.n4].X;
-                    float bottom = renderGrid.Grid2D.XY[selectedElem.n1].Y;
-                    float top = renderGrid.Grid2D.XY[selectedElem.n4].Y;
-
-                    float width = right - left;
-                    float height = top - bottom;
-
-                    float indent = 0.2f;
-                    float hor_offset = width * indent;
-                    float ver_offset = height * indent;
-
-                    float left_ = left - hor_offset;
-                    float right_ = right + hor_offset;
-                    float bottom_ = bottom - ver_offset;
-                    float top_ = top + ver_offset;
-
-                    float w, left__, right__, bottom__, top__;
-                    float windowWidth = (float)SelectedElemOpenTkControl.ActualWidth;
-                    float windowHeight = (float)SelectedElemOpenTkControl.ActualHeight;
-                    if ((right_ - left_) >= (top_ - bottom_))
-                    {
-                        left__ = left_;
-                        right__ = right_;
-                        w = (windowHeight / windowWidth * (right__ - left__) - (top - bottom)) / 2;
-                        top__ = top + w;
-                        bottom__ = bottom - w;
-                    }
-                    else
-                    {
-                        top__ = top_;
-                        bottom__ = bottom_;
-                        w = (windowWidth / windowHeight * (top__ - bottom__) - (right - left)) / 2;
-                        right__ = right + w;
-                        left__ = left - w;
-                    }
-                    projectionSelectedElem = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
-                    float[] vertices = { left,  bottom, 0,  // 0
-                                         right, bottom, 0,  // 1
-                                         left,  top,    0,  // 2
-                                         right, top,    0}; // 3
-                    uint[] indices = { 0, 1, 3, 0, 2, 3 };
-                    uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
-                   
-                    if (selectedElemMesh != null)
-                        selectedElemMesh.Dispose();
-                    if (selectedElemLines != null)
-                        selectedElemLines.Dispose();
-                    selectedElemMesh = new Mesh(vertices, indices);
-                    selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
-
-
-
-                    BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem.wi + 1).ToString();
-                    BlockNodesNum1.Text = "Л.Н. №: " + selectedElem.n1;
-                    BlockNodesCoords1.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n1].X.ToString("0.00")
-                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n1].Y.ToString("0.00");
-                    BlockNodesNum2.Text = "П.Н. №: " + selectedElem.n2;
-                    BlockNodesCoords2.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n2].X.ToString("0.00")
-                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n2].Y.ToString("0.00");
-                    BlockNodesNum3.Text = "Л.В. №: " + selectedElem.n3;
-                    BlockNodesCoords3.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n3].X.ToString("0.00")
-                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n3].Y.ToString("0.00");
-                    BlockNodesNum4.Text = "П.В. №: " + selectedElem.n4;
-                    BlockNodesCoords4.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n4].X.ToString("0.00")
-                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n4].Y.ToString("0.00");
-                    return;
+                    left__ = left_;
+                    right__ = right_;
+                    w = (windowHeight / windowWidth * (right__ - left__) - (top - bottom)) / 2;
+                    top__ = top + w;
+                    bottom__ = bottom - w;
                 }
+                else
+                {
+                    top__ = top_;
+                    bottom__ = bottom_;
+                    w = (windowWidth / windowHeight * (top__ - bottom__) - (right - left)) / 2;
+                    right__ = right + w;
+                    left__ = left - w;
+                }
+                projectionSelectedElem = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
+                float xt, yt;
+                if (selectedElem.n5 >= 0) {
+                    xt = renderGrid.Grid2D.XY[selectedElem.n5].X;
+                    yt = renderGrid.Grid2D.XY[selectedElem.n5].Y;
+                }
+                else
+                {
+                    xt = left; 
+                    yt = bottom;
+                }
+
+                float[] vertices = { left,  bottom, 0,  // 0
+                                     right, bottom, 0,  // 1
+                                     left,  top,    0,  // 2
+                                     right, top,    0,  // 3
+                                     xt,    yt,     0};
+                uint[] indices = { 0, 1, 3, 0, 2, 3 };
+                uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
+
+                if (selectedElemMesh != null)
+                    selectedElemMesh.Dispose();
+                if (selectedElemLines != null)
+                    selectedElemLines.Dispose();
+                selectedElemMesh = new Mesh(vertices, indices);
+                selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
+
+                BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem.wi + 1).ToString();
+                BlockNodesNum1.Text = "Л.Н. №: " + selectedElem.n1;
+                BlockNodesCoords1.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n1].X.ToString("0.00")
+                                       + " y: " + renderGrid.Grid2D.XY[selectedElem.n1].Y.ToString("0.00");
+                BlockNodesNum2.Text = "П.Н. №: " + selectedElem.n2;
+                BlockNodesCoords2.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n2].X.ToString("0.00")
+                                       + " y: " + renderGrid.Grid2D.XY[selectedElem.n2].Y.ToString("0.00");
+                BlockNodesNum3.Text = "Л.В. №: " + selectedElem.n3;
+                BlockNodesCoords3.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n3].X.ToString("0.00")
+                                       + " y: " + renderGrid.Grid2D.XY[selectedElem.n3].Y.ToString("0.00");
+                BlockNodesNum4.Text = "П.В. №: " + selectedElem.n4;
+                BlockNodesCoords4.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n4].X.ToString("0.00")
+                                       + " y: " + renderGrid.Grid2D.XY[selectedElem.n4].Y.ToString("0.00");
+                if (selectedElem.n5 >= 0)
+                {
+                    BlockNodesNum5.Text = "ДОП. №: " + selectedElem.n5;
+                    BlockNodesCoords5.Text = "x: " + renderGrid.Grid2D.XY[selectedElem.n5].X.ToString("0.00")
+                                           + " y: " + renderGrid.Grid2D.XY[selectedElem.n5].Y.ToString("0.00");
+                }
+                else
+                {
+                    BlockNodesNum5.Text = "";
+                    BlockNodesCoords5.Text = "";
+                }
+            }
+            else
+            {
                 if (selectedElemMesh != null)
                 {
                     selectedElemMesh.Dispose();
@@ -353,8 +394,78 @@ namespace MakeGrid3D
                 BlockNodesCoords3.Text = "";
                 BlockNodesNum4.Text = "";
                 BlockNodesCoords4.Text = "";
+                BlockNodesNum5.Text = "";
+                BlockNodesCoords5.Text = "";
             }
         }
+
+        private void SetCurrentNodeMesh(int node_num)
+        {
+            float x = renderGrid.Grid2D.XY[node_num].X;
+            float y = renderGrid.Grid2D.XY[node_num].Y;
+            float[] vertices = { x, y, 0 };
+            uint[] indices = { 0 };
+            currentNodeMesh = new Mesh(vertices, indices);
+        }
+
+        private void OpenTkControl_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (renderGrid == null)
+                return;
+            var position = e.GetPosition(OpenTkControl);
+            Point new_position = MouseMap(position);
+            float x = (float)new_position.X;
+            float y = (float)new_position.Y;
+
+            if (renderGrid.Grid2D.FindElem(x, y, ref selectedElem))
+            {  
+                float x1 = renderGrid.Grid2D.XY[selectedElem.n1].X;
+                float x2 = renderGrid.Grid2D.XY[selectedElem.n4].X;
+                float y1 = renderGrid.Grid2D.XY[selectedElem.n1].Y;
+                float y2 = renderGrid.Grid2D.XY[selectedElem.n4].Y;
+                
+                // TODO: Что за...
+                Tuple<int, float> distance_lb = new Tuple<int, float>(1, MathF.Sqrt(MathF.Pow(x - x1, 2) + MathF.Pow(y - y1, 2)));
+                Tuple<int, float> distance_rb = new Tuple<int, float>(2, MathF.Sqrt(MathF.Pow(x - x2, 2) + MathF.Pow(y - y1, 2)));
+                Tuple<int, float> distance_lu = new Tuple<int, float>(3, MathF.Sqrt(MathF.Pow(x - x1, 2) + MathF.Pow(y - y2, 2)));
+                Tuple<int, float> distance_ru = new Tuple<int, float>(4, MathF.Sqrt(MathF.Pow(x - x2, 2) + MathF.Pow(y - y2, 2)));
+
+                List<Tuple<int, float>> distances = new List<Tuple<int, float>> { distance_lb, distance_rb, distance_lu, distance_ru};
+                int id = distances.MinBy(t => t.Item2).Item1;
+                int node = 0;
+                int i = 0; int j = 0;
+                switch (id)
+                {
+                    case 1:
+                        node = selectedElem.n1;
+                        i = renderGrid.Grid2D.global_ij(node).X;
+                        j = renderGrid.Grid2D.global_ij(node).Y;
+                        break;
+                    case 2:
+                        node = selectedElem.n2;
+                        i = renderGrid.Grid2D.global_ij(node).X;
+                        j = renderGrid.Grid2D.global_ij(node).Y;
+                        break;
+                    case 3:
+                        node = selectedElem.n3;
+                        i = renderGrid.Grid2D.global_ij(node).X;
+                        j = renderGrid.Grid2D.global_ij(node).Y;
+                        break;
+                    case 4:
+                        node = selectedElem.n4;
+                        i = renderGrid.Grid2D.global_ij(node).X;
+                        j = renderGrid.Grid2D.global_ij(node).Y;
+                        break;
+                }
+                if (i < renderGrid.Grid2D.Nx - 1 && j < renderGrid.Grid2D.Ny - 1 && i > 0 && j > 0)
+                {
+                    irregularGridMaker.I = i;
+                    irregularGridMaker.J = j;
+                    SetCurrentNodeMesh(node);
+                }
+            }
+        }
+
         private void AxisOpenTkControl_OnRender(TimeSpan obj)
         {
             if (renderGrid == null)
@@ -363,7 +474,6 @@ namespace MakeGrid3D
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             renderGrid.shader.Use();
-            axis.Use();
             renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
             axis.DrawElems(6, 0, PrimitiveType.Lines);
             renderGrid.shader.SetColor4("current_color", Color4.Red);
@@ -460,6 +570,8 @@ namespace MakeGrid3D
             DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
             WidthInput.Text = Default.maxAR_width.ToString();
             HeightInput.Text = Default.maxAR_height.ToString();
+            ShowCurrentUnstructedNodeCheckBox.IsChecked = Default.showCurrentUnstructedNode;
+            CurrentUnstructedNodeColorPicker.SelectedColor = ColorFloatToByte(Default.currentUnstructedNodeColor);
         }
 
         private void RotateLeftClick(object sender, RoutedEventArgs e)
@@ -652,8 +764,9 @@ namespace MakeGrid3D
                 currentNode = currentNode.Previous;
                 renderGrid.Grid2D = currentNode.ValueRef.Grid2D;
                 irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
-                irregularGridMaker.CurrentI = currentNode.ValueRef.CurrentI;
-                irregularGridMaker.CurrentJ = currentNode.ValueRef.CurrentJ;
+                irregularGridMaker.I = currentNode.ValueRef.CurrentI;
+                irregularGridMaker.J = currentNode.ValueRef.CurrentJ;
+                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J));
             }
         }
 
@@ -664,25 +777,26 @@ namespace MakeGrid3D
                 currentNode = currentNode.Next;
                 renderGrid.Grid2D = currentNode.ValueRef.Grid2D;
                 irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
-                irregularGridMaker.CurrentI = currentNode.ValueRef.CurrentI;
-                irregularGridMaker.CurrentJ = currentNode.ValueRef.CurrentJ;
+                irregularGridMaker.I = currentNode.ValueRef.CurrentI;
+                irregularGridMaker.J = currentNode.ValueRef.CurrentJ;
+                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J));
             }
         }
 
         private void RemoveElemsClick(object sender, RoutedEventArgs e)
         {
-            if (irregularGridMaker.CurrentI < irregularGridMaker.Grid2D.Nx - 1 &&
-                irregularGridMaker.CurrentJ < irregularGridMaker.Grid2D.Ny - 1) 
+            if (irregularGridMaker.NodeI < irregularGridMaker.Grid2D.Nx - 1 &&
+                irregularGridMaker.NodeJ < irregularGridMaker.Grid2D.Ny - 1) 
             {
-                //MessageBox.Show($"i = {irregularGridMaker.CurrentI}\tj = {irregularGridMaker.CurrentJ}");
-                irregularGridMaker.AllSteps = false;
                 Grid2D grid2D_new = irregularGridMaker.MakeUnStructedGrid();
                 while (currentNode != null && currentNode.Next != null)
                     grid2DList.Remove(currentNode.Next);
-                int currentI = irregularGridMaker.CurrentI;
-                int currentJ = irregularGridMaker.CurrentJ;
-
-                grid2DList.AddLast(new GridState(grid2D_new, currentI, currentJ));
+                int nodeI = irregularGridMaker.NodeI;
+                int nodeJ = irregularGridMaker.NodeJ;
+                int i = irregularGridMaker.I;
+                int j = irregularGridMaker.J;
+                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(currentI, currentJ));
+                grid2DList.AddLast(new GridState(grid2D_new, i, j, nodeI, nodeJ));
                 currentNode = grid2DList.Last;
                 renderGrid.Grid2D = grid2D_new;
                 irregularGridMaker.Grid2D = grid2D_new; 
@@ -691,17 +805,25 @@ namespace MakeGrid3D
 
         private void RemoveAllElemsClick(object sender, RoutedEventArgs e)
         {
-            if (irregularGridMaker.CurrentI < irregularGridMaker.Grid2D.Nx - 1 &&
-                irregularGridMaker.CurrentJ < irregularGridMaker.Grid2D.Ny - 1)
+            // TODO: Соптимизировать
+            if (irregularGridMaker.NodeI < irregularGridMaker.Grid2D.Nx - 1 &&
+                irregularGridMaker.NodeJ < irregularGridMaker.Grid2D.Ny - 1)
             {
-                irregularGridMaker.AllSteps = true;
+
                 Grid2D grid2D_new = irregularGridMaker.MakeUnStructedGrid();
+                irregularGridMaker.Grid2D = grid2D_new;
+                while (irregularGridMaker.I < irregularGridMaker.Grid2D.Nx - 1 &&
+                    irregularGridMaker.J < irregularGridMaker.Grid2D.Ny - 1)
+                {
+                    grid2D_new = irregularGridMaker.MakeUnStructedGrid();
+                    irregularGridMaker.Grid2D = grid2D_new;
+                }
                 while (currentNode != null && currentNode.Next != null)
                     grid2DList.Remove(currentNode.Next);
-                grid2DList.AddLast(new GridState(grid2D_new));
+                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(grid2D_new.Nx - 1, grid2D_new.Ny - 1));
+                grid2DList.AddLast(new GridState(grid2D_new, grid2D_new.Nx - 1, grid2D_new.Ny - 1));
                 currentNode = grid2DList.Last;
                 renderGrid.Grid2D = grid2D_new;
-                irregularGridMaker.Grid2D = grid2D_new;
             }
         }
 
@@ -716,11 +838,27 @@ namespace MakeGrid3D
             if (renderGrid == null) return;
             renderGrid.Grid2D = regularGrid2D;
             irregularGridMaker.Grid2D = regularGrid2D;
-            irregularGridMaker.CurrentI = 1;
-            irregularGridMaker.CurrentJ = 1;
+            irregularGridMaker.I = 1;
+            irregularGridMaker.J = 1;
             grid2DList.Clear();
+            SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J));
             grid2DList.AddLast(new GridState(regularGrid2D));
             currentNode = grid2DList.Last;
+        }
+
+        private void ShowCurrentUnstructedNodeChecked(object sender, RoutedEventArgs e)
+        {
+            showCurrentUnstructedNode = true;
+        }
+
+        private void ShowCurrentUnstructedNodeUnChecked(object sender, RoutedEventArgs e)
+        {
+            showCurrentUnstructedNode = false;
+        }
+
+        private void CurrentUnstructedNodeColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            currentUnstructedNodeColor = ColorByteToFloat((Color)e.NewValue);
         }
     }
 }

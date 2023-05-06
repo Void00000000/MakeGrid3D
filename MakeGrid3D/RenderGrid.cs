@@ -104,6 +104,13 @@ namespace MakeGrid3D
             GL.Uniform1(location, f);
         }
 
+        public void SetInt(string name, int i)
+        {
+            Use();
+            int location = GL.GetUniformLocation(Handle, name);
+            GL.Uniform1(location, i);
+        }
+
         public void SetMatrix4(string name, ref Matrix4 matrix)
         {
             Use();
@@ -161,11 +168,11 @@ namespace MakeGrid3D
 
     class Mesh
     {
-        public int Vao { get; }
-        public int Vbo { get; }
-        public int Ebo { get; }
-        public int VLen { get; }
-        public int ILen { get; }
+        public int Vao { get; private set; }
+        public int Vbo { get; private set; }
+        public int Ebo { get; private set; }
+        public int VLen { get; private set; }
+        public int ILen { get; private set; }
         public Mesh(int vbo, uint[] indices, int vLen)
         {
             Vbo = vbo;
@@ -196,6 +203,15 @@ namespace MakeGrid3D
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
             GL.BindVertexArray(0);
+        }
+
+        public Mesh(Mesh mesh)
+        {
+            Vao = mesh.Vao;
+            Vbo = mesh.Vbo;
+            Ebo = mesh.Ebo;
+            VLen = mesh.VLen;
+            ILen = mesh.ILen;
         }
 
         public void Use()
@@ -386,15 +402,19 @@ namespace MakeGrid3D
             }
         }
 
-        private void DrawLines(Mesh mesh) {
-            shader.SetColor4("current_color", LinesColor);
+        public void DrawLines(Mesh mesh, Color4 color4) {
+            shader.SetColor4("current_color", color4);
             mesh.DrawElems(PrimitiveType.Lines);
         }
 
-        private void DrawNodes(Mesh mesh)
+        public void DrawNodes(Mesh mesh, Color4 color4)
         {
-            shader.SetColor4("current_color", PointsColor);
+            shader.SetColor4("current_color", color4);
+            // 0.5f - это центр квадрата(точки)
+            shader.SetFloat("pointRadius", 0.5f);
+            shader.SetInt("isPoint", 1);
             mesh.DrawVerices(PrimitiveType.Points);
+            shader.SetInt("isPoint", 0);
         }
 
         public void RenderFrame(bool drawArea=true, bool drawNodes=true, bool drawLines=true)
@@ -410,7 +430,6 @@ namespace MakeGrid3D
             if (!WireframeMode && drawArea)
             {
                 int s = 0;
-                areaMesh.Use();
                 foreach (SubArea subArea in grid2D.Area.Mw)
                 {
                     shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
@@ -421,9 +440,9 @@ namespace MakeGrid3D
             if (ShowGrid)
             {
                 if (drawLines)
-                    DrawLines(gridMesh);
+                    DrawLines(gridMesh, LinesColor);
                 if (drawNodes)
-                    DrawNodes(gridMesh);
+                    DrawNodes(gridMesh, PointsColor);
             }
         }
 

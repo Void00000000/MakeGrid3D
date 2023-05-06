@@ -34,11 +34,20 @@ namespace MakeGrid3D
         Removed
     }
 
+    enum Direction
+    {
+        Left,
+        Right,
+        Top,
+        Bottom,
+    }
+
     // Прямоугольный конечный элемент
     struct Elem
     {
         public int wi;
-        public int n1; public int n2; public int n3; public int n4;
+        public int n1; public int n2; public int n3; public int n4; // граничные узлы
+        public int n5 = -1;
 
         public Elem(int wi, int n1, int n2, int n3, int n4)
         {
@@ -47,6 +56,11 @@ namespace MakeGrid3D
             this.n2 = n2;
             this.n3 = n3;
             this.n4 = n4;
+        }
+
+        public Elem(int wi, int n1, int n2, int n3, int n4, int n5) : this(wi, n1, n2, n3, n4)
+        {
+            this.n5 = n5;
         }
     }
 
@@ -339,8 +353,51 @@ namespace MakeGrid3D
 
             for (int k = 0; k < removedNodes.Count; k++)
                 if (l < removedNodes[k]) return l - k;
-            return l - removedNodes.Count;
-            
+            return l - removedNodes.Count;   
+        }
+
+        public Vector2i global_ij(int node_num)
+        {
+            int i, j;
+            if (removedNodes.Count == 0)
+            {
+                i = node_num % Nx;
+                j = node_num / Nx;
+                return new Vector2i(i, j);
+            }
+
+            for (int k = 0; k < removedNodes.Count; k++)
+            {
+                int reg_i = (removedNodes[k]) % Nx;
+                int reg_j = (removedNodes[k]) / Nx;
+                // TODO: Скорее всего неправильно
+                if (node_num < global_num(reg_i, reg_j) + 1)
+                {
+                    i = (node_num + k) % Nx;
+                    j = (node_num + k) / Nx;
+                    return new Vector2i(i, j);
+                }
+            }
+            i = (node_num + removedNodes.Count) % Nx;
+            j = (node_num + removedNodes.Count) / Nx;
+            return new Vector2i(i, j);
+        }
+
+        public bool FindElem(float x, float y, ref Elem foundElem)
+        {
+            foreach (Elem elem in Elems)
+            {
+                float xElemMin = XY[elem.n1].X;
+                float yElemMin = XY[elem.n1].Y;
+                float xElemMax = XY[elem.n4].X;
+                float yElemMax = XY[elem.n4].Y;
+                if (x >= xElemMin && x <= xElemMax && y >= yElemMin && y <= yElemMax)
+                {
+                    foundElem = elem;
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -349,11 +406,17 @@ namespace MakeGrid3D
         public Grid2D Grid2D { get; set; }
         int Nx, Ny;
         public int StepSize { get; set; } = 1;
-        public bool AllSteps { get; set; } = true;
         public float MaxAR { get; set; } = (float)Default.maxAR_width / Default.maxAR_height;
 
-        public int CurrentI { get; set; } = 1;
-        public int CurrentJ { get; set; } = 1;
+        public int NodeI { get; set; } = Default.I;
+        public int NodeJ { get; set; } = Default.J;
+
+        public int I { get; set; } = Default.I;
+        public int J { get; set; } = Default.J;
+        
+        // По приоритету (от высшего к низшему ^ слева направо)
+        public Direction[] Dirs = { Default.dir1, Default.dir2, Default.dir3, Default.dir4 };
+        private int dirs_index = 0;
         public IrregularGridMaker(Grid2D grid2D)
         {
             Grid2D = grid2D;
@@ -382,8 +445,51 @@ namespace MakeGrid3D
             if (a1 < 1f) a1 = 1f / a1;
             return a1 >= a2;
         }
+ 
 
-        private List<List<NodeType>> MakeUnStructedMatrix()
+        private bool MergeLeft(List<List<NodeType>> IJ_new)
+        {
+
+        }
+
+        private void MakeUnStructedMatrix(List<List<NodeType>> IJ_new)
+        {
+            bool end;
+            switch (Dirs[dirs_index])
+            {
+                case Direction.Left:
+                    end = MergeLeft(IJ_new); 
+                    break;
+                case Direction.Right:
+                    end = MergeRight(IJ_new);
+                    break;
+                case Direction.Bottom:
+                    end = MergeBottom(IJ_new);
+                    break;
+                case Direction.Top:
+                    end = MergeTop(IJ_new);
+                    break;
+            }
+            if (end)
+                dirs_index++;
+            if (dirs_index >= Dirs.Length) { 
+                dirs_index = 0;
+                do
+                {
+                    NodeI++;
+                    if (NodeI >= Nx - 1)
+                    {
+                        NodeI = 0;
+                        NodeJ++;
+                    }
+                }
+                while (IJ_new[NodeI][NodeJ] == NodeType.Removed);
+            }
+            I = NodeI;
+            J = NodeJ;
+        }
+
+        public Grid2D MakeUnStructedGrid()
         {
             List<List<NodeType>> IJ_new = new List<List<NodeType>>(Nx);
             for (int i = 0; i < Nx; i++)
@@ -392,96 +498,7 @@ namespace MakeGrid3D
                 for (int j = 0; j < Ny; j++)
                     IJ_new[i].Add(Grid2D.IJ[i][j]);
             }
-            int removedCount = 0;
-            bool full_loop = true;
-            // Изменение матрицы IJ
-            for (int j = CurrentJ; j < Ny - 1; j++)
-            {
-                for (int i = CurrentI; i < Nx - 1; i++)
-                {
-                    if (!AllSteps && removedCount >= StepSize) { CurrentI = i; CurrentJ = j; full_loop = false; goto EXIT_LOOP; }
-                    if (IJ_new[i][j] != NodeType.Regular)
-                        continue;
-                    int n = Grid2D.global_num(i, j);
-                    int nlb = Grid2D.global_num(i - 1, j - 1);
-                    int nb = Grid2D.global_num(i, j - 1);
-                    int nr = Grid2D.global_num(i + 1, j);
-                    int nru = Grid2D.global_num(i + 1, j + 1);
-                    int nl = Grid2D.global_num(i - 1, j);
-                    int nu = Grid2D.global_num(i, j + 1);
-
-                    float alb = CalcAR(nlb, n);
-                    float arb = CalcAR(nb, nr);
-                    float ab = CalcAR(nlb, nr);
-                    float aru = CalcAR(n, nru);
-                    float ar = CalcAR(nb, nru);
-                    float alu = CalcAR(nl, nu);
-                    float au = CalcAR(nl, nru);
-                    float al = CalcAR(nlb, nu);
-
-                    // bottom
-                    if (CompareAR(alb, MaxAR) && CompareAR(arb, MaxAR) &&
-                        CompareAR(alb, ab) && CompareAR(arb, ab))
-                    {
-                        IJ_new[i][j] = NodeType.Top;
-                        for (int jk = j - 1; jk >= 0; jk--)
-                        {
-                            IJ_new[i][jk] = NodeType.Removed;
-                            removedCount++;
-                        }
-                        continue;
-                    }
-                    // top
-                    if (CompareAR(alu, MaxAR) && CompareAR(aru, MaxAR) &&
-                        CompareAR(alu, au) && CompareAR(aru, au))
-                    {
-                        IJ_new[i][j] = NodeType.Bottom;
-                        for (int jk = j + 1; jk < Ny; jk++)
-                        {   
-                            IJ_new[i][jk] = NodeType.Removed;
-                            removedCount++;
-                        }
-                        continue;
-                    }
-                    // left
-                    if (CompareAR(alb, MaxAR) && CompareAR(alu, MaxAR) &&
-                        CompareAR(alb, al) && CompareAR(alu, al))
-                    {
-                        IJ_new[i][j] = NodeType.Right;
-                        for (int ik = i - 1; ik >= 0; ik--)
-                        {
-                            IJ_new[ik][j] = NodeType.Removed;
-                            removedCount++;
-                        }
-                        continue;
-                    }
-                    // right
-                    if (CompareAR(arb, MaxAR) && CompareAR(aru, MaxAR) &&
-                        CompareAR(arb, ar) && CompareAR(aru, ar))
-                    {
-                        IJ_new[i][j] = NodeType.Left;
-                        for (int ik = i + 1; ik < Nx; ik++)
-                        {
-                            IJ_new[ik][j] = NodeType.Removed;
-                            removedCount++;
-                        }
-                        continue;
-                    }
-                }
-                CurrentI = 1;
-            }
-            EXIT_LOOP:
-            if (full_loop)
-            {
-                CurrentI = Nx - 1;
-                CurrentJ = Ny - 1;
-            }
-            return IJ_new;
-        }
-
-        public Grid2D MakeUnStructedGrid()
-        {
-            List<List<NodeType>> IJ_new = MakeUnStructedMatrix();
+            MakeUnStructedMatrix(IJ_new);
             List<Vector2> XY_new = new List<Vector2>();
             List<Elem> Elems_new = new List<Elem>();
 
@@ -493,57 +510,66 @@ namespace MakeGrid3D
                     int n = Grid2D.global_num(i, j);
                     XY_new.Add(new Vector2(Grid2D.XY[n].X, Grid2D.XY[n].Y));
                 }
-            Elems_new = new List<Elem>();
 
+            int n1, n2, n3, n4, n5;
             for (int j = 0; j < Ny - 1; j++)
                 for (int i = 0; i < Nx - 1; i++)
                 {
                     if (IJ_new[i][j] == NodeType.Removed || IJ_new[i][j] == NodeType.Left || IJ_new[i][j] == NodeType.Bottom)
                         continue;
-                    int ik;
-                    int ik1 = i + 1;
-                    while (ik1 < Nx && (IJ_new[ik1][j] == NodeType.Removed || IJ_new[ik1][j] == NodeType.Bottom))
-                    {
-                        ik1++;
-                    }
-                    int ik2 = i + 1;
-                    while (ik2 < Nx && IJ_new[ik2][j] == NodeType.Removed)
-                    {
-                        ik2++;
-                    }
-                    if (ik1 > ik2) { ik = ik1; } else { ik = ik2; }
-                    if (ik >= Nx) { ik = i + 1; }
+                    n5 = -1;
+                    n1 = Grid2D.global_num(i, j);
 
+                    int ik = i + 1;
+                    // Bottom line
+                    while (IJ_new[ik][j] == NodeType.Removed || IJ_new[ik][j] == NodeType.Bottom)
+                    {
+                        if (IJ_new[ik][j] == NodeType.Bottom)
+                            n5 = Grid2D.global_num(ik, j);
+                        ik++;
+                    }
+                    n2 = Grid2D.global_num(ik, j);
 
-                    int jk;
-                    int jk1 = j + 1;
-                    while (jk1 < Ny && IJ_new[i][jk1] == NodeType.Removed)
-                    {
-                        jk1++;
+                    int jk = j + 1;
+                    // Left line
+                    while (IJ_new[i][jk] == NodeType.Removed || IJ_new[i][jk] == NodeType.Left) {
+                        if (IJ_new[i][jk] == NodeType.Left)
+                            n5 = Grid2D.global_num(i, jk);
+                        jk++;
                     }
-                    int jk2 = j + 1;
-                    while (jk2 < Ny && IJ_new[ik][jk2] == NodeType.Removed)
+                    n3 = Grid2D.global_num(i, jk);
+                    n4 = Grid2D.global_num(ik, jk);
+
+                    // Top line
+                    for (int ikk = i; ikk < ik; ikk++)
                     {
-                        jk2++;
+                        if (IJ_new[ikk][jk] == NodeType.Top)
+                            n5 = Grid2D.global_num(ikk, jk);
                     }
-                    if (jk1 > jk2) { jk = jk1; } else { jk = jk2; }
-                    if (jk >= Ny) { jk = j + 1; }
-                    int n1 = Grid2D.global_num(i, j);
-                    int n2 = Grid2D.global_num(ik, j);
-                    int n3 = Grid2D.global_num(i, jk);
-                    int n4 = Grid2D.global_num(ik, jk);
+
+                    // Right line
+                    for (int jkk = j; jkk < jk; jkk++)
+                    {
+                        if (IJ_new[ik][jkk] == NodeType.Right)
+                            n5 = Grid2D.global_num(ik, jkk);
+                    }
 
                     // TODO: OPTIMIZE THAT
-                    int n1_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n1].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n1].Y) < 1e-14f);
-                    int n2_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n2].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n2].Y) < 1e-14f);
-                    int n3_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n3].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n3].Y) < 1e-14f);
-                    int n4_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n4].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n4].Y) < 1e-14f);
+                    int n1_new, n2_new, n3_new, n4_new, n5_new;
+                    n1_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n1].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n1].Y) < 1e-14f);
+                    n2_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n2].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n2].Y) < 1e-14f);
+                    n3_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n3].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n3].Y) < 1e-14f);
+                    n4_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n4].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n4].Y) < 1e-14f);
+                    if (n5 >= 0)
+                        n5_new = XY_new.FindIndex(v => MathF.Abs(v.X - Grid2D.XY[n5].X) < 1e-14f && MathF.Abs(v.Y - Grid2D.XY[n5].Y) < 1e-14f);
+                    else
+                        n5_new = -1;
                     float xmin = XY_new[n1_new].X;
                     float xmax = XY_new[n4_new].X;
                     float ymin = XY_new[n1_new].Y;
                     float ymax = XY_new[n4_new].Y;
                     int wi = Grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax);
-                    Elems_new.Add(new Elem(wi, n1_new, n2_new, n3_new, n4_new));
+                    Elems_new.Add(new Elem(wi, n1_new, n2_new, n3_new, n4_new, n5_new));
                 }
             return new Grid2D(Grid2D.Area, XY_new, Elems_new, IJ_new);
         }

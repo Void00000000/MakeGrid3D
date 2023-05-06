@@ -33,10 +33,11 @@
 
             <glWpfControl:GLWpfControl 
             x:Name="OpenTkControl" RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
-            Render="OpenTkControl_OnRender" Loaded="OpenTkControl_OnLoad" SizeChanged="OpenTkControl_Resize" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" Grid.ColumnSpan="3"/>
+            Render="OpenTkControl_OnRender" Loaded="OpenTkControl_OnLoad" SizeChanged="OpenTkControl_Resize" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" MouseRightButtonUp="OpenTkControl_MouseRightButtonUp" Grid.ColumnSpan="3"/>
 
             <Grid Grid.Column="3">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
@@ -187,6 +188,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0" Margin="10 10 10 0" HorizontalAlignment="Center">
                                 <Grid.ColumnDefinitions>
@@ -228,13 +232,16 @@
                             <Button Grid.Row="2" Click="DoClick" Background="Transparent" Margin="10 10 10 0" BorderThickness="1" Width="40" Height="40" HorizontalAlignment="Right">
                                 <Image Source="Images/do.png"></Image>
                             </Button>
-                            <Button Grid.Row="3" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
+                            <TextBlock Name="CurrentUnstructedNodeBlock" Grid.Row="3" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="4" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="5" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center"></xctk:ColorPicker>
+                            <Button Grid.Row="6" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
                         </Grid>
                     </TabItem>
                 </TabControl>
                 <!--Instrument Panel End-->
                 
-                <Grid Grid.Row="3">
+                <Grid Grid.Row="3" Grid.RowSpan="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
@@ -247,6 +254,7 @@
                      x:Name="SelectedElemOpenTkControl" Grid.RowSpan="2" Grid.Column="0" Render="SelectedElemOpenTkControl_OnRender"/>
                     <Grid Grid.Row="0" Grid.Column="1">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -266,6 +274,8 @@
                         <TextBlock Name="BlockNodesCoords3" Grid.Row="3" Grid.Column="1" Text=""/>
                         <TextBlock Name="BlockNodesNum4" Grid.Row="4" Grid.Column="0" Text=""/>
                         <TextBlock Name="BlockNodesCoords4" Grid.Row="4" Grid.Column="1" Text=""/>
+                        <TextBlock Name="BlockNodesNum5" Grid.Row="5" Grid.Column="0" Text=""/>
+                        <TextBlock Name="BlockNodesCoords5" Grid.Row="5" Grid.Column="1" Text=""/>
                     </Grid>
                     <glWpfControl:GLWpfControl RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
                      x:Name="AxisOpenTkControl" Grid.Row="1" Grid.Column="1" Render="AxisOpenTkControl_OnRender"/>

@@ -30,5 +30,14 @@ namespace MakeGrid3D
         static public Color4[] areaColors = {area1Color, area2Color, area3Color};
 
         static public float indent = 0.2f;
+
+        static public int I = 1;
+        static public int J = 1;
+        static public Direction dir1 = Direction.Left;
+        static public Direction dir2 = Direction.Right;
+        static public Direction dir3 = Direction.Bottom;
+        static public Direction dir4 = Direction.Top;
+        static public bool showCurrentUnstructedNode = false;
+        static public Color4 currentUnstructedNodeColor = new Color4(1f, 0, 0, 075f);
     }
 }
