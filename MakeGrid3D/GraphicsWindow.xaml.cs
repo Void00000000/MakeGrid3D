@@ -20,13 +20,15 @@ namespace MakeGrid3D
         public int J { get; } = Default.J;
         public int NodeI { get; } = Default.I;
         public int NodeJ { get; } = Default.J;
-        public GridState(Grid2D grid2D, int I, int J, int NodeI, int NodeJ)
+        public int DirIndex { get; } = 0;
+        public GridState(Grid2D grid2D, int i, int j, int nodeI, int nodeJ, int dirIndex)
         {
             Grid2D = grid2D;
-            this.I = I;
-            this.J = J;
-            this.NodeI = NodeI;
-            this.NodeJ = NodeJ;
+            I = i;
+            J = j;
+            NodeI = nodeI;
+            NodeJ = nodeJ;
+            DirIndex = dirIndex;
         }
         public GridState(Grid2D grid2D)
         {
@@ -90,7 +92,7 @@ namespace MakeGrid3D
             renderGrid = new RenderGrid(regularGrid2D, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             irregularGridMaker = new IrregularGridMaker(regularGrid2D);
             grid2DList = new LinkedList<GridState>();
-            SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.CurrentI, irregularGridMaker.CurrentJ));
+            SetCurrentNodeMesh();
             grid2DList.AddLast(new GridState(regularGrid2D));
             currentNode = grid2DList.Last;
             // Множители скорости = 1 процент от ширины(высоты) мира
@@ -151,6 +153,7 @@ namespace MakeGrid3D
 
             if (showCurrentUnstructedNode)
             {
+                renderGrid.DrawNodes(currentPosMesh, Color4.Orange);
                 renderGrid.DrawNodes(currentNodeMesh, currentUnstructedNodeColor);
                 // первый узел почему то тоже красится...
                 float[] vert = { renderGrid.Grid2D.XY[0].X, renderGrid.Grid2D.XY[0].Y, 0 };
@@ -159,10 +162,21 @@ namespace MakeGrid3D
                 renderGrid.DrawNodes(firstNode, renderGrid.PointsColor);
                 firstNode.Dispose();
                 //----------------------
-                int node = renderGrid.Grid2D.global_num(irregularGridMaker.CurrentI, irregularGridMaker.CurrentJ);
+                int node = renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J);
                 float x = renderGrid.Grid2D.XY[node].X;
                 float y = renderGrid.Grid2D.XY[node].Y;
                 CurrentUnstructedNodeBlock.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", " + y.ToString("0.00");
+                switch (irregularGridMaker.DirIndex)
+                {
+                    case 0:
+                        CurrentUnstructedNodeBlock.Text += "| Влево"; break;
+                    case 1:
+                        CurrentUnstructedNodeBlock.Text += "| Вправо"; break;
+                    case 2:
+                        CurrentUnstructedNodeBlock.Text += "| Вниз"; break;
+                    case 3:
+                        CurrentUnstructedNodeBlock.Text += "| Вверх"; break;
+                }
             }
         }
 
@@ -273,6 +287,53 @@ namespace MakeGrid3D
             }
         }
 
+        private void SetSelectedElemWindowSize()
+        {
+            float left = renderGrid.Grid2D.XY[selectedElem.n1].X;
+            float right = renderGrid.Grid2D.XY[selectedElem.n4].X;
+            float bottom = renderGrid.Grid2D.XY[selectedElem.n1].Y;
+            float top = renderGrid.Grid2D.XY[selectedElem.n4].Y;
+
+            float width = right - left;
+            float height = top - bottom;
+
+            float indent = 0.1f;
+            float hor_offset = width * indent;
+            float ver_offset = height * indent;
+
+            float left_ = left - hor_offset;
+            float right_ = right + hor_offset;
+            float bottom_ = bottom - ver_offset;
+            float top_ = top + ver_offset;
+
+            float w, left__, right__, bottom__, top__;
+            float windowWidth = (float)SelectedElemOpenTkControl.ActualWidth;
+            float windowHeight = (float)SelectedElemOpenTkControl.ActualHeight;
+            if ((right_ - left_) >= (top_ - bottom_))
+            {
+                left__ = left_;
+                right__ = right_;
+                w = (windowHeight / windowWidth * (right__ - left__) - (top - bottom)) / 2;
+                top__ = top + w;
+                bottom__ = bottom - w;
+            }
+            else
+            {
+                top__ = top_;
+                bottom__ = bottom_;
+                w = (windowWidth / windowHeight * (top__ - bottom__) - (right - left)) / 2;
+                right__ = right + w;
+                left__ = left - w;
+            }
+            projectionSelectedElem = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
+        }
+
+        private void SelectedElemOpenTkControl_Resize(object sender, SizeChangedEventArgs e)
+        {
+            if (selectedElemMesh != null && selectedElemLines!= null)
+                SetSelectedElemWindowSize();
+        }
+
         private void OpenTkControl_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (renderGrid == null)
@@ -284,43 +345,11 @@ namespace MakeGrid3D
 
             if (renderGrid.Grid2D.FindElem(x, y, ref selectedElem))
             {
+                SetSelectedElemWindowSize();
                 float left = renderGrid.Grid2D.XY[selectedElem.n1].X;
                 float right = renderGrid.Grid2D.XY[selectedElem.n4].X;
                 float bottom = renderGrid.Grid2D.XY[selectedElem.n1].Y;
                 float top = renderGrid.Grid2D.XY[selectedElem.n4].Y;
-
-                float width = right - left;
-                float height = top - bottom;
-
-                float indent = 0.2f;
-                float hor_offset = width * indent;
-                float ver_offset = height * indent;
-
-                float left_ = left - hor_offset;
-                float right_ = right + hor_offset;
-                float bottom_ = bottom - ver_offset;
-                float top_ = top + ver_offset;
-
-                float w, left__, right__, bottom__, top__;
-                float windowWidth = (float)SelectedElemOpenTkControl.ActualWidth;
-                float windowHeight = (float)SelectedElemOpenTkControl.ActualHeight;
-                if ((right_ - left_) >= (top_ - bottom_))
-                {
-                    left__ = left_;
-                    right__ = right_;
-                    w = (windowHeight / windowWidth * (right__ - left__) - (top - bottom)) / 2;
-                    top__ = top + w;
-                    bottom__ = bottom - w;
-                }
-                else
-                {
-                    top__ = top_;
-                    bottom__ = bottom_;
-                    w = (windowWidth / windowHeight * (top__ - bottom__) - (right - left)) / 2;
-                    right__ = right + w;
-                    left__ = left - w;
-                }
-                projectionSelectedElem = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
                 float xt, yt;
                 if (selectedElem.n5 >= 0) {
                     xt = renderGrid.Grid2D.XY[selectedElem.n5].X;
@@ -399,13 +428,21 @@ namespace MakeGrid3D
             }
         }
 
-        private void SetCurrentNodeMesh(int node_num)
+        private void SetCurrentNodeMesh()
         {
-            float x = renderGrid.Grid2D.XY[node_num].X;
-            float y = renderGrid.Grid2D.XY[node_num].Y;
-            float[] vertices = { x, y, 0 };
-            uint[] indices = { 0 };
-            currentNodeMesh = new Mesh(vertices, indices);
+            int node_num_1 = renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J);
+            int node_num_2 = renderGrid.Grid2D.global_num(irregularGridMaker.NodeI, irregularGridMaker.NodeJ);
+            float x1 = renderGrid.Grid2D.XY[node_num_1].X;
+            float y1 = renderGrid.Grid2D.XY[node_num_1].Y;
+            float[] vertices1 = { x1, y1, 0 };
+            uint[] indices1 = { 0 };
+            currentPosMesh = new Mesh(vertices1, indices1);
+
+            float x2 = renderGrid.Grid2D.XY[node_num_2].X;
+            float y2 = renderGrid.Grid2D.XY[node_num_2].Y;
+            float[] vertices2 = { x2, y2, 0 };
+            uint[] indices2 = { 0 };
+            currentNodeMesh = new Mesh(vertices2, indices2);
         }
 
         private void OpenTkControl_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -461,7 +498,9 @@ namespace MakeGrid3D
                 {
                     irregularGridMaker.I = i;
                     irregularGridMaker.J = j;
-                    SetCurrentNodeMesh(node);
+                    irregularGridMaker.NodeI = i;
+                    irregularGridMaker.NodeJ = j;
+                    SetCurrentNodeMesh();
                 }
             }
         }
@@ -764,9 +803,17 @@ namespace MakeGrid3D
                 currentNode = currentNode.Previous;
                 renderGrid.Grid2D = currentNode.ValueRef.Grid2D;
                 irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
-                irregularGridMaker.I = currentNode.ValueRef.CurrentI;
-                irregularGridMaker.J = currentNode.ValueRef.CurrentJ;
-                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J));
+                int i = currentNode.Value.I;
+                int j = currentNode.Value.J;
+                int nodeI = currentNode.Value.NodeI;
+                int nodeJ = currentNode.Value.NodeJ;
+                int dirIndex = currentNode.Value.DirIndex;
+                irregularGridMaker.I = i;
+                irregularGridMaker.J = j;
+                irregularGridMaker.NodeI = nodeI;
+                irregularGridMaker.NodeJ = nodeJ;
+                irregularGridMaker.DirIndex = dirIndex;
+                SetCurrentNodeMesh();
             }
         }
 
@@ -777,9 +824,17 @@ namespace MakeGrid3D
                 currentNode = currentNode.Next;
                 renderGrid.Grid2D = currentNode.ValueRef.Grid2D;
                 irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
-                irregularGridMaker.I = currentNode.ValueRef.CurrentI;
-                irregularGridMaker.J = currentNode.ValueRef.CurrentJ;
-                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J));
+                int i = currentNode.Value.I;
+                int j = currentNode.Value.J;
+                int nodeI = currentNode.Value.NodeI;
+                int nodeJ = currentNode.Value.NodeJ;
+                int dirIndex = currentNode.Value.DirIndex;
+                irregularGridMaker.I = i;
+                irregularGridMaker.J = j;
+                irregularGridMaker.NodeI = nodeI;
+                irregularGridMaker.NodeJ = nodeJ;
+                irregularGridMaker.DirIndex = dirIndex;
+                SetCurrentNodeMesh();
             }
         }
 
@@ -795,8 +850,9 @@ namespace MakeGrid3D
                 int nodeJ = irregularGridMaker.NodeJ;
                 int i = irregularGridMaker.I;
                 int j = irregularGridMaker.J;
-                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(currentI, currentJ));
-                grid2DList.AddLast(new GridState(grid2D_new, i, j, nodeI, nodeJ));
+                int dirIndex = irregularGridMaker.DirIndex;
+                SetCurrentNodeMesh();
+                grid2DList.AddLast(new GridState(grid2D_new, i, j, nodeI, nodeJ, dirIndex));
                 currentNode = grid2DList.Last;
                 renderGrid.Grid2D = grid2D_new;
                 irregularGridMaker.Grid2D = grid2D_new; 
@@ -809,19 +865,19 @@ namespace MakeGrid3D
             if (irregularGridMaker.NodeI < irregularGridMaker.Grid2D.Nx - 1 &&
                 irregularGridMaker.NodeJ < irregularGridMaker.Grid2D.Ny - 1)
             {
-
                 Grid2D grid2D_new = irregularGridMaker.MakeUnStructedGrid();
                 irregularGridMaker.Grid2D = grid2D_new;
-                while (irregularGridMaker.I < irregularGridMaker.Grid2D.Nx - 1 &&
-                    irregularGridMaker.J < irregularGridMaker.Grid2D.Ny - 1)
+                while (irregularGridMaker.NodeI < irregularGridMaker.Grid2D.Nx - 1 &&
+                    irregularGridMaker.NodeJ < irregularGridMaker.Grid2D.Ny - 1)
                 {
                     grid2D_new = irregularGridMaker.MakeUnStructedGrid();
                     irregularGridMaker.Grid2D = grid2D_new;
                 }
                 while (currentNode != null && currentNode.Next != null)
                     grid2DList.Remove(currentNode.Next);
-                SetCurrentNodeMesh(renderGrid.Grid2D.global_num(grid2D_new.Nx - 1, grid2D_new.Ny - 1));
-                grid2DList.AddLast(new GridState(grid2D_new, grid2D_new.Nx - 1, grid2D_new.Ny - 1));
+                SetCurrentNodeMesh();
+                int dirIndex = irregularGridMaker.DirIndex;
+                grid2DList.AddLast(new GridState(grid2D_new, grid2D_new.Nx - 1, grid2D_new.Ny - 1, grid2D_new.Nx - 1, grid2D_new.Ny - 1, dirIndex));
                 currentNode = grid2DList.Last;
                 renderGrid.Grid2D = grid2D_new;
             }
@@ -840,8 +896,11 @@ namespace MakeGrid3D
             irregularGridMaker.Grid2D = regularGrid2D;
             irregularGridMaker.I = 1;
             irregularGridMaker.J = 1;
+            irregularGridMaker.NodeI = 1;
+            irregularGridMaker.NodeJ = 1;
+            irregularGridMaker.DirIndex = 0;
             grid2DList.Clear();
-            SetCurrentNodeMesh(renderGrid.Grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J));
+            SetCurrentNodeMesh();
             grid2DList.AddLast(new GridState(regularGrid2D));
             currentNode = grid2DList.Last;
         }
@@ -860,5 +919,26 @@ namespace MakeGrid3D
         {
             currentUnstructedNodeColor = ColorByteToFloat((Color)e.NewValue);
         }
+
+        private void LeftDirClick(object sender, RoutedEventArgs e)
+        {
+            irregularGridMaker.DirIndex = 0;
+        }
+
+        private void RightDirClick(object sender, RoutedEventArgs e)
+        {
+            irregularGridMaker.DirIndex = 1;
+        }
+
+        private void BottomDirClick(object sender, RoutedEventArgs e)
+        {
+            irregularGridMaker.DirIndex = 2;
+        }
+
+        private void TopDirClick(object sender, RoutedEventArgs e)
+        {
+            irregularGridMaker.DirIndex = 3;
+        }
+
     }
 }

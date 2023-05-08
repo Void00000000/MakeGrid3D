@@ -191,6 +191,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0" Margin="10 10 10 0" HorizontalAlignment="Center">
                                 <Grid.ColumnDefinitions>
@@ -236,6 +237,18 @@
                             <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="4" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
                             <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="5" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center"></xctk:ColorPicker>
                             <Button Grid.Row="6" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
+                            <Grid Grid.Row="7" Margin="10 10 10 0" HorizontalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Content="Влево" Click="LeftDirClick" Grid.Column="0"/>
+                                <Button Content="Вправо" Click="RightDirClick" Grid.Column="1"/>
+                                <Button Content="Вниз" Click="BottomDirClick" Grid.Column="2"/>
+                                <Button Content="Вверх" Click="TopDirClick" Grid.Column="3"/>
+                            </Grid>
                         </Grid>
                     </TabItem>
                 </TabControl>
@@ -251,7 +264,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <glWpfControl:GLWpfControl RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
-                     x:Name="SelectedElemOpenTkControl" Grid.RowSpan="2" Grid.Column="0" Render="SelectedElemOpenTkControl_OnRender"/>
+                     x:Name="SelectedElemOpenTkControl" Grid.RowSpan="2" Grid.Column="0" Render="SelectedElemOpenTkControl_OnRender" SizeChanged="SelectedElemOpenTkControl_Resize"/>
                     <Grid Grid.Row="0" Grid.Column="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>

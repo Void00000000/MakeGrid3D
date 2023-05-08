@@ -38,6 +38,6 @@ namespace MakeGrid3D
         static public Direction dir3 = Direction.Bottom;
         static public Direction dir4 = Direction.Top;
         static public bool showCurrentUnstructedNode = false;
-        static public Color4 currentUnstructedNodeColor = new Color4(1f, 0, 0, 075f);
+        static public Color4 currentUnstructedNodeColor = new Color4(1f, 0, 0, 1f);
     }
 }
