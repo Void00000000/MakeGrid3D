@@ -330,17 +330,26 @@ namespace MakeGrid3D
         private void MakeGrid1D(List<float> X_Y, float left, float right, int n, float qxy, ref int i0, ref int j)
         {
             float h0;
-            if (qxy - 1 < 1E-16)
+            if (MathF.Abs(qxy - 1) < 1E-16)
                 h0 = (right - left) / n;
-            else
+            else if (qxy > 0)
                 h0 = (right - left) * (1 - qxy) / (1 - MathF.Pow(qxy, n));
+            else
+            {
+                qxy *= -1;
+                h0 = (right - left) * (1 - qxy) / (1 - MathF.Pow(qxy, n)) * MathF.Pow(qxy, n - 1);
+                qxy *= -1;
+            }
 
             X_Y[i0] = left;
             j++;
             for (int i = i0 + 1; i < n + i0; i++)
             {
                 X_Y[i] = X_Y[i - 1] + h0;
-                h0 *= qxy;
+                if (qxy > 0)
+                    h0 *= qxy;
+                else
+                    h0 /= MathF.Abs(qxy);
             }
             i0 = n + i0;
         }
@@ -438,12 +447,12 @@ namespace MakeGrid3D
             return width / height;
         }
 
-        // a1 >= a2
+        // a1 > a2
         private bool CompareAR(float a1, float a2)
         {
             if (a2 < 1f) a2 = 1f / a2;
             if (a1 < 1f) a1 = 1f / a1;
-            return a1 >= a2;
+            return a1 > a2;
         }
 
         private bool MoveRight(List<List<NodeType>> IJ_new)

@@ -66,7 +66,7 @@ namespace MakeGrid3D
         float speedHor = 0;
         float speedVer = 0;
         Color4 bgColor = Default.bgColor;
-        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
+        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST3.txt";
         Elem selectedElem;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;

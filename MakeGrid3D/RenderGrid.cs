@@ -305,6 +305,7 @@ namespace MakeGrid3D
 
         public void SetSize()
         {
+            // TODO: может не влезать
             float left = grid2D.Area.X0;
             float right = grid2D.Area.Xn;
             float bottom = grid2D.Area.Y0;
