@@ -7,14 +7,14 @@ using System.IO;
 
 namespace MakeGrid3D
 {
-    struct SubArea
+    struct SubArea2D
     {
         public int wi; // Номер подобласти
         // Индексы в массивах Xw и Yw
         public int nx1, nx2;
         public int ny1, ny2;
 
-        public SubArea(int wi, int nx1, int nx2, int ny1, int ny2)
+        public SubArea2D(int wi, int nx1, int nx2, int ny1, int ny2)
         {
             this.wi = wi; 
             this.nx1 = nx1;
@@ -43,13 +43,13 @@ namespace MakeGrid3D
     }
 
     // Прямоугольный конечный элемент
-    struct Elem
+    struct Elem2D
     {
         public int wi;
         public int n1; public int n2; public int n3; public int n4; // граничные узлы
         public int n5 = -1;
 
-        public Elem(int wi, int n1, int n2, int n3, int n4)
+        public Elem2D(int wi, int n1, int n2, int n3, int n4)
         {
             this.wi = wi;
             this.n1 = n1;
@@ -58,14 +58,14 @@ namespace MakeGrid3D
             this.n4 = n4;
         }
 
-        public Elem(int wi, int n1, int n2, int n3, int n4, int n5) : this(wi, n1, n2, n3, n4)
+        public Elem2D(int wi, int n1, int n2, int n3, int n4, int n5) : this(wi, n1, n2, n3, n4)
         {
             this.n5 = n5;
         }
     }
 
     // Расчётная область
-    class Area
+    class Area2D
     {
         // Количество подобластей
         public int Nareas { get; }
@@ -82,9 +82,9 @@ namespace MakeGrid3D
         public List<float> Xw { get; }
         public List<float> Yw { get; }
         // Массив, содержащий подобласти
-        public List<SubArea> Mw { get; }
+        public List<SubArea2D> Mw { get; }
 
-        public Area(string path)
+        public Area2D(string path)
         {
             try
             {
@@ -115,7 +115,7 @@ namespace MakeGrid3D
                     string[] nmat_nw = nmat_nw_txt.Split(' ');
                     Nmats = int.Parse(nmat_nw[0]);
                     Nareas = int.Parse(nmat_nw[1]);
-                    Mw = new List<SubArea>(Nareas);
+                    Mw = new List<SubArea2D>(Nareas);
 
                     for (int i = 0; i < Nareas; i++)
                     {
@@ -126,7 +126,7 @@ namespace MakeGrid3D
                         int nx2 = int.Parse(Mwi[2]) - 1;
                         int ny1 = int.Parse(Mwi[3]) - 1;
                         int ny2 = int.Parse(Mwi[4]) - 1;
-                        Mw.Add(new SubArea(wi, nx1, nx2, ny1, ny2));
+                        Mw.Add(new SubArea2D(wi, nx1, nx2, ny1, ny2));
                     }
                 }
             }
@@ -149,7 +149,7 @@ namespace MakeGrid3D
 
         public int FindSubArea(float xElemMin, float xElemMax, float yElemMin, float yElemMax)
         {
-            foreach (SubArea subArea in Mw)
+            foreach (SubArea2D subArea in Mw)
             {
                 float xAreaMin = Xw[subArea.nx1];
                 float yAreaMin = Yw[subArea.ny1];
@@ -168,22 +168,31 @@ namespace MakeGrid3D
         }
     }
 
-    class Grid2D
+    interface IGrid
     {
-        public Area Area { get; }
         public int Nnodes { get; }
         public int Nelems { get; }
+        public int Nmats { get; }
+    }
+
+    class Grid2D : IGrid
+    {
+        public Area2D Area { get; }
+        public int Nnodes { get; }
+        public int Nelems { get; }
+        public int Nmats { get; }
         public int Nx { get; private set; }
         public int Ny { get; private set; }
 
-        public List<Elem> Elems { get; }
+        public List<Elem2D> Elems { get; }
         public List<Vector2> XY { get; }
         public List<List<NodeType>> IJ { get; }
         public List<int> removedNodes;
 
-        public Grid2D(Area area, List<Vector2> XY, List<Elem> elems, List<List<NodeType>> IJ)
+        public Grid2D(Area2D area, List<Vector2> XY, List<Elem2D> elems, List<List<NodeType>> IJ)
         {
             Area = area;
+            Nmats = area.Nmats;
             this.XY = XY;
             Nnodes = XY.Count;
             Nelems = elems.Count;
@@ -201,7 +210,7 @@ namespace MakeGrid3D
         }
 
         // Создание регулярной сетки
-        public Grid2D(string path, Area area) 
+        public Grid2D(string path, Area2D area) 
         {
             Area = area;
             List<float> X = new List<float>();
@@ -211,7 +220,7 @@ namespace MakeGrid3D
             Nnodes = Nx * Ny;
             Nelems = (Nx - 1) * (Ny - 1);
 
-            Elems = new List<Elem>(Nelems);
+            Elems = new List<Elem2D>(Nelems);
             XY = new List<Vector2>(Nnodes);
             removedNodes = new List<int>();
 
@@ -232,7 +241,7 @@ namespace MakeGrid3D
                     float xmin = XY[n1].X; float xmax = XY[n4].X;
                     float ymin = XY[n1].Y; float ymax = XY[n4].Y;
                     int wi = area.FindSubArea(xmin, xmax, ymin, ymax);
-                    Elem elem = new Elem(wi, n1, n2, n3, n4);
+                    Elem2D elem = new Elem2D(wi, n1, n2, n3, n4);
                     Elems.Add(elem);
                 }
 
@@ -392,9 +401,9 @@ namespace MakeGrid3D
             return new Vector2i(i, j);
         }
 
-        public bool FindElem(float x, float y, ref Elem foundElem)
+        public bool FindElem(float x, float y, ref Elem2D foundElem)
         {
-            foreach (Elem elem in Elems)
+            foreach (Elem2D elem in Elems)
             {
                 float xElemMin = XY[elem.n1].X;
                 float yElemMin = XY[elem.n1].Y;
@@ -769,7 +778,7 @@ namespace MakeGrid3D
             }
             MakeUnStructedMatrix(IJ_new);
             List<Vector2> XY_new = new List<Vector2>();
-            List<Elem> Elems_new = new List<Elem>();
+            List<Elem2D> Elems_new = new List<Elem2D>();
 
             for (int j = 0; j < Ny; j++)
                 for (int i = 0; i < Nx; i++)
@@ -838,7 +847,7 @@ namespace MakeGrid3D
                     float ymin = XY_new[n1_new].Y;
                     float ymax = XY_new[n4_new].Y;
                     int wi = Grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax);
-                    Elems_new.Add(new Elem(wi, n1_new, n2_new, n3_new, n4_new, n5_new));
+                    Elems_new.Add(new Elem2D(wi, n1_new, n2_new, n3_new, n4_new, n5_new));
                 }
             return new Grid2D(Grid2D.Area, XY_new, Elems_new, IJ_new);
         }

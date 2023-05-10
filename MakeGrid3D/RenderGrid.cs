@@ -3,6 +3,8 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Printing;
+using System.Windows.Controls;
 
 namespace MakeGrid3D
 {
@@ -275,14 +277,18 @@ namespace MakeGrid3D
         public bool ShowGrid { get; set; } = Default.showGrid;
         public bool DrawRemovedLinesMode { get; set; } = Default.drawRemovedLinesMode;
 
-        private Grid2D grid2D;
-        public Grid2D Grid2D
+        private IGrid grid;
+        public IGrid Grid
         {
-            get { return grid2D; }
+            get { return grid; }
             set 
             {
-                grid2D = value; 
-                AssembleVertices(false);
+                grid = value;
+                if (grid is Grid2D)
+                {
+                    AssembleVertices2D(false);
+                }
+                else { }
             }
         }
         public float Left { get; private set; }
@@ -293,18 +299,22 @@ namespace MakeGrid3D
         public float WindowWidth { get; set; }
         public float WindowHeight { get; set; }
 
-        public RenderGrid(Grid2D grid2D, float windowWidth, float windowHeight)
+        public RenderGrid(IGrid grid, float windowWidth, float windowHeight)
         {
-            this.grid2D = grid2D;
-            AssembleVertices(true);
+            this.grid = grid;
             WindowWidth= windowWidth;
             WindowHeight = windowHeight; 
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
-            SetSize();
+            if (grid is Grid2D)
+            {
+                AssembleVertices2D(true);
+                SetSize();
+            }
         }
 
-        public void SetSize()
+        private void SetSize2D()
         {
+            Grid2D grid2D = (Grid2D)grid;
             // TODO: может не влезать
             float left = grid2D.Area.X0;
             float right = grid2D.Area.Xn;
@@ -339,11 +349,22 @@ namespace MakeGrid3D
                 Right = right + w;
                 Left = left - w;
             }
-           projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
+            projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
         }
 
-        private void AssembleVertices(bool area)
+        private void SetSize3D()
         {
+
+        }
+
+        public void SetSize()
+        {
+            if (grid is Grid2D) SetSize2D(); else SetSize3D();
+        }
+
+        private void AssembleVertices2D(bool area)
+        {
+            Grid2D grid2D = (Grid2D)grid;
             int Nelems = grid2D.Nelems;
             int Nnodes = grid2D.Nnodes;
             int Nareas = grid2D.Area.Nareas;
@@ -358,7 +379,7 @@ namespace MakeGrid3D
 
             indices = new uint[Nelems * 4 * 2];
             int e = 0;
-            foreach (Elem elem in grid2D.Elems)
+            foreach (Elem2D elem in grid2D.Elems)
             {
                 uint n1 = (uint)elem.n1;
                 uint n2 = (uint)elem.n2;
@@ -383,7 +404,7 @@ namespace MakeGrid3D
 
                 indices_area = new uint[Nareas * 6];
                 int s = 0;
-                foreach (SubArea subArea in grid2D.Area.Mw)
+                foreach (SubArea2D subArea in grid2D.Area.Mw)
                 {
                     int ix1 = subArea.nx1;
                     int iy1 = subArea.ny1;
@@ -418,6 +439,18 @@ namespace MakeGrid3D
             shader.SetInt("isPoint", 0);
         }
 
+        private void DrawArea2D()
+        {
+            Grid2D grid2D = (Grid2D)grid;
+            int s = 0;
+            foreach (SubArea2D subArea in grid2D.Area.Mw)
+            {
+                shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
+                areaMesh.DrawElems(6, s, PrimitiveType.Triangles);
+                s += 6;
+            }
+        }
+
         public void RenderFrame(bool drawArea=true, bool drawNodes=true, bool drawLines=true)
         {
             shader.Use();
@@ -430,13 +463,7 @@ namespace MakeGrid3D
 
             if (!WireframeMode && drawArea)
             {
-                int s = 0;
-                foreach (SubArea subArea in grid2D.Area.Mw)
-                {
-                    shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
-                    areaMesh.DrawElems(6, s, PrimitiveType.Triangles);
-                    s += 6;
-                }
+                DrawArea2D();
             }
             if (ShowGrid)
             {
