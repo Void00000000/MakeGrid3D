@@ -7,6 +7,7 @@ using System.IO;
 
 namespace MakeGrid3D
 {
+    using ByteMat2D = List<List<NodeType>>;
     struct SubArea2D
     {
         public int wi; // Номер подобласти
@@ -186,10 +187,10 @@ namespace MakeGrid3D
 
         public List<Elem2D> Elems { get; }
         public List<Vector2> XY { get; }
-        public List<List<NodeType>> IJ { get; }
+        public ByteMat2D IJ { get; }
         public List<int> removedNodes;
 
-        public Grid2D(Area2D area, List<Vector2> XY, List<Elem2D> elems, List<List<NodeType>> IJ)
+        public Grid2D(Area2D area, List<Vector2> XY, List<Elem2D> elems, ByteMat2D IJ)
         {
             Area = area;
             Nmats = area.Nmats;
@@ -213,6 +214,7 @@ namespace MakeGrid3D
         public Grid2D(string path, Area2D area) 
         {
             Area = area;
+            Nmats = area.Nmats;
             List<float> X = new List<float>();
             List<float> Y = new List<float>();
             ReadGrid2D(path, X, Y);
@@ -245,7 +247,7 @@ namespace MakeGrid3D
                     Elems.Add(elem);
                 }
 
-            IJ = new List<List<NodeType>>(Nx);
+            IJ = new ByteMat2D(Nx);
             for (int i = 0; i < Nx; i++)
             {
                 IJ.Add(new List<NodeType>(Ny));
@@ -464,7 +466,7 @@ namespace MakeGrid3D
             return a1 > a2;
         }
 
-        private bool MoveRight(List<List<NodeType>> IJ_new)
+        private bool MoveRight(ByteMat2D IJ_new)
         {
             do
             {
@@ -475,7 +477,7 @@ namespace MakeGrid3D
             return false;
         }
 
-        private bool MoveLeft(List<List<NodeType>> IJ_new)
+        private bool MoveLeft(ByteMat2D IJ_new)
         {
             do
             {
@@ -486,7 +488,7 @@ namespace MakeGrid3D
             return false;
         }
 
-        private bool MoveTop(List<List<NodeType>> IJ_new)
+        private bool MoveTop(ByteMat2D IJ_new)
         {
             do
             {
@@ -497,7 +499,7 @@ namespace MakeGrid3D
             return false;
         }
 
-        private bool MoveBottom(List<List<NodeType>> IJ_new)
+        private bool MoveBottom(ByteMat2D IJ_new)
         {
             do
             {
@@ -508,7 +510,7 @@ namespace MakeGrid3D
             return false;
         }
 
-        private void MoveNode(List<List<NodeType>> IJ_new) {
+        private void MoveNode(ByteMat2D IJ_new) {
             do
             {
                 NodeI++;
@@ -521,7 +523,7 @@ namespace MakeGrid3D
             while (IJ_new[NodeI][NodeJ] == NodeType.Removed && NodeI < Nx - 1 && NodeJ < Ny - 1);
         }
 
-        private bool MergeRight(List<List<NodeType>> IJ_new, out bool merged)
+        private bool MergeRight(ByteMat2D IJ_new, out bool merged)
         {
             merged = false;
             if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Right) { 
@@ -572,7 +574,7 @@ namespace MakeGrid3D
             return MoveRight(IJ_new);
         }
 
-        private bool MergeLeft(List<List<NodeType>> IJ_new, out bool merged)
+        private bool MergeLeft(ByteMat2D IJ_new, out bool merged)
         {
             merged = false;
             if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Left)
@@ -624,7 +626,7 @@ namespace MakeGrid3D
             return MoveLeft(IJ_new);
         }
 
-        private bool MergeTop(List<List<NodeType>> IJ_new, out bool merged)
+        private bool MergeTop(ByteMat2D IJ_new, out bool merged)
         {
             merged = false;
             if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Top)
@@ -676,7 +678,7 @@ namespace MakeGrid3D
             return MoveTop(IJ_new);
         }
 
-        private bool MergeBottom(List<List<NodeType>> IJ_new, out bool merged)
+        private bool MergeBottom(ByteMat2D IJ_new, out bool merged)
         {
             merged = false;
             if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Bottom)
@@ -728,7 +730,7 @@ namespace MakeGrid3D
             return MoveBottom(IJ_new);
         }
 
-        private void MakeUnStructedMatrix(List<List<NodeType>> IJ_new)
+        private void MakeUnStructedMatrix(ByteMat2D IJ_new)
         {
             bool end = true;
             bool merged = false;
@@ -769,7 +771,7 @@ namespace MakeGrid3D
 
         public Grid2D MakeUnStructedGrid()
         {
-            List<List<NodeType>> IJ_new = new List<List<NodeType>>(Nx);
+            ByteMat2D IJ_new = new ByteMat2D(Nx);
             for (int i = 0; i < Nx; i++)
             {
                 IJ_new.Add(new List<NodeType>(Ny));

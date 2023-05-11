@@ -57,6 +57,7 @@ namespace MakeGrid3D
         Matrix4 rscale = Matrix4.Identity; // TODO: не используется вообще все матрицы scale
         float horOffset = 0;
         float verOffset = 0;
+        float depOffset = 0;
         float scaleX = 1;
         float scaleY = 1;
         float mouse_horOffset = 0;
@@ -67,8 +68,9 @@ namespace MakeGrid3D
         float speedZoom = Default.speedZoom;
         float speedHor = 0;
         float speedVer = 0;
+        float speedDep = 0;
         Color4 bgColor = Default.bgColor;
-        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST3.txt";
+        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST4_3D.txt";
         Elem2D selectedElem;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
@@ -89,7 +91,7 @@ namespace MakeGrid3D
 
         private void Init()
         {
-            twoD = true;
+            twoD = false;
             if (twoD)
             {
                 Area2D area = new Area2D(fileName);
@@ -103,11 +105,14 @@ namespace MakeGrid3D
             }
             else
             {
-
+                Area3D area = new Area3D(fileName);
+                regularGrid = new Grid3D(fileName, area);
+                renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             }
             // Множители скорости = 1 процент от ширины(высоты) мира
             speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
+            speedDep = (renderGrid.Back - renderGrid.Front) * 0.01f;
             SetAxis();
         }
 
@@ -120,7 +125,9 @@ namespace MakeGrid3D
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid.Nelems;
             BlockRemovedNodesCount.Text = "***";
             BlockRemovedElemsCount.Text = "***";
-            //-----------------------------------------------------------------------------
+            //----------------------------------------------------------------------------
+            GL.Enable(EnableCap.LineSmooth);
+            GL.Enable(EnableCap.PointSmooth);
         }
 
         private void OpenTkControl_Resize(object sender, SizeChangedEventArgs e)
@@ -139,6 +146,8 @@ namespace MakeGrid3D
             BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid.Nmats;
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid.Nnodes;
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid.Nelems;
+
+            if (twoD) GL.Disable(EnableCap.DepthTest); else GL.Enable(EnableCap.DepthTest);
 
             GL.ClearColor(bgColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -166,6 +175,7 @@ namespace MakeGrid3D
                 renderGrid.DrawNodes(currentPosMesh, Color4.Orange);
                 renderGrid.DrawNodes(currentNodeMesh, currentUnstructedNodeColor);
                 // первый узел почему то тоже красится...
+                // -----------------------------------2D-------------------------------------
                 if (twoD)
                 {
                     Grid2D grid2D = (Grid2D)renderGrid.Grid;
@@ -179,6 +189,11 @@ namespace MakeGrid3D
                     float x = grid2D.XY[node].X;
                     float y = grid2D.XY[node].Y;
                     CurrentUnstructedNodeBlock.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", " + y.ToString("0.00");
+                }
+                // -----------------------------------3D------------------------------------ -
+                else
+                {
+
                 }
                 switch (irregularGridMaker.DirIndex)
                 {
@@ -303,6 +318,7 @@ namespace MakeGrid3D
 
         private void SetSelectedElemWindowSize()
         {
+            // -----------------------------------2D------------------------------------ -
             if (twoD)
             {
                 Grid2D grid2D = (Grid2D)renderGrid.Grid;
@@ -343,6 +359,11 @@ namespace MakeGrid3D
                     left__ = left - w;
                 }
                 projectionSelectedElem = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
+            }
+            // -----------------------------------3D------------------------------------ -
+            else
+            {
+
             }
         }
 
@@ -705,11 +726,14 @@ namespace MakeGrid3D
 
         private void ZoomInClick(object sender, RoutedEventArgs e)
         {
-            if (renderGrid.Indent >= -0.5f)
-            {
-                renderGrid.Indent -= speedZoom;
-                renderGrid.SetSize();
-            }
+            depOffset -= speedDep * speedTranslate;
+            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, depOffset);
+            //if (renderGrid.Indent >= -0.5f)
+            //{
+            //   renderGrid.Indent -= speedZoom;
+            //   renderGrid.SetSize();
+            //}
+
             //MessageBox.Show(BufferClass.indent.ToString());
             //BufferClass.scaleX *= BufferClass.speedZoom;
             //BufferClass.scaleY *= BufferClass.speedZoom;
@@ -721,8 +745,12 @@ namespace MakeGrid3D
 
         private void ZoomOutClick(object sender, RoutedEventArgs e)
         {
-            renderGrid.Indent += speedZoom;
-            renderGrid.SetSize();
+            depOffset += speedDep * speedTranslate;
+            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, depOffset);
+
+            //renderGrid.Indent += speedZoom;
+            //renderGrid.SetSize();
+
             //BufferClass.scaleX /= BufferClass.speedZoom;
             //BufferClass.scaleY /= BufferClass.speedZoom;
             //BufferClass.scale = Matrix4.CreateScale(BufferClass.scaleX, BufferClass.scaleY, 1);

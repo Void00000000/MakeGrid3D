@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Printing;
 using System.Windows.Controls;
+using System.Windows.Media.Media3D;
 
 namespace MakeGrid3D
 {
@@ -268,6 +269,7 @@ namespace MakeGrid3D
 
         public Matrix4 Translate { get; set; } = Matrix4.Identity;
         public Matrix4 Scale { get; set; } = Matrix4.Identity;
+        public Matrix4 View { get; set; } = Matrix4.Identity;
         public float Indent { get; set; } = Default.indent;
         public float LinesSize { get; set; } = Default.linesSize;
         public float PointsSize { get; set; } = Default.pointsSize;
@@ -284,17 +286,15 @@ namespace MakeGrid3D
             set 
             {
                 grid = value;
-                if (grid is Grid2D)
-                {
-                    AssembleVertices2D(false);
-                }
-                else { }
+                if (grid is Grid2D) AssembleVertices2D(false); else AssembleVertices3D(false);
             }
         }
         public float Left { get; private set; }
         public float Right { get; private set; }
         public float Bottom { get; private set; }
         public float Top { get; private set;}
+        public float Front { get; private set; }
+        public float Back { get; private set; }
 
         public float WindowWidth { get; set; }
         public float WindowHeight { get; set; }
@@ -305,11 +305,8 @@ namespace MakeGrid3D
             WindowWidth= windowWidth;
             WindowHeight = windowHeight; 
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
-            if (grid is Grid2D)
-            {
-                AssembleVertices2D(true);
-                SetSize();
-            }
+            if (grid is Grid2D) AssembleVertices2D(true); else AssembleVertices3D(true);
+            SetSize();
         }
 
         private void SetSize2D()
@@ -354,7 +351,43 @@ namespace MakeGrid3D
 
         private void SetSize3D()
         {
+            Grid3D grid3D = (Grid3D)grid;
+            // TODO: может не влезать
+            float left = grid3D.Area.X0;
+            float right = grid3D.Area.Xn;
+            float bottom = grid3D.Area.Y0;
+            float top = grid3D.Area.Yn;
+            float front = grid3D.Area.Z0;
+            float back = grid3D.Area.Zn;
 
+            float width = right - left;
+            float height = top - bottom;
+            float depth = back - front;
+
+            float hor_offset = width * Indent;
+            float ver_offset = height * Indent;
+            float dep_offset = depth * Indent;
+
+            float left_ = left - hor_offset;
+            float right_ = right + hor_offset;
+            float bottom_ = bottom - ver_offset;
+            float top_ = top + ver_offset;
+            float front_ = front - dep_offset;
+            float back_ = back + dep_offset;
+
+            Left = left -  10 * hor_offset;
+            Right = right + 10 * hor_offset;
+            Bottom = bottom - 10 * ver_offset;
+            Top = top + 10 * ver_offset;
+            Front = front - 2 * dep_offset;
+            Back = back + 2 * dep_offset;
+
+            Vector3 position = new Vector3((Left + Right) / 2, (Left + Right) / 2, 0);
+            Vector3 direction = Vector3.Normalize(((Left + Right) / 2, (Left + Right) / 2, (Front + Back) / 2));
+            Vector3 up = (0f, 1f, 0f);
+            View = Matrix4.LookAt(position, direction, up);
+            //projection = Matrix4.CreatePerspectiveOffCenter(Left, Right, Bottom, Top, 10f, 40f);
+            projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), WindowWidth / WindowHeight, 0.1f, 100f);
         }
 
         public void SetSize()
@@ -424,6 +457,93 @@ namespace MakeGrid3D
             }
         }
 
+        private void AssembleVertices3D(bool area)
+        {
+            Grid3D grid3D = (Grid3D)grid;
+            int Nelems = grid3D.Nelems;
+            int Nnodes = grid3D.Nnodes;
+            int Nareas = grid3D.Area.Nareas;
+
+            vertices = new float[Nnodes * 3];
+            int n = 0;
+            foreach (Vector3 node in grid3D.XYZ)
+            {
+                vertices[n] = node.X; vertices[n + 1] = node.Y; vertices[n + 2] = node.Z;
+                n += 3;
+            }
+
+            indices = new uint[Nelems * 12 * 2];
+            int e = 0;
+            foreach (Elem3D elem in grid3D.Elems)
+            {
+                uint n1 = (uint)elem.n1;
+                uint n2 = (uint)elem.n2;
+                uint n3 = (uint)elem.n3;
+                uint n4 = (uint)elem.n4;
+                uint n5 = (uint)elem.n5;
+                uint n6 = (uint)elem.n6;
+                uint n7 = (uint)elem.n7;
+                uint n8 = (uint)elem.n8;
+                indices[e] = n1; indices[e + 1] = n2; indices[e + 2] = n2; indices[e + 3] = n4;
+                indices[e + 4] = n3; indices[e + 5] = n4; indices[e + 6] = n1; indices[e + 7] = n3;
+                indices[e + 8] = n1; indices[e + 9] = n5; indices[e + 10] = n3; indices[e + 11] = n7;
+                indices[e + 12] = n7; indices[e + 13] = n8; indices[e + 14] = n7; indices[e + 15] = n5;
+                indices[e + 16] = n5; indices[e + 17] = n6; indices[e + 18] = n6; indices[e + 19] = n8;
+                indices[e + 20] = n2; indices[e + 21] = n6; indices[e + 22] = n4; indices[e + 23] = n8;
+                e += 24;
+            }
+            gridMesh = new Mesh(vertices, indices);
+
+            if (area)
+            {
+                vertices_area = new float[grid3D.Area.NXw * grid3D.Area.NYw * grid3D.Area.NZw * 3];
+                int zyx = 0;
+                foreach (float z in grid3D.Area.Zw)
+                    foreach (float y in grid3D.Area.Yw)
+                        foreach (float x in grid3D.Area.Xw)
+                        {
+                            vertices_area[zyx] = x; vertices_area[zyx + 1] = y; vertices_area[zyx + 2] = z;
+                            zyx += 3;
+                        }
+
+                indices_area = new uint[Nareas * 12 * 3];
+                int s = 0;
+                foreach (SubArea3D subArea in grid3D.Area.Mw)
+                {
+                    int ix1 = subArea.nx1;
+                    int iy1 = subArea.ny1;
+                    int iz1 = subArea.nz1;
+                    int ix2 = subArea.nx2;
+                    int iy2 = subArea.ny2;
+                    int iz2 = subArea.nz2;
+
+                    uint n1 = (uint)(iy1 * grid3D.Area.NXw + ix1 + grid3D.Area.NXw * grid3D.Area.NYw * iz1);
+                    uint n2 = (uint)(iy1 * grid3D.Area.NXw + ix2 + grid3D.Area.NXw * grid3D.Area.NYw * iz1);
+                    uint n3 = (uint)(iy2 * grid3D.Area.NXw + ix1 + grid3D.Area.NXw * grid3D.Area.NYw * iz1);
+                    uint n4 = (uint)(iy2 * grid3D.Area.NXw + ix2 + grid3D.Area.NXw * grid3D.Area.NYw * iz1);
+                    uint n5 = (uint)(iy1 * grid3D.Area.NXw + ix1 + grid3D.Area.NXw * grid3D.Area.NYw * iz2);
+                    uint n6 = (uint)(iy1 * grid3D.Area.NXw + ix2 + grid3D.Area.NXw * grid3D.Area.NYw * iz2);
+                    uint n7 = (uint)(iy2 * grid3D.Area.NXw + ix1 + grid3D.Area.NXw * grid3D.Area.NYw * iz2);
+                    uint n8 = (uint)(iy2 * grid3D.Area.NXw + ix2 + grid3D.Area.NXw * grid3D.Area.NYw * iz2);
+
+                    indices_area[s] = n1; indices_area[s + 1] = n2; indices_area[s + 2] = n4;
+                    indices_area[s + 3] = n1; indices_area[s + 4] = n3; indices_area[s + 5] = n4;
+                    indices_area[s + 6] = n1; indices_area[s + 7] = n3; indices_area[s + 8] = n5;
+                    indices_area[s + 9] = n5; indices_area[s + 10] = n3; indices_area[s + 11] = n7;
+                    indices_area[s + 12] = n5; indices_area[s + 13] = n6; indices_area[s + 14] = n8;
+                    indices_area[s + 15] = n5; indices_area[s + 16] = n7; indices_area[s + 17] = n6;
+                    indices_area[s + 18] = n2; indices_area[s + 19] = n6; indices_area[s + 20] = n8;
+                    indices_area[s + 21] = n2; indices_area[s + 22] = n4; indices_area[s + 23] = n8;
+                    indices_area[s + 24] = n3; indices_area[s + 25] = n4; indices_area[s + 26] = n8;
+                    indices_area[s + 27] = n3; indices_area[s + 28] = n7; indices_area[s + 29] = n8;
+                    indices_area[s + 30] = n1; indices_area[s + 31] = n2; indices_area[s + 32] = n5;
+                    indices_area[s + 33] = n2; indices_area[s + 34] = n6; indices_area[s + 35] = n5;
+                    s += 36;
+                }
+                areaMesh = new Mesh(vertices_area, indices_area);
+            }
+        }
+
         public void DrawLines(Mesh mesh, Color4 color4) {
             shader.SetColor4("current_color", color4);
             mesh.DrawElems(PrimitiveType.Lines);
@@ -451,19 +571,34 @@ namespace MakeGrid3D
             }
         }
 
+        private void DrawArea3D()
+        {
+            Grid3D grid3D = (Grid3D)grid;
+            int s = 0;
+            foreach (SubArea3D subArea in grid3D.Area.Mw)
+            {
+                shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
+                areaMesh.DrawElems(12 * 3, s, PrimitiveType.Triangles);
+                s += 12 * 3;
+            }
+        }
+
         public void RenderFrame(bool drawArea=true, bool drawNodes=true, bool drawLines=true)
         {
             shader.Use();
             shader.SetMatrix4("projection", ref projection);
             Matrix4 model = Translate * Scale;
             shader.SetMatrix4("model", ref model);
+            Matrix4 view = View;
+            shader.SetMatrix4("view", ref view);
             shader.SetVector2("u_resolution", new Vector2(Right - Left, Top - Bottom));
             GL.LineWidth(LinesSize);
             GL.PointSize(PointsSize);
 
             if (!WireframeMode && drawArea)
             {
-                DrawArea2D();
+                if (grid is Grid2D) DrawArea2D();
+                else DrawArea3D();
             }
             if (ShowGrid)
             {
