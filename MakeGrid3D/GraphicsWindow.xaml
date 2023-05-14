@@ -10,7 +10,8 @@
         Title="MakeGrid3D" Height="720" Width="1280"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
-        Closing="Window_Closing">
+        Closing="Window_Closing"
+        KeyDown="KeyDownHandler">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -33,7 +34,7 @@
 
             <glWpfControl:GLWpfControl 
             x:Name="OpenTkControl" RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
-            Render="OpenTkControl_OnRender" Loaded="OpenTkControl_OnLoad" SizeChanged="OpenTkControl_Resize" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" MouseRightButtonUp="OpenTkControl_MouseRightButtonUp" Grid.ColumnSpan="3"/>
+            Render="OpenTkControl_OnRender" Loaded="OpenTkControl_OnLoad" SizeChanged="OpenTkControl_Resize" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" MouseRightButtonUp="OpenTkControl_MouseRightButtonUp" MouseWheel="OpenTkControl_MouseWheel" Grid.ColumnSpan="3"/>
 
             <Grid Grid.Column="3">
                 <Grid.RowDefinitions>
@@ -46,8 +47,8 @@
 
                 <!--Instrument Panel -->
                 <TabControl Grid.RowSpan="3" Name="Panel" Grid.Column="3" Background="WhiteSmoke">
-                    <!--Moving row-->
-                    <TabItem Header="Движение">
+                    <!-- 2D Moving -->
+                    <TabItem Header="2D">
                         <Grid Margin="10 10 10 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -105,6 +106,119 @@
                             </Grid>
 
                             <Button Grid.Row="3" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- 3D Moving -->
+                    <TabItem Header="3D">
+                        <Grid Margin="10 10 10 0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Rotating row-->
+                            <Grid Grid.Row="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Скорость вращения: " Foreground="Black" FontSize="14"/>
+                                    <Slider Grid.Column="1"/>
+                                </Grid>
+
+                                <Grid Grid.Row="1" Margin="0 10 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <RepeatButton Grid.Column="0" Click="RollLeftClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                        <Image Source="Images/rotate_left.png"></Image>
+                                    </RepeatButton>
+                                    <RepeatButton Grid.Column="1" Click="RollRightClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                        <Image Source="Images/rotate_right.png"></Image>
+                                    </RepeatButton>
+                                    <RepeatButton Grid.Column="2" Click="YawLeftClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                        <Image Source="Images/rotate_around_left.png"></Image>
+                                    </RepeatButton>
+                                    <RepeatButton Grid.Column="3" Click="YawRightClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                        <Image Source="Images/rotate_around_right.png"></Image>
+                                    </RepeatButton>
+                                    <RepeatButton Grid.Column="4" Click="PitchTopClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                        <Image Source="Images/rotate_top.png"></Image>
+                                    </RepeatButton>
+                                    <RepeatButton Grid.Column="5" Click="PitchBottomClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                        <Image Source="Images/rotate_bottom.png"></Image>
+                                    </RepeatButton>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Camera moving -->
+                            <Grid Grid.Row="1" Margin="0 10 0 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Скорость камеры: " Foreground="Black" FontSize="14"/>
+                                <Slider Grid.Column="1" Minimum="0" Maximum="10" ValueChanged="SpeedTranslateChanged" Margin="0 0 0 10"/>
+                            </Grid>
+
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Скорость зума:          " Foreground="Black" FontSize="14"/>
+                                <Slider Grid.Column="1" Minimum="0.001" Maximum="1" ValueChanged="SpeedZoomChanged"/>
+                            </Grid>
+
+                            <Grid Grid.Row="3" Margin="0 10 0 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RepeatButton Grid.Column="0" Click="MoveLeftClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                    <Image Source="Images/arrow_left.png"></Image>
+                                </RepeatButton>
+                                <RepeatButton Grid.Column="1" Click ="MoveRightClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                    <Image Source="Images/arrow_right.png"></Image>
+                                </RepeatButton>
+                                <RepeatButton Grid.Column="2" Click="MoveDownClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                    <Image Source="Images/arrow_down.png"></Image>
+                                </RepeatButton>
+                                <RepeatButton Grid.Column="3" Click="MoveUpClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                    <Image Source="Images/arrow_up.png"></Image>
+                                </RepeatButton>
+                                <RepeatButton Grid.Column="4" Click="ZoomInClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                    <Image Source="Images/zoom_in.png"></Image>
+                                </RepeatButton>
+                                <RepeatButton Grid.Column="5" Click="ZoomOutClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                    <Image Source="Images/zoom_out.png"></Image>
+                                </RepeatButton>
+                            </Grid>
+
+                            <Button Grid.Row="4" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <TextBlock Grid.Row="5" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <TextBlock Grid.Row="6" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                         </Grid>
                     </TabItem>
 

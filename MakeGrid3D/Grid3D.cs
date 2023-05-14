@@ -88,6 +88,9 @@ namespace MakeGrid3D
             {
                 using (TextReader reader = File.OpenText(path))
                 {
+                    string line = "*";
+                    while (line != "")
+                        line = reader.ReadLine();
                     string nXw_txt = reader.ReadLine();
                     NXw = int.Parse(nXw_txt);
                     Xw = new List<float>(NXw);

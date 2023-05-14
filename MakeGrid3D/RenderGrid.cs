@@ -266,10 +266,12 @@ namespace MakeGrid3D
         private float[] vertices_area;
         private uint[] indices_area;
         private Matrix4 projection;
+        private Matrix4 view;
 
+        public Camera Camera { get; private set; }
         public Matrix4 Translate { get; set; } = Matrix4.Identity;
         public Matrix4 Scale { get; set; } = Matrix4.Identity;
-        public Matrix4 View { get; set; } = Matrix4.Identity;
+        public Matrix4 Rotate { get; set; } = Matrix4.Identity;
         public float Indent { get; set; } = Default.indent;
         public float LinesSize { get; set; } = Default.linesSize;
         public float PointsSize { get; set; } = Default.pointsSize;
@@ -303,7 +305,7 @@ namespace MakeGrid3D
         {
             this.grid = grid;
             WindowWidth= windowWidth;
-            WindowHeight = windowHeight; 
+            WindowHeight = windowHeight;
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
             if (grid is Grid2D) AssembleVertices2D(true); else AssembleVertices3D(true);
             SetSize();
@@ -353,41 +355,16 @@ namespace MakeGrid3D
         {
             Grid3D grid3D = (Grid3D)grid;
             // TODO: может не влезать
-            float left = grid3D.Area.X0;
-            float right = grid3D.Area.Xn;
-            float bottom = grid3D.Area.Y0;
-            float top = grid3D.Area.Yn;
-            float front = grid3D.Area.Z0;
-            float back = grid3D.Area.Zn;
-
-            float width = right - left;
-            float height = top - bottom;
-            float depth = back - front;
-
-            float hor_offset = width * Indent;
-            float ver_offset = height * Indent;
-            float dep_offset = depth * Indent;
-
-            float left_ = left - hor_offset;
-            float right_ = right + hor_offset;
-            float bottom_ = bottom - ver_offset;
-            float top_ = top + ver_offset;
-            float front_ = front - dep_offset;
-            float back_ = back + dep_offset;
-
-            Left = left -  10 * hor_offset;
-            Right = right + 10 * hor_offset;
-            Bottom = bottom - 10 * ver_offset;
-            Top = top + 10 * ver_offset;
-            Front = front - 2 * dep_offset;
-            Back = back + 2 * dep_offset;
-
-            Vector3 position = new Vector3((Left + Right) / 2, (Left + Right) / 2, 0);
-            Vector3 direction = Vector3.Normalize(((Left + Right) / 2, (Left + Right) / 2, (Front + Back) / 2));
-            Vector3 up = (0f, 1f, 0f);
-            View = Matrix4.LookAt(position, direction, up);
-            //projection = Matrix4.CreatePerspectiveOffCenter(Left, Right, Bottom, Top, 10f, 40f);
-            projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), WindowWidth / WindowHeight, 0.1f, 100f);
+            Left = grid3D.Area.X0;
+            Right = grid3D.Area.Xn;
+            Bottom = grid3D.Area.Y0;
+            Top = grid3D.Area.Yn;
+            Front = grid3D.Area.Z0;
+            Back = grid3D.Area.Zn;
+            if (Camera != null)
+                Camera.AspectRatio = WindowWidth / WindowHeight;
+            else
+                Camera = new Camera(new Vector3((Left + Right) / 2, (Left + Right) / 2, 0), WindowWidth / WindowHeight);
         }
 
         public void SetSize()
@@ -586,10 +563,17 @@ namespace MakeGrid3D
         public void RenderFrame(bool drawArea=true, bool drawNodes=true, bool drawLines=true)
         {
             shader.Use();
+            if (grid is Grid3D)
+                projection = Camera.GetProjectionMatrix();
             shader.SetMatrix4("projection", ref projection);
-            Matrix4 model = Translate * Scale;
+            if (grid is Grid3D)
+                Translate = Matrix4.CreateTranslation(-4, -4, -4);
+            Matrix4 model = Translate * Scale * Rotate;
             shader.SetMatrix4("model", ref model);
-            Matrix4 view = View;
+            if (grid is Grid2D)
+                view = Matrix4.Identity;
+            else
+                view = Camera.GetViewMatrix();
             shader.SetMatrix4("view", ref view);
             shader.SetVector2("u_resolution", new Vector2(Right - Left, Top - Bottom));
             GL.LineWidth(LinesSize);

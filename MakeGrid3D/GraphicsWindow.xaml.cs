@@ -1,12 +1,19 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
 using OpenTK.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
+using System.Runtime.InteropServices;
+using System.Globalization;
+using System.IO;
 
 namespace MakeGrid3D
 {
@@ -36,6 +43,9 @@ namespace MakeGrid3D
         }
     }
 
+    // TODO: Область рисуется криво(не хватает треугольников)
+    // Сделать сброс настроек камеры
+
     public partial class GraphicsWindow : Window
     {
         RenderGrid renderGrid;
@@ -57,23 +67,33 @@ namespace MakeGrid3D
         Matrix4 rscale = Matrix4.Identity; // TODO: не используется вообще все матрицы scale
         float horOffset = 0;
         float verOffset = 0;
-        float depOffset = 0;
         float scaleX = 1;
         float scaleY = 1;
+        float angleX = 0;
+        float angleY = 0;
+        float angleZ = 0;
         float mouse_horOffset = 0;
         float mouse_verOffset = 0;
         float mouse_scaleX = 1;
         float mouse_scaleY = 1;
         float speedTranslate = Default.speedTranslate;
         float speedZoom = Default.speedZoom;
+        float speedRotate = Default.speedRotate;
         float speedHor = 0;
         float speedVer = 0;
-        float speedDep = 0;
         Color4 bgColor = Default.bgColor;
         string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST4_3D.txt";
         Elem2D selectedElem;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
+
+        Vector2 lastMousePos;
+        bool firstMove = true;
+        bool rotateState = true;
+        const float sensitivity = 0.2f;
+
+        [DllImport("user32.dll")]
+        private static extern bool SetCursorPos(int X, int Y);
 
         public GraphicsWindow()
         {
@@ -91,7 +111,22 @@ namespace MakeGrid3D
 
         private void Init()
         {
-            twoD = false;
+            try
+            {
+                using (TextReader reader = File.OpenText(fileName))
+                {
+                    string dim_txt = reader.ReadLine();
+                    if (dim_txt == "2D") twoD = true; else twoD = false; 
+                }
+            }
+            catch (Exception e)
+            {
+                if (e is DirectoryNotFoundException || e is FileNotFoundException)
+                {
+                    ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
+                }
+            }
+
             if (twoD)
             {
                 Area2D area = new Area2D(fileName);
@@ -112,7 +147,6 @@ namespace MakeGrid3D
             // Множители скорости = 1 процент от ширины(высоты) мира
             speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
-            speedDep = (renderGrid.Back - renderGrid.Front) * 0.01f;
             SetAxis();
         }
 
@@ -146,6 +180,15 @@ namespace MakeGrid3D
             BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid.Nmats;
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid.Nnodes;
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid.Nelems;
+
+            //------------------------------
+            CameraPositionBlock.Text = "X: " + renderGrid.Camera.Position.X.ToString("0.00") + 
+                ", Y: " + renderGrid.Camera.Position.Y.ToString("0.00") +
+                ", Z: " + renderGrid.Camera.Position.Z.ToString("0.00");
+            CameraDirectionBlock.Text = "X: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).X.ToString("0.00") +
+                ", Y: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).Y.ToString("0.00") +
+                ", Z: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).Z.ToString("0.00");
+            //------------------------------
 
             if (twoD) GL.Disable(EnableCap.DepthTest); else GL.Enable(EnableCap.DepthTest);
 
@@ -261,6 +304,7 @@ namespace MakeGrid3D
             mouse_scaleY = 1;
             renderGrid.Indent = Default.indent;
             renderGrid.SetSize();
+            renderGrid.Camera.Reset();
         }
 
         private Point MouseMap(Point pos)
@@ -284,10 +328,76 @@ namespace MakeGrid3D
         private void OpenTkControl_MouseMove(object sender, MouseEventArgs e)
         {
             var position = e.GetPosition(OpenTkControl);
-            Point new_position = MouseMap(position);
-            double x = new_position.X;
-            double y = new_position.Y;
-            BlockCoordinates.Text = "X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
+            // ------------------------------------- 2D -------------------------------------
+            if (twoD)
+            {
+                Point new_position = MouseMap(position);
+                double x = new_position.X;
+                double y = new_position.Y;
+                BlockCoordinates.Text = "X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
+            }
+            // ------------------------------------- 3D -------------------------------------
+            else
+            {
+                float x = (float)position.X;
+                float y = (float)position.Y;
+                if (firstMove)
+                {
+                    lastMousePos = new Vector2(x, y);
+                    firstMove = false;
+                }
+                else if (rotateState)
+                {
+                    float deltaX, deltaY;
+                    OpenTkControl.CaptureMouse();
+                    if (x < 0)
+                    {
+                        lastMousePos = new Vector2(x, y);
+                        x = 0;
+                        Point screenPoint = OpenTkControl.PointToScreen(new Point(x, y));
+                        SetCursorPos((int)screenPoint.X, (int)screenPoint.Y);
+                        deltaX = lastMousePos.X - x;
+                        deltaY = y - lastMousePos.Y;
+                    }
+                    else if (x > OpenTkControl.ActualWidth)
+                    {
+                        lastMousePos = new Vector2(x, y);
+                        x = (float)OpenTkControl.ActualWidth;
+                        Point screenPoint = OpenTkControl.PointToScreen(new Point(x, y));
+                        SetCursorPos((int)screenPoint.X, (int)screenPoint.Y);
+                        deltaX = lastMousePos.X - x;
+                        deltaY = y - lastMousePos.Y;
+                    }
+                    else if (y < 0)
+                    {
+                        lastMousePos = new Vector2(x, y);
+                        y = 0;
+                        Point screenPoint = OpenTkControl.PointToScreen(new Point(x, y));
+                        SetCursorPos((int)screenPoint.X, (int)screenPoint.Y);
+                        deltaX = x - lastMousePos.X;
+                        deltaY = lastMousePos.Y - y;
+                    }
+                    else if (y > OpenTkControl.ActualHeight)
+                    {
+                        lastMousePos = new Vector2(x, y);
+                        y = (float)OpenTkControl.ActualHeight;
+                        Point screenPoint = OpenTkControl.PointToScreen(new Point(x, y));
+                        SetCursorPos((int)screenPoint.X, (int)screenPoint.Y);
+                        deltaX = x - lastMousePos.X;
+                        deltaY = lastMousePos.Y - y;
+                    }
+                    else
+                    { 
+                        deltaX = x - lastMousePos.X;
+                        deltaY = y - lastMousePos.Y;
+                        lastMousePos = new Vector2(x, y);
+                    }
+                    
+
+                    renderGrid.Camera.Yaw += deltaX * sensitivity;
+                    renderGrid.Camera.Pitch -= deltaY * sensitivity; // Reversed since y-coordinates range from bottom to top
+                }
+            }
         }
 
         private void SelectedElemOpenTkControl_OnRender(TimeSpan obj)
@@ -381,7 +491,7 @@ namespace MakeGrid3D
             Point new_position = MouseMap(position);
             float x = (float)new_position.X;
             float y = (float)new_position.Y;
-
+            OpenTkControl.ReleaseMouseCapture();
             if (twoD)
             {
                 // ----------------------------------------- 2D -----------------------------------------
@@ -504,7 +614,7 @@ namespace MakeGrid3D
             }
         }
 
-        private void OpenTkControl_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        private void OpenTkControl_MouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (renderGrid == null)
                 return;
@@ -661,7 +771,6 @@ namespace MakeGrid3D
             color4.A = color.A / 255f;
             return color4;
         }
-
         private void ResetUI()
         {
             LinesSizeSlider.Value = Default.linesSize;
@@ -682,9 +791,53 @@ namespace MakeGrid3D
             CurrentUnstructedNodeColorPicker.SelectedColor = ColorFloatToByte(Default.currentUnstructedNodeColor);
         }
 
-        private void RotateLeftClick(object sender, RoutedEventArgs e)
+        private void RollLeftClick(object sender, RoutedEventArgs e)
         {
-
+            angleX += speedRotate;
+            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+        }
+        private void RollRightClick(object sender, RoutedEventArgs e)
+        {
+            angleX -= speedRotate;
+            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+        }
+        private void YawLeftClick(object sender, RoutedEventArgs e)
+        {
+            angleY += speedRotate;
+            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+        }
+        private void YawRightClick(object sender, RoutedEventArgs e)
+        {
+            angleY -= speedRotate;
+            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+        }
+        private void PitchBottomClick(object sender, RoutedEventArgs e)
+        {
+            angleZ += speedRotate;
+            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+        }
+        private void PitchTopClick(object sender, RoutedEventArgs e)
+        {
+            angleZ -= speedRotate;
+            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+            renderGrid.Rotate = rotateX * rotateY * rotateZ;
         }
 
         private void MoveLeftClick(object sender, RoutedEventArgs e)
@@ -726,13 +879,11 @@ namespace MakeGrid3D
 
         private void ZoomInClick(object sender, RoutedEventArgs e)
         {
-            depOffset -= speedDep * speedTranslate;
-            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, depOffset);
-            //if (renderGrid.Indent >= -0.5f)
-            //{
-            //   renderGrid.Indent -= speedZoom;
-            //   renderGrid.SetSize();
-            //}
+            if (renderGrid.Indent >= -0.5f)
+            {
+                renderGrid.Indent -= speedZoom;
+                renderGrid.SetSize();
+            }
 
             //MessageBox.Show(BufferClass.indent.ToString());
             //BufferClass.scaleX *= BufferClass.speedZoom;
@@ -745,11 +896,8 @@ namespace MakeGrid3D
 
         private void ZoomOutClick(object sender, RoutedEventArgs e)
         {
-            depOffset += speedDep * speedTranslate;
-            renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, depOffset);
-
-            //renderGrid.Indent += speedZoom;
-            //renderGrid.SetSize();
+            renderGrid.Indent += speedZoom;
+            renderGrid.SetSize();
 
             //BufferClass.scaleX /= BufferClass.speedZoom;
             //BufferClass.scaleY /= BufferClass.speedZoom;
@@ -1016,5 +1164,34 @@ namespace MakeGrid3D
             irregularGridMaker.DirIndex = 3;
         }
 
+        private void KeyDownHandler(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Tab)
+            {
+                if (rotateState)
+                {
+                    rotateState = false;
+                    firstMove = true;
+                }
+                else rotateState = true;
+            }
+            else if (e.Key == Key.W)
+                renderGrid.Camera.MoveForward();
+            else if (e.Key == Key.S)
+                renderGrid.Camera.MoveBackwards();
+            else if (e.Key == Key.A)
+                renderGrid.Camera.MoveLeft();
+            else if (e.Key == Key.D)
+                renderGrid.Camera.MoveRight();
+            else if (e.Key == Key.LeftCtrl)
+                renderGrid.Camera.MoveDown();
+            else if (e.Key == Key.LeftShift)
+                renderGrid.Camera.MoveUp();
+        }
+
+        private void OpenTkControl_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            renderGrid.Camera.Zoom((float)e.Delta / 100);
+        }
     }
 }

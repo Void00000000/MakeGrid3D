@@ -12,6 +12,8 @@ namespace MakeGrid3D
     {
         static public float speedTranslate = 1;
         static public float speedZoom = 0.05f;
+        static public float speedRotate = 0.1f;
+        static public float cameraSpeed = 0.5f;
         static public float linesSize = 3;
         static public float pointsSize = 10;
         static public Color4 linesColor = Color4.White;
