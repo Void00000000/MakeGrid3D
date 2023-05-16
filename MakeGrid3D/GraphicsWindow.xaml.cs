@@ -22,24 +22,28 @@ namespace MakeGrid3D
     /// </summary>
     class GridState
     {
-        public Grid2D Grid2D { get; }
-        public int I { get; } = Default.I;
-        public int J { get; } = Default.J;
-        public int NodeI { get; } = Default.I;
-        public int NodeJ { get; } = Default.J;
+        public IGrid Grid { get; }
+        public int I { get; } = 1;
+        public int J { get; } = 1;
+        public int K { get; } = 1;
+        public int NodeI { get; } = 1;
+        public int NodeJ { get; } = 1;
+        public int NodeK { get; } = 1;
         public int DirIndex { get; } = 0;
-        public GridState(Grid2D grid2D, int i, int j, int nodeI, int nodeJ, int dirIndex)
+        public GridState(IGrid grid, int i, int j, int k, int nodeI, int nodeJ, int nodeK, int dirIndex)
         {
-            Grid2D = grid2D;
+            Grid = grid;
             I = i;
             J = j;
+            K = k;
             NodeI = nodeI;
             NodeJ = nodeJ;
+            NodeK = nodeK;
             DirIndex = dirIndex;
         }
-        public GridState(Grid2D grid2D)
+        public GridState(IGrid grid)
         {
-            Grid2D = grid2D;
+            Grid = grid;
         }
     }
 
@@ -51,7 +55,7 @@ namespace MakeGrid3D
         RenderGrid renderGrid;
         IrregularGridMaker irregularGridMaker;
         IGrid regularGrid;
-        LinkedList<GridState> grid2DList;
+        LinkedList<GridState> gridList;
         LinkedListNode<GridState> currentNode;
 
         Mesh axis;
@@ -76,7 +80,7 @@ namespace MakeGrid3D
         float mouse_verOffset = 0;
         float mouse_scaleX = 1;
         float mouse_scaleY = 1;
-        float speedTranslate = Default.speedTranslate;
+        float speedMove = Default.speedMove;
         float speedZoom = Default.speedZoom;
         float speedRotate = Default.speedRotate;
         float speedHor = 0;
@@ -89,7 +93,7 @@ namespace MakeGrid3D
 
         Vector2 lastMousePos;
         bool firstMove = true;
-        bool rotateState = true;
+        bool rotateState = false;
         const float sensitivity = 0.2f;
 
         [DllImport("user32.dll")]
@@ -126,17 +130,12 @@ namespace MakeGrid3D
                     ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
                 }
             }
-
+            BlockCurrentMode.Text = twoD ? "Режим: 2D" : "Режим: 3D";
             if (twoD)
             {
                 Area2D area = new Area2D(fileName);
                 regularGrid = new Grid2D(fileName, area);
                 renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
-                irregularGridMaker = new IrregularGridMaker((Grid2D)regularGrid);
-                grid2DList = new LinkedList<GridState>();
-                SetCurrentNodeMesh();
-                grid2DList.AddLast(new GridState((Grid2D)regularGrid));
-                currentNode = grid2DList.Last;
             }
             else
             {
@@ -144,6 +143,11 @@ namespace MakeGrid3D
                 regularGrid = new Grid3D(fileName, area);
                 renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             }
+            irregularGridMaker = new IrregularGridMaker(regularGrid);
+            gridList = new LinkedList<GridState>();
+            SetCurrentNodeMesh();
+            gridList.AddLast(new GridState(regularGrid));
+            currentNode = gridList.Last;
             // Множители скорости = 1 процент от ширины(высоты) мира
             speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
@@ -182,12 +186,15 @@ namespace MakeGrid3D
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid.Nelems;
 
             //------------------------------
-            CameraPositionBlock.Text = "X: " + renderGrid.Camera.Position.X.ToString("0.00") + 
-                ", Y: " + renderGrid.Camera.Position.Y.ToString("0.00") +
-                ", Z: " + renderGrid.Camera.Position.Z.ToString("0.00");
-            CameraDirectionBlock.Text = "X: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).X.ToString("0.00") +
-                ", Y: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).Y.ToString("0.00") +
-                ", Z: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).Z.ToString("0.00");
+            if (!twoD)
+            {
+                CameraPositionBlock.Text = "X: " + renderGrid.Camera.Position.X.ToString("0.00") +
+                    ", Y: " + renderGrid.Camera.Position.Y.ToString("0.00") +
+                    ", Z: " + renderGrid.Camera.Position.Z.ToString("0.00");
+                CameraDirectionBlock.Text = "X: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).X.ToString("0.00") +
+                    ", Y: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).Y.ToString("0.00") +
+                    ", Z: " + (renderGrid.Camera.Position + renderGrid.Camera.Front).Z.ToString("0.00");
+            }
             //------------------------------
 
             if (twoD) GL.Disable(EnableCap.DepthTest); else GL.Enable(EnableCap.DepthTest);
@@ -205,7 +212,7 @@ namespace MakeGrid3D
                 renderGrid.RenderFrame(drawArea:false, drawNodes:false);
                 renderGrid.shader.DashedLines(false, renderGrid.LinesSize);
 
-                renderGrid.Grid = currentNode.ValueRef.Grid2D;
+                renderGrid.Grid = currentNode.ValueRef.Grid;
                 renderGrid.RenderFrame(drawArea:false);
             }
             else
@@ -271,33 +278,20 @@ namespace MakeGrid3D
             }
         }
 
-        private void Reset()
-        {
-            speedTranslate = Default.speedTranslate;
-            speedZoom = Default.speedZoom;
-            renderGrid.LinesSize = Default.linesSize;
-            renderGrid.PointsSize = Default.pointsSize;
-            renderGrid.LinesColor = Default.linesColor;
-            renderGrid.PointsColor = Default.pointsColor;
-            bgColor = Default.bgColor;
-            renderGrid.WireframeMode = Default.wireframeMode;
-            renderGrid.ShowGrid = Default.showGrid;
-            renderGrid.DrawRemovedLinesMode = Default.drawRemovedLinesMode;
-            irregularGridMaker.MaxAR = (float)Default.maxAR_width / Default.maxAR_height;
-            showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
-            currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
-        }
-
         private void ResetPosition()
         {
             renderGrid.Translate = Matrix4.Identity;
             renderGrid.Scale = Matrix4.Identity;
+            renderGrid.Rotate = Matrix4.Identity;
             rtranslate = Matrix4.Identity;
             rscale = Matrix4.Identity;
             horOffset = 0;
             verOffset = 0;
             scaleX = 1;
             scaleY = 1;
+            angleX = 0;
+            angleY = 0;
+            angleZ = 0;
             mouse_horOffset = 0;
             mouse_verOffset = 0;
             mouse_scaleX = 1;
@@ -692,10 +686,27 @@ namespace MakeGrid3D
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             renderGrid.shader.Use();
+            float fov = renderGrid.Camera.Fov;
+            if (!twoD)
+            {
+                renderGrid.Camera.Fov /= 2f;
+                Matrix4 axis_proj3d = renderGrid.Camera.GetProjectionMatrix();
+                renderGrid.shader.SetMatrix4("projection", ref axis_proj3d);
+            }
             renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
             axis.DrawElems(6, 0, PrimitiveType.Lines);
             renderGrid.shader.SetColor4("current_color", Color4.Red);
             axis.DrawElems(6, 6, PrimitiveType.Lines);
+            if (!twoD)
+            {
+                renderGrid.shader.SetColor4("current_color", Color4.Blue);
+                axis.DrawElems(6, 12, PrimitiveType.Lines);
+
+                renderGrid.Camera.Fov = fov;
+                Matrix4 axis_proj3d = renderGrid.Camera.GetProjectionMatrix();
+                renderGrid.shader.SetMatrix4("projection", ref axis_proj3d);
+            }
+
         }
 
         private void SetAxis()
@@ -704,7 +715,10 @@ namespace MakeGrid3D
             float mid_y = (renderGrid.Top + renderGrid.Bottom) / 2f;
             float offset_x = (renderGrid.Right - renderGrid.Left) * 0.05f;
             float offset_y = (renderGrid.Top - renderGrid.Bottom) * 0.1f;
-            float[] vertices = {
+            // ----------------------------------- 2D -------------------------------------------
+            if (twoD)
+            {
+                float[] vertices = {
                                                     // x
                                  mid_x, renderGrid.Bottom, 0, //0
                                  mid_x, renderGrid.Top, 0, // 1
@@ -715,10 +729,38 @@ namespace MakeGrid3D
                                  renderGrid.Right, mid_y, 0,// 5
                                  renderGrid.Right - offset_x, mid_y + offset_y, 0, // 6
                                  renderGrid.Right - offset_x, mid_y - offset_y, 0 }; // 7
-            uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7 };
-            if (axis != null)
-                axis.Dispose();
-            axis = new Mesh(vertices, indices);
+                uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7 };
+                if (axis != null)
+                    axis.Dispose();
+                axis = new Mesh(vertices, indices);
+            }
+            // ----------------------------------- 3D -------------------------------------------
+            else
+            {
+                float mid_z = (renderGrid.Back + renderGrid.Front) / 2f;
+                float offset_z = (renderGrid.Back - renderGrid.Front) * 0.05f;
+                float[] vertices = {
+                                                    // y
+                                 mid_x, renderGrid.Bottom, mid_z, //0
+                                 mid_x, renderGrid.Top, mid_z, // 1
+                                 mid_x - offset_x, renderGrid.Top - offset_y, mid_z, // 2
+                                 mid_x + offset_x, renderGrid.Top - offset_y, mid_z, // 3
+                                                    // x
+                                 renderGrid.Left, mid_y, mid_z, // 4
+                                 renderGrid.Right, mid_y, mid_z,// 5
+                                 renderGrid.Right - offset_x, mid_y + offset_y, mid_z, // 6
+                                 renderGrid.Right - offset_x, mid_y - offset_y, mid_z, // 7
+                                                    // z
+                                 mid_x, mid_y, renderGrid.Front, // 8
+                                 mid_x, mid_y, renderGrid.Back, // 9
+                                 mid_x + offset_x, mid_y, renderGrid.Front + offset_z, // 10
+                                 mid_x - offset_x, mid_y, renderGrid.Front + offset_z, // 11            
+                                 };
+                uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7, 8, 9, 8, 10, 8, 11 };
+                if (axis != null)
+                    axis.Dispose();
+                axis = new Mesh(vertices, indices);
+            }
         }
         private void OpenFileClick(object sender, RoutedEventArgs e)
         {
@@ -748,7 +790,6 @@ namespace MakeGrid3D
                 selectedElemLines = null;
             }
             ResetPosition();
-            Reset();
             ResetUI();
             Init();
         }
@@ -775,8 +816,9 @@ namespace MakeGrid3D
         {
             LinesSizeSlider.Value = Default.linesSize;
             PointsSizeSlider.Value = Default.pointsSize;
-            SpeedTranslateSlider.Value = Default.speedTranslate;
+            SpeedMoveSlider.Value = Default.speedMove;
             SpeedZoomSlider.Value = Default.speedZoom;
+            SpeedRotateSlider.Value = Default.speedRotate;
 
             PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
             LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
@@ -787,101 +829,128 @@ namespace MakeGrid3D
             DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
             WidthInput.Text = Default.maxAR_width.ToString();
             HeightInput.Text = Default.maxAR_height.ToString();
+            if (irregularGridMaker != null)
+            {
+                irregularGridMaker.MaxAR = Default.maxAR_width / Default.maxAR_height;
+            }
             ShowCurrentUnstructedNodeCheckBox.IsChecked = Default.showCurrentUnstructedNode;
             CurrentUnstructedNodeColorPicker.SelectedColor = ColorFloatToByte(Default.currentUnstructedNodeColor);
         }
 
         private void RollLeftClick(object sender, RoutedEventArgs e)
         {
-            angleX += speedRotate;
-            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
-            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
-            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
-            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            if (!twoD)
+            {
+                angleZ += speedRotate;
+                Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+                Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+                Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+                renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            }
+            else MessageBox.Show("Вращение не доступно в 2D режиме");
         }
         private void RollRightClick(object sender, RoutedEventArgs e)
         {
-            angleX -= speedRotate;
-            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
-            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
-            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
-            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            if (!twoD)
+            {
+                angleZ -= speedRotate;
+                Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+                Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+                Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+                renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            }
+            else MessageBox.Show("Вращение не доступно в 2D режиме");
         }
         private void YawLeftClick(object sender, RoutedEventArgs e)
         {
-            angleY += speedRotate;
-            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
-            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
-            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
-            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            if (!twoD)
+            {
+                angleY += speedRotate;
+                Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+                Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+                Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+                renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            }
+            else MessageBox.Show("Вращение не доступно в 2D режиме");
         }
         private void YawRightClick(object sender, RoutedEventArgs e)
         {
-            angleY -= speedRotate;
-            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
-            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
-            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
-            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            if (!twoD)
+            {
+                angleY -= speedRotate;
+                Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+                Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+                Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+                renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            }
+            else MessageBox.Show("Вращение не доступно в 2D режиме");
         }
         private void PitchBottomClick(object sender, RoutedEventArgs e)
         {
-            angleZ += speedRotate;
-            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
-            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
-            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
-            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            if (!twoD)
+            {
+                angleX += speedRotate;
+                Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+                Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+                Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+                renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            }
+            else MessageBox.Show("Вращение не доступно в 2D режиме");
         }
         private void PitchTopClick(object sender, RoutedEventArgs e)
         {
-            angleZ -= speedRotate;
-            Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
-            Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
-            Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
-            renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            if (!twoD)
+            {
+                angleX -= speedRotate;
+                Matrix4 rotateX = Matrix4.CreateRotationX(angleX);
+                Matrix4 rotateY = Matrix4.CreateRotationY(angleY);
+                Matrix4 rotateZ = Matrix4.CreateRotationZ(angleZ);
+                renderGrid.Rotate = rotateX * rotateY * rotateZ;
+            }
+            else MessageBox.Show("Вращение не доступно в 2D режиме");
         }
 
-        private void MoveLeftClick(object sender, RoutedEventArgs e)
+        private void MoveLeft2D()
         {
-
-            horOffset += speedHor * speedTranslate;
+            horOffset += speedHor * speedMove;
             renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
-            mouse_horOffset -= speedHor * speedTranslate;
+            mouse_horOffset -= speedHor * speedMove;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
         }
 
-        private void MoveRightClick(object sender, RoutedEventArgs e)
+        private void MoveRight2D()
         {
-            horOffset -= speedHor * speedTranslate;
+            horOffset -= speedHor * speedMove;
             renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
-            mouse_horOffset += speedHor * speedTranslate;
+            mouse_horOffset += speedHor * speedMove;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
         }
 
-        private void MoveDownClick(object sender, RoutedEventArgs e)
+        private void MoveDown2D()
         {
-            verOffset += speedVer * speedTranslate;
+            verOffset += speedVer * speedMove;
             renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
-            mouse_verOffset -= speedVer * speedTranslate;
+            mouse_verOffset -= speedVer * speedMove;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
         }
 
-        private void MoveUpClick(object sender, RoutedEventArgs e)
+        private void MoveUp2D()
         {
-            verOffset -= speedVer * speedTranslate;
+            verOffset -= speedVer * speedMove;
             renderGrid.Translate = Matrix4.CreateTranslation(horOffset, verOffset, 0);
 
-            mouse_verOffset += speedVer * speedTranslate;
+            mouse_verOffset += speedVer * speedMove;
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
         }
 
-        private void ZoomInClick(object sender, RoutedEventArgs e)
+        private void ZoomIn2D(float delta = 1f)
         {
             if (renderGrid.Indent >= -0.5f)
             {
-                renderGrid.Indent -= speedZoom;
+                renderGrid.Indent -= delta * speedZoom;
                 renderGrid.SetSize();
             }
 
@@ -894,7 +963,7 @@ namespace MakeGrid3D
             //BufferClass.mouse_scaleY /= BufferClass.speedZoom;
         }
 
-        private void ZoomOutClick(object sender, RoutedEventArgs e)
+        private void ZoomOut2D(float delta = 1f)
         {
             renderGrid.Indent += speedZoom;
             renderGrid.SetSize();
@@ -905,6 +974,36 @@ namespace MakeGrid3D
 
             //BufferClass.mouse_scaleX *= BufferClass.speedZoom;
             //BufferClass.mouse_scaleY *= BufferClass.speedZoom;
+        }
+
+        private void MoveLeftClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD) MoveLeft2D(); else renderGrid.Camera.MoveLeft();
+        }
+
+        private void MoveRightClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD) MoveRight2D(); else renderGrid.Camera.MoveRight();
+        }
+
+        private void MoveDownClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD) MoveDown2D(); else renderGrid.Camera.MoveDown();
+        }
+
+        private void MoveUpClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD) MoveUp2D(); else renderGrid.Camera.MoveUp();
+        }
+
+        private void ZoomInClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD) ZoomIn2D(); else renderGrid.Camera.Zoom(speedZoom * 100);
+        }
+
+        private void ZoomOutClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD) ZoomOut2D(); else renderGrid.Camera.Zoom(-speedZoom * 100);
         }
 
         private void ResetPositionClick(object sender, RoutedEventArgs e)
@@ -941,9 +1040,10 @@ namespace MakeGrid3D
             bgColor = ColorByteToFloat((Color)e.NewValue);
         }
 
-        private void SpeedTranslateChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void SpeedMoveChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            speedTranslate = (float)e.NewValue;
+            speedMove = (float)e.NewValue;
+            if (!twoD && renderGrid != null) renderGrid.Camera.Speed = speedMove;
         }
 
         private void SpeedZoomChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -951,9 +1051,13 @@ namespace MakeGrid3D
             speedZoom = (float)e.NewValue;
         }
 
+        private void SpeedRotateChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            speedRotate = MathHelper.DegreesToRadians((float)e.NewValue);
+        }
+
         private void ResetSettingsClick(object sender, RoutedEventArgs e)
         {
-            Reset();
             ResetUI();
         }
 
@@ -1025,8 +1129,8 @@ namespace MakeGrid3D
             if (currentNode != null && currentNode.Previous != null)
             {
                 currentNode = currentNode.Previous;
-                renderGrid.Grid = currentNode.ValueRef.Grid2D;
-                irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
+                renderGrid.Grid = currentNode.ValueRef.Grid;
+                irregularGridMaker.Grid = currentNode.ValueRef.Grid;
                 int i = currentNode.Value.I;
                 int j = currentNode.Value.J;
                 int nodeI = currentNode.Value.NodeI;
@@ -1046,8 +1150,8 @@ namespace MakeGrid3D
             if (currentNode != null && currentNode.Next != null)
             {
                 currentNode = currentNode.Next;
-                renderGrid.Grid = currentNode.ValueRef.Grid2D;
-                irregularGridMaker.Grid2D = currentNode.ValueRef.Grid2D;
+                renderGrid.Grid = currentNode.ValueRef.Grid;
+                irregularGridMaker.Grid = currentNode.ValueRef.Grid;
                 int i = currentNode.Value.I;
                 int j = currentNode.Value.J;
                 int nodeI = currentNode.Value.NodeI;
@@ -1064,46 +1168,51 @@ namespace MakeGrid3D
 
         private void RemoveElemsClick(object sender, RoutedEventArgs e)
         {
-            if (irregularGridMaker.NodeI < irregularGridMaker.Grid2D.Nx - 1 &&
-                irregularGridMaker.NodeJ < irregularGridMaker.Grid2D.Ny - 1) 
+            if (irregularGridMaker.NodeI < irregularGridMaker.Nx - 1 &&
+                irregularGridMaker.NodeJ < irregularGridMaker.Ny - 1) 
             {
-                Grid2D grid2D_new = irregularGridMaker.MakeUnStructedGrid();
+                IGrid grid_new = irregularGridMaker.MakeUnStructedGrid();
                 while (currentNode != null && currentNode.Next != null)
-                    grid2DList.Remove(currentNode.Next);
+                    gridList.Remove(currentNode.Next);
                 int nodeI = irregularGridMaker.NodeI;
                 int nodeJ = irregularGridMaker.NodeJ;
+                int nodeK = irregularGridMaker.NodeK;
                 int i = irregularGridMaker.I;
                 int j = irregularGridMaker.J;
+                int k = irregularGridMaker.K;
                 int dirIndex = irregularGridMaker.DirIndex;
                 SetCurrentNodeMesh();
-                grid2DList.AddLast(new GridState(grid2D_new, i, j, nodeI, nodeJ, dirIndex));
-                currentNode = grid2DList.Last;
-                renderGrid.Grid = grid2D_new;
-                irregularGridMaker.Grid2D = grid2D_new; 
+                gridList.AddLast(new GridState(grid_new, i, j, k, nodeI, nodeJ, nodeK, dirIndex));
+                currentNode = gridList.Last;
+                renderGrid.Grid = grid_new;
+                irregularGridMaker.Grid = grid_new; 
             }
         }
 
         private void RemoveAllElemsClick(object sender, RoutedEventArgs e)
         {
             // TODO: Соптимизировать
-            if (irregularGridMaker.NodeI < irregularGridMaker.Grid2D.Nx - 1 &&
-                irregularGridMaker.NodeJ < irregularGridMaker.Grid2D.Ny - 1)
+            if (irregularGridMaker.NodeI < irregularGridMaker.Nx - 1 &&
+                irregularGridMaker.NodeJ < irregularGridMaker.Ny - 1)
             {
-                Grid2D grid2D_new = irregularGridMaker.MakeUnStructedGrid();
-                irregularGridMaker.Grid2D = grid2D_new;
-                while (irregularGridMaker.NodeI < irregularGridMaker.Grid2D.Nx - 1 &&
-                    irregularGridMaker.NodeJ < irregularGridMaker.Grid2D.Ny - 1)
+                IGrid grid_new = irregularGridMaker.MakeUnStructedGrid();
+                irregularGridMaker.Grid = grid_new;
+                while (irregularGridMaker.NodeI < irregularGridMaker.Nx - 1 &&
+                    irregularGridMaker.NodeJ < irregularGridMaker.Ny - 1)
                 {
-                    grid2D_new = irregularGridMaker.MakeUnStructedGrid();
-                    irregularGridMaker.Grid2D = grid2D_new;
+                    grid_new = irregularGridMaker.MakeUnStructedGrid();
+                    irregularGridMaker.Grid = grid_new;
                 }
                 while (currentNode != null && currentNode.Next != null)
-                    grid2DList.Remove(currentNode.Next);
+                    gridList.Remove(currentNode.Next);
                 SetCurrentNodeMesh();
                 int dirIndex = irregularGridMaker.DirIndex;
-                grid2DList.AddLast(new GridState(grid2D_new, grid2D_new.Nx - 1, grid2D_new.Ny - 1, grid2D_new.Nx - 1, grid2D_new.Ny - 1, dirIndex));
-                currentNode = grid2DList.Last;
-                renderGrid.Grid = grid2D_new;
+                int Nx = irregularGridMaker.Nx;
+                int Ny = irregularGridMaker.Ny;
+                int Nz = irregularGridMaker.Nz;
+                gridList.AddLast(new GridState(grid_new, Nx - 1, Ny - 1, Nz - 1, Nx - 1, Ny - 1, Nz - 1, dirIndex));
+                currentNode = gridList.Last;
+                renderGrid.Grid = grid_new;
             }
         }
 
@@ -1117,16 +1226,16 @@ namespace MakeGrid3D
         {
             if (renderGrid == null) return;
             renderGrid.Grid = regularGrid;
-            irregularGridMaker.Grid2D = (Grid2D)regularGrid;
+            irregularGridMaker.Grid = regularGrid;
             irregularGridMaker.I = 1;
             irregularGridMaker.J = 1;
             irregularGridMaker.NodeI = 1;
             irregularGridMaker.NodeJ = 1;
             irregularGridMaker.DirIndex = 0;
-            grid2DList.Clear();
+            gridList.Clear();
             SetCurrentNodeMesh();
-            grid2DList.AddLast(new GridState((Grid2D)regularGrid));
-            currentNode = grid2DList.Last;
+            gridList.AddLast(new GridState(regularGrid));
+            currentNode = gridList.Last;
         }
 
         private void ShowCurrentUnstructedNodeChecked(object sender, RoutedEventArgs e)
@@ -1166,7 +1275,7 @@ namespace MakeGrid3D
 
         private void KeyDownHandler(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Tab)
+            if (e.Key == Key.Tab && !twoD)
             {
                 if (rotateState)
                 {
@@ -1176,22 +1285,27 @@ namespace MakeGrid3D
                 else rotateState = true;
             }
             else if (e.Key == Key.W)
-                renderGrid.Camera.MoveForward();
+                if (!twoD) renderGrid.Camera.MoveForward(); else MoveUp2D();
             else if (e.Key == Key.S)
-                renderGrid.Camera.MoveBackwards();
+                if (!twoD) renderGrid.Camera.MoveBackwards(); else MoveDown2D();
             else if (e.Key == Key.A)
-                renderGrid.Camera.MoveLeft();
+                if (!twoD) renderGrid.Camera.MoveLeft(); else MoveLeft2D();
             else if (e.Key == Key.D)
-                renderGrid.Camera.MoveRight();
-            else if (e.Key == Key.LeftCtrl)
+                if (!twoD) renderGrid.Camera.MoveRight(); else MoveRight2D();
+            else if (e.Key == Key.LeftCtrl && !twoD)
                 renderGrid.Camera.MoveDown();
-            else if (e.Key == Key.LeftShift)
+            else if (e.Key == Key.LeftShift && !twoD)
                 renderGrid.Camera.MoveUp();
         }
 
         private void OpenTkControl_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
-            renderGrid.Camera.Zoom((float)e.Delta / 100);
+            if (twoD)
+            {
+                if ((float)e.Delta > 0) ZoomIn2D((float)e.Delta / 100);
+                else ZoomOut2D(-(float)e.Delta / 100);
+            }
+            else renderGrid.Camera.Zoom(speedZoom * e.Delta);
         }
     }
 }

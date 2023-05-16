@@ -293,6 +293,9 @@ namespace MakeGrid3D
                     string line = "*";
                     while (line != "")
                         line = reader.ReadLine();
+                    line = "*";
+                    while (line != "")
+                        line = reader.ReadLine();
                     nx = new List<int>(Area.NXw - 1);
                     string nxi_txt = reader.ReadLine();
                     string[] nxi = nxi_txt.Split(' ');

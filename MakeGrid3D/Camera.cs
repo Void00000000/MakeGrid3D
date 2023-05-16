@@ -20,7 +20,7 @@ namespace MakeGrid3D
         private float yaw = -MathHelper.PiOver2; // Without this, you would be started rotated 90 degrees right.
         private float fov = MathHelper.PiOver2;
 
-        public float Speed { get; set; } = Default.cameraSpeed;
+        public float Speed { get; set; } = Default.speedMove;
         public Vector3 Position { get; set; }
         public float AspectRatio { private get; set; }
         public Vector3 Front => front;
@@ -65,6 +65,7 @@ namespace MakeGrid3D
             }
         }
 
+        public Camera() { }
         public Camera(Vector3 position, float aspectRatio)
         {
             defaultPosition = position;
@@ -79,7 +80,7 @@ namespace MakeGrid3D
 
         public Matrix4 GetProjectionMatrix()
         {
-            return Matrix4.CreatePerspectiveFieldOfView(fov, AspectRatio, 0.01f, 100f);
+            return Matrix4.CreatePerspectiveFieldOfView(fov, AspectRatio, 0.01f, 1000f);
         }
 
         private void UpdateVectors()
@@ -106,7 +107,7 @@ namespace MakeGrid3D
             right = Vector3.UnitX;
             yaw = -MathHelper.PiOver2;
             fov = MathHelper.PiOver2;
-            Speed = Default.cameraSpeed;
+            Speed = Default.speedMove;
         }
 
         // TODO: Нужно добавить умножение на время, иначе чем мощнее компьютер чем быстрее будет камера

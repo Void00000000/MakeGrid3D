@@ -295,8 +295,8 @@ namespace MakeGrid3D
         public float Right { get; private set; }
         public float Bottom { get; private set; }
         public float Top { get; private set;}
-        public float Front { get; private set; }
-        public float Back { get; private set; }
+        public float Front { get; private set; } = 0;
+        public float Back { get; private set; } = 0;
 
         public float WindowWidth { get; set; }
         public float WindowHeight { get; set; }
@@ -307,7 +307,8 @@ namespace MakeGrid3D
             WindowWidth= windowWidth;
             WindowHeight = windowHeight;
             shader = new Shader("\\Shaders\\shader.vert", "\\Shaders\\shader.frag");
-            if (grid is Grid2D) AssembleVertices2D(true); else AssembleVertices3D(true);
+            if (grid is Grid2D) { AssembleVertices2D(true); Camera = new Camera(); } 
+            else AssembleVertices3D(true);
             SetSize();
         }
 
@@ -364,7 +365,7 @@ namespace MakeGrid3D
             if (Camera != null)
                 Camera.AspectRatio = WindowWidth / WindowHeight;
             else
-                Camera = new Camera(new Vector3((Left + Right) / 2, (Left + Right) / 2, 0), WindowWidth / WindowHeight);
+                Camera = new Camera(new Vector3(0, 0, Back), WindowWidth / WindowHeight);
         }
 
         public void SetSize()
@@ -502,19 +503,25 @@ namespace MakeGrid3D
                     uint n6 = (uint)(iy1 * grid3D.Area.NXw + ix2 + grid3D.Area.NXw * grid3D.Area.NYw * iz2);
                     uint n7 = (uint)(iy2 * grid3D.Area.NXw + ix1 + grid3D.Area.NXw * grid3D.Area.NYw * iz2);
                     uint n8 = (uint)(iy2 * grid3D.Area.NXw + ix2 + grid3D.Area.NXw * grid3D.Area.NYw * iz2);
-
-                    indices_area[s] = n1; indices_area[s + 1] = n2; indices_area[s + 2] = n4;
-                    indices_area[s + 3] = n1; indices_area[s + 4] = n3; indices_area[s + 5] = n4;
-                    indices_area[s + 6] = n1; indices_area[s + 7] = n3; indices_area[s + 8] = n5;
-                    indices_area[s + 9] = n5; indices_area[s + 10] = n3; indices_area[s + 11] = n7;
-                    indices_area[s + 12] = n5; indices_area[s + 13] = n6; indices_area[s + 14] = n8;
-                    indices_area[s + 15] = n5; indices_area[s + 16] = n7; indices_area[s + 17] = n6;
-                    indices_area[s + 18] = n2; indices_area[s + 19] = n6; indices_area[s + 20] = n8;
-                    indices_area[s + 21] = n2; indices_area[s + 22] = n4; indices_area[s + 23] = n8;
-                    indices_area[s + 24] = n3; indices_area[s + 25] = n4; indices_area[s + 26] = n8;
-                    indices_area[s + 27] = n3; indices_area[s + 28] = n7; indices_area[s + 29] = n8;
-                    indices_area[s + 30] = n1; indices_area[s + 31] = n2; indices_area[s + 32] = n5;
-                    indices_area[s + 33] = n2; indices_area[s + 34] = n6; indices_area[s + 35] = n5;
+                    
+                    // Front face
+                    indices_area[s] = n1; indices_area[s + 1] = n3; indices_area[s + 2] = n4;
+                    indices_area[s + 3] = n1; indices_area[s + 4] = n4; indices_area[s + 5] = n2;
+                    // Right face
+                    indices_area[s + 6] = n2; indices_area[s + 7] = n4; indices_area[s + 8] = n8;
+                    indices_area[s + 9] = n2; indices_area[s + 10] = n8; indices_area[s + 11] = n6;
+                    // Back face
+                    indices_area[s + 12] = n6; indices_area[s + 13] = n8; indices_area[s + 14] = n7;
+                    indices_area[s + 15] = n6; indices_area[s + 16] = n7; indices_area[s + 17] = n5;
+                    // Left face
+                    indices_area[s + 18] = n5; indices_area[s + 19] = n7; indices_area[s + 20] = n3;
+                    indices_area[s + 21] = n5; indices_area[s + 22] = n3; indices_area[s + 23] = n1;
+                    // Top face
+                    indices_area[s + 24] = n3; indices_area[s + 25] = n7; indices_area[s + 26] = n8;
+                    indices_area[s + 27] = n3; indices_area[s + 28] = n8; indices_area[s + 29] = n4;
+                    // Bottom face
+                    indices_area[s + 30] = n6; indices_area[s + 31] = n5; indices_area[s + 32] = n1;
+                    indices_area[s + 33] = n6; indices_area[s + 34] = n1; indices_area[s + 35] = n2;
                     s += 36;
                 }
                 areaMesh = new Mesh(vertices_area, indices_area);
@@ -566,8 +573,11 @@ namespace MakeGrid3D
             if (grid is Grid3D)
                 projection = Camera.GetProjectionMatrix();
             shader.SetMatrix4("projection", ref projection);
+            float center_x = (Left + Right) / 2;
+            float center_y = (Top + Bottom) / 2;
+            float center_z = (Front + Back) / 2;
             if (grid is Grid3D)
-                Translate = Matrix4.CreateTranslation(-4, -4, -4);
+                Translate = Matrix4.CreateTranslation(-center_x, -center_y, -center_z);
             Matrix4 model = Translate * Scale * Rotate;
             shader.SetMatrix4("model", ref model);
             if (grid is Grid2D)
