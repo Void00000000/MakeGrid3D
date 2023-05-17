@@ -25,29 +25,13 @@ namespace MakeGrid3D
         }
     }
 
-    enum NodeType : byte
-    {
-        Regular,
-        Left,
-        Right,
-        Top,
-        Bottom,
-        Removed
-    }
-
-    enum Direction
-    {
-        Left,
-        Right,
-        Top,
-        Bottom,
-    }
-
     // Прямоугольный конечный элемент
     struct Elem2D
     {
         public int wi;
-        public int n1; public int n2; public int n3; public int n4; // граничные узлы
+        // Граничные узлы
+        public int n1; public int n2; public int n3; public int n4;
+        // Терминальный узел
         public int n5 = -1;
 
         public Elem2D(int wi, int n1, int n2, int n3, int n4)
@@ -170,13 +154,6 @@ namespace MakeGrid3D
             }
             return -1;
         }
-    }
-
-    interface IGrid
-    {
-        public int Nnodes { get; }
-        public int Nelems { get; }
-        public int Nmats { get; }
     }
 
     class Grid2D : IGrid

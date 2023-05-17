@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MakeGrid3D
 {
@@ -38,6 +36,8 @@ namespace MakeGrid3D
         // Граничные узлы
         public int n1; public int n2; public int n3; public int n4;
         public int n5; public int n6; public int n7; public int n8;
+        // Терминальные узлы
+        public int n9 = -1; public int n10 = -1;
 
         public Elem3D(int wi, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8)
         {
@@ -52,10 +52,12 @@ namespace MakeGrid3D
             this.n8 = n8;
         }
 
-        //public Elem3D(int wi, int n1, int n2, int n3, int n4, int n5) : this(wi, n1, n2, n3, n4)
-        //{
-        //    this.n5 = n5;
-        //}
+        public Elem3D(int wi, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10)
+            : this(wi, n1, n2, n3, n4, n5, n6, n7, n8)
+        {
+            this.n9 = n9;
+            this.n10 = n10;
+        }
     }
 
     // Расчётная область
@@ -160,6 +162,36 @@ namespace MakeGrid3D
             }
         }
 
+        // Тиражирование сечений
+        public Area3D(Area2D area2D, List<float> z)
+        {
+            Nareas = area2D.Nareas;
+            Nmats = area2D.Nmats;
+            X0 = area2D.X0;
+            Xn = area2D.Xn;
+            Y0 = area2D.Y0;
+            Yn = area2D.Yn;
+            Z0 = z[0];
+            Zn = z[z.Count - 1];
+            NXw = area2D.NXw;
+            NYw = area2D.NYw;
+            NZw = 2;
+            Xw = area2D.Xw;
+            Yw = area2D.Yw;
+            Zw = new List<float>{ Z0, Zn };
+            Mw = new List<SubArea3D>(Nareas);
+            foreach (SubArea2D subArea2D in area2D.Mw)
+            {
+                int wi = subArea2D.wi;
+                int nx1 = subArea2D.nx1;
+                int nx2 = subArea2D.nx2;
+                int ny1 = subArea2D.ny1;
+                int ny2 = subArea2D.ny2;
+                SubArea3D subArea3D = new SubArea3D(wi, nx1, nx2, ny1, ny2, 0, 1);
+                Mw.Add(subArea3D);
+            }
+        }
+
         public int FindSubArea(float xElemMin, float xElemMax, float yElemMin, float yElemMax,
             float zElemMin, float zElemMax)
         {
@@ -221,6 +253,72 @@ namespace MakeGrid3D
                         if (IJK[i][j][k] == NodeType.Removed)
                             removedNodes.Add(j * Nx + i + k * Nx * Ny);
                     }
+        }
+
+        // Тиражирование сечений
+        public Grid3D(Grid2D grid2D, List<float> z)
+        {
+            Area = new Area3D(grid2D.Area, z);
+            Nnodes = grid2D.Nnodes * z.Count;
+            Nelems = grid2D.Nelems * (z.Count - 1);
+            Nmats = Area.Nmats;
+            Nx = grid2D.Nx;
+            Ny = grid2D.Ny;
+            Nz = z.Count;
+            // Заполнение массива узлов
+            XYZ = new List<Vector3>(Nnodes);
+            foreach (float zi in z)
+            {
+                foreach (Vector2 xy in grid2D.XY)
+                {
+                    XYZ.Add(new Vector3(xy.X, xy.Y, zi));
+                }
+            }
+            // Заполнение байтовой матрицы
+            IJK = new ByteMat3D(Nx);
+            for (int i = 0; i < Nx; i++)
+            {
+                IJK.Add(new ByteMat2D(Ny));
+                for (int j = 0; j < Ny; j++)
+                {
+                    IJK[i].Add(new List<NodeType>(Nz));
+                    for (int k = 0; k < Nz; k++)
+                        IJK[i][j].Add(NodeType.Regular);
+                }
+            }
+            removedNodes = new List<int>();
+            for (int k = 0; k < Nz; k++)
+                for (int j = 0; j < Ny; j++)
+                    for (int i = 0; i < Nx; i++)
+                    {
+                        IJK[i][j][k] = grid2D.IJ[i][j];
+                        if (IJK[i][j][k] == NodeType.Removed)
+                            removedNodes.Add(j * Nx + i + k * Nx * Ny);
+                    }
+            // Заполнения массива элементов
+            Elems = new List<Elem3D>(Nelems);
+            for (int i = 0; i < z.Count - 1; i++)
+            {
+                foreach (Elem2D elem2D in grid2D.Elems)
+                {
+                    int n1 = elem2D.n1 + i * grid2D.Nnodes;
+                    int n2 = elem2D.n2 + i * grid2D.Nnodes;
+                    int n3 = elem2D.n3 + i * grid2D.Nnodes;
+                    int n4 = elem2D.n4 + i * grid2D.Nnodes;
+                    int n5 = elem2D.n1 + (i + 1) * grid2D.Nnodes;
+                    int n6 = elem2D.n2 + (i + 1) * grid2D.Nnodes;
+                    int n7 = elem2D.n3 + (i + 1) * grid2D.Nnodes;
+                    int n8 = elem2D.n4 + (i + 1) * grid2D.Nnodes;
+                    if (elem2D.n5 < 0)
+                        Elems.Add(new Elem3D(elem2D.wi, n1, n2, n3, n4, n5, n6, n7, n8));
+                    else
+                    {
+                        int n9 = elem2D.n5 + i * grid2D.Nnodes;
+                        int n10 = elem2D.n5 + (i + 1) * grid2D.Nnodes;
+                        Elems.Add(new Elem3D(elem2D.wi, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10));
+                    }
+                }
+            }
         }
 
         // Создание регулярной сетки

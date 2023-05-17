@@ -58,6 +58,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <Grid Grid.Row="0" Margin="10 10 10 0">
@@ -66,7 +67,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Скорость движения: " Foreground="Black" FontSize="14"/>
-                                <Slider Name = "SpeedMoveSlider" Grid.Column="1" Minimum="0" Maximum="5" ValueChanged="SpeedMoveChanged" Margin="0 0 0 10"/>
+                                <Slider Name = "SpeedMoveSlider" Grid.Column="1" Minimum="0" Maximum="5" ValueChanged="SpeedMoveChanged"/>
                             </Grid>
 
                             <Grid Grid.Row="1" Margin="10 10 10 0">
@@ -153,9 +154,10 @@
                                 </Grid>
                             </Grid>
 
-                            <Button Grid.Row="4" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="10 10 10 0"/>
-                            <TextBlock Grid.Row="5" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
-                            <TextBlock Grid.Row="6" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <Button Grid.Row="4" Click="ReplicateCrossSectionsClick" Content="Тиражировать сечение" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <Button Grid.Row="5" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <TextBlock Grid.Row="6" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <TextBlock Grid.Row="7" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                         </Grid>
                     </TabItem>
 
@@ -225,7 +227,6 @@
                                 <TextBlock Grid.Column="2" Text="Отображать сетку: " Foreground="Black"/>
                                 <CheckBox Name="ShowGridCheckBox" Grid.Column="3" Checked="ShowGridChecked" Unchecked="ShowGridUnChecked"/>
                             </Grid>
-
                             <!--Reset Settings-->
                             <Button Grid.Row="5" Click="ResetSettingsClick" Content="Сбросить настройки по умолчанию" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                         </Grid>

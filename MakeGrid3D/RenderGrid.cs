@@ -282,13 +282,15 @@ namespace MakeGrid3D
         public bool DrawRemovedLinesMode { get; set; } = Default.drawRemovedLinesMode;
 
         private IGrid grid;
+        // TODO: Area собирается всегда
         public IGrid Grid
         {
             get { return grid; }
             set 
             {
                 grid = value;
-                if (grid is Grid2D) AssembleVertices2D(false); else AssembleVertices3D(false);
+                if (grid is Grid2D) AssembleVertices2D(true); else AssembleVertices3D(true);
+                SetSize();
             }
         }
         public float Left { get; private set; }
@@ -355,7 +357,6 @@ namespace MakeGrid3D
         private void SetSize3D()
         {
             Grid3D grid3D = (Grid3D)grid;
-            // TODO: может не влезать
             Left = grid3D.Area.X0;
             Right = grid3D.Area.Xn;
             Bottom = grid3D.Area.Y0;
@@ -600,6 +601,7 @@ namespace MakeGrid3D
                     DrawLines(gridMesh, LinesColor);
                 if (drawNodes)
                     DrawNodes(gridMesh, PointsColor);
+                
             }
         }
 

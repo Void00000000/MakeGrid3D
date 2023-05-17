@@ -1,25 +1,52 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
 using OpenTK.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Runtime.InteropServices;
-using System.Globalization;
 using System.IO;
+using OpenTK.Windowing.Common;
 
 namespace MakeGrid3D
 {
     /// <summary>
     /// Interaction logic for GraphicsWindow.xaml
     /// </summary>
+
+    enum NodeType : byte
+    {
+        Regular,
+        Left,
+        Right,
+        Top,
+        Bottom,
+        Removed
+    }
+    enum Direction
+    {
+        Left,
+        Right,
+        Top,
+        Bottom,
+    }
+
+    enum PlaneSection
+    {
+        XY,
+        XZ,
+        YZ
+    }
+    interface IGrid
+    {
+        public int Nnodes { get; }
+        public int Nelems { get; }
+        public int Nmats { get; }
+    }
+
     class GridState
     {
         public IGrid Grid { get; }
@@ -46,9 +73,6 @@ namespace MakeGrid3D
             Grid = grid;
         }
     }
-
-    // TODO: Область рисуется криво(не хватает треугольников)
-    // Сделать сброс настроек камеры
 
     public partial class GraphicsWindow : Window
     {
@@ -113,7 +137,24 @@ namespace MakeGrid3D
             ResetUI();
         }
 
-        private void Init()
+        private void SetRenderGrid()
+        {
+            if (renderGrid == null)
+                renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+            else
+                renderGrid.Grid = regularGrid;
+            irregularGridMaker = new IrregularGridMaker(regularGrid);
+            gridList = new LinkedList<GridState>();
+            SetCurrentNodeMesh();
+            gridList.AddLast(new GridState(regularGrid));
+            currentNode = gridList.Last;
+            // Множители скорости = 1 процент от ширины(высоты) мира
+            speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
+            speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
+            SetAxis();
+        }
+
+        private void InitRegularGrid()
         {
             try
             {
@@ -135,28 +176,18 @@ namespace MakeGrid3D
             {
                 Area2D area = new Area2D(fileName);
                 regularGrid = new Grid2D(fileName, area);
-                renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             }
             else
             {
                 Area3D area = new Area3D(fileName);
                 regularGrid = new Grid3D(fileName, area);
-                renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             }
-            irregularGridMaker = new IrregularGridMaker(regularGrid);
-            gridList = new LinkedList<GridState>();
-            SetCurrentNodeMesh();
-            gridList.AddLast(new GridState(regularGrid));
-            currentNode = gridList.Last;
-            // Множители скорости = 1 процент от ширины(высоты) мира
-            speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
-            speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
-            SetAxis();
         }
 
         private void OpenTkControl_OnLoad(object sender, RoutedEventArgs e)
         {
-            Init();
+            InitRegularGrid();
+            SetRenderGrid();
             // если удалить отсюда то не будет показываться в статус баре
             BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid.Nmats;
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid.Nnodes;
@@ -777,21 +808,21 @@ namespace MakeGrid3D
             {
                 // Open document
                 fileName = dialog.FileName;
+                if (selectedElemMesh != null)
+                {
+                    selectedElemMesh.Dispose();
+                    selectedElemMesh = null;
+                }
+                if (selectedElemLines != null)
+                {
+                    selectedElemLines.Dispose();
+                    selectedElemLines = null;
+                }
+                ResetPosition();
+                ResetUI();
+                InitRegularGrid();
+                SetRenderGrid();
             }
-            renderGrid.CleanUp();
-            if (selectedElemMesh != null)
-            {
-                selectedElemMesh.Dispose();
-                selectedElemMesh = null;
-            }
-            if (selectedElemLines != null)
-            {
-                selectedElemLines.Dispose();
-                selectedElemLines = null;
-            }
-            ResetPosition();
-            ResetUI();
-            Init();
         }
 
         private Color ColorFloatToByte(Color4 color4)
@@ -1306,6 +1337,20 @@ namespace MakeGrid3D
                 else ZoomOut2D(-(float)e.Delta / 100);
             }
             else renderGrid.Camera.Zoom(speedZoom * e.Delta);
+        }
+
+        private void ReplicateCrossSectionsClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD)
+            {
+                twoD = false;
+                BlockCurrentMode.Text = "Режим: 3D";
+                List<float> z = new List<float>{ 1f, 2f, 3f };
+                regularGrid = new Grid3D((Grid2D)renderGrid.Grid, z);
+                SetRenderGrid();
+                ResetPosition();
+            }
+            else MessageBox.Show("Тиражирование сечения не доступно в режиме 3D");
         }
     }
 }
