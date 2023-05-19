@@ -34,6 +34,14 @@ namespace MakeGrid3D
         Bottom,
     }
 
+    enum Quadrant
+    {
+        RightTop,
+        LeftTop,
+        LeftBottom,
+        RightBottom
+    }
+
     enum PlaneSection
     {
         XY,
@@ -110,7 +118,7 @@ namespace MakeGrid3D
         float speedHor = 0;
         float speedVer = 0;
         Color4 bgColor = Default.bgColor;
-        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST4_3D.txt";
+        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
         Elem2D selectedElem;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
@@ -696,6 +704,8 @@ namespace MakeGrid3D
                     {
                         irregularGridMaker.I = i;
                         irregularGridMaker.J = j;
+                        irregularGridMaker.MidI = i;
+                        irregularGridMaker.MidJ = j;
                         irregularGridMaker.NodeI = i;
                         irregularGridMaker.NodeJ = j;
                         SetCurrentNodeMesh();
@@ -1199,8 +1209,7 @@ namespace MakeGrid3D
 
         private void RemoveElemsClick(object sender, RoutedEventArgs e)
         {
-            if (irregularGridMaker.NodeI < irregularGridMaker.Nx - 1 &&
-                irregularGridMaker.NodeJ < irregularGridMaker.Ny - 1) 
+            if (!irregularGridMaker.End)
             {
                 IGrid grid_new = irregularGridMaker.MakeUnStructedGrid();
                 while (currentNode != null && currentNode.Next != null)
@@ -1216,24 +1225,21 @@ namespace MakeGrid3D
                 gridList.AddLast(new GridState(grid_new, i, j, k, nodeI, nodeJ, nodeK, dirIndex));
                 currentNode = gridList.Last;
                 renderGrid.Grid = grid_new;
-                irregularGridMaker.Grid = grid_new; 
+                irregularGridMaker.Grid = grid_new;
             }
         }
 
         private void RemoveAllElemsClick(object sender, RoutedEventArgs e)
         {
             // TODO: Соптимизировать
-            if (irregularGridMaker.NodeI < irregularGridMaker.Nx - 1 &&
-                irregularGridMaker.NodeJ < irregularGridMaker.Ny - 1)
+            IGrid? grid_new = null;
+            while (!irregularGridMaker.End)
             {
-                IGrid grid_new = irregularGridMaker.MakeUnStructedGrid();
+                grid_new = irregularGridMaker.MakeUnStructedGrid();
                 irregularGridMaker.Grid = grid_new;
-                while (irregularGridMaker.NodeI < irregularGridMaker.Nx - 1 &&
-                    irregularGridMaker.NodeJ < irregularGridMaker.Ny - 1)
-                {
-                    grid_new = irregularGridMaker.MakeUnStructedGrid();
-                    irregularGridMaker.Grid = grid_new;
-                }
+            }
+            if (grid_new != null)
+            {
                 while (currentNode != null && currentNode.Next != null)
                     gridList.Remove(currentNode.Next);
                 SetCurrentNodeMesh();

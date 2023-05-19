@@ -43,13 +43,27 @@ namespace MakeGrid3D
         public int NodeJ { get; set; } = 1;
         public int NodeK { get; set; } = 1;
 
+        public int MidI { get; set; } = 1;
+        public int MidJ { get; set; } = 1;
+        public int MidK { get; set; } = 1;
+
         public int I { get; set; } = 1;
         public int J { get; set; } = 1;
         public int K { get; set; } = 1;
 
+        public bool End { get; private set; } = false; 
+
         // По приоритету (от высшего к низшему ^ слева направо)
-        public Direction[] Dirs = { Default.dir1, Default.dir2, Default.dir3, Default.dir4 };
+        public Quadrant[] Quadrants = { Quadrant.RightTop, Quadrant.LeftTop, Quadrant.LeftBottom, Quadrant.RightBottom };
+        Dictionary<Quadrant, Direction[]> Directions = new Dictionary<Quadrant, Direction[]>()
+        {
+            { Quadrant.RightTop, new Direction[]{Direction.Right, Direction.Top} },
+            { Quadrant.LeftTop, new Direction[]{Direction.Left, Direction.Top} },
+            { Quadrant.LeftBottom, new Direction[]{Direction.Left, Direction.Bottom} },
+            { Quadrant.RightBottom, new Direction[]{Direction.Right, Direction.Bottom} }
+        };
         public int DirIndex = 0;
+        public int QuadIndex = 0;
         public IrregularGridMaker(IGrid grid)
         {
             if (grid is Grid2D)
@@ -136,263 +150,329 @@ namespace MakeGrid3D
             return false;
         }
 
-        private void MoveNode2D(ByteMat2D IJ_new)
+        private void MergeRight2D(ByteMat2D IJ_new, ref bool merged)
+        
         {
-            do
+            merged = true;
+            int i = I; int j = J;
+            MoveBottom2D(IJ_new);
+            int bottom = J;
+            J = j;
+            MoveTop2D(IJ_new);
+            int top = J;
+            J = j;
+            if (IJ_new[I][bottom] == NodeType.Left || IJ_new[I][J] == NodeType.Left || IJ_new[I][top] == NodeType.Left)
+                return;
+
+            MoveBottom2D(IJ_new);
+            int jb = J;
+            J = j;
+
+            MoveRight2D(IJ_new);
+            int ir = I;
+            MoveTop2D(IJ_new);
+            int jt = J;
+
+            I = i; J = j;
+
+            int n = grid2D.global_num(i, j);
+            int nb = grid2D.global_num(i, jb);
+            int nr = grid2D.global_num(ir, j);
+            int nrt = grid2D.global_num(ir, jt);
+
+            float arb = CalcAR2D(nb, nr);
+            float art = CalcAR2D(n, nrt);
+            float ar = CalcAR2D(nb, nrt);
+
+            if ((CompareAR(arb, MaxAR) || CompareAR(art, MaxAR)) &&
+                 CompareAR(arb, ar) && CompareAR(art, ar))
             {
-                NodeI++;
-                if (NodeI >= Nx - 1)
+                IJ_new[i][j] = NodeType.Left;
+                for (int ik = i + 1; ik < Nx; ik++)
                 {
-                    NodeI = 1;
-                    NodeJ++;
+                    IJ_new[ik][j] = NodeType.Removed;
                 }
+                merged = true;
             }
-            while (IJ_new[NodeI][NodeJ] == NodeType.Removed && NodeI < Nx - 1 && NodeJ < Ny - 1);
         }
 
-        private bool MergeRight2D(ByteMat2D IJ_new, out bool merged)
+        private void MergeLeft2D(ByteMat2D IJ_new, ref bool merged)
         {
-            merged = false;
-            if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Right)
+            merged = true;
+            int i = I; int j = J;
+            MoveBottom2D(IJ_new);
+            int bottom = J;
+            J = j;
+            MoveTop2D(IJ_new);
+            int top = J;
+            J = j;
+            if (IJ_new[I][bottom] == NodeType.Right || IJ_new[I][J] == NodeType.Right || IJ_new[I][top] == NodeType.Right)
+                return;
+
+            MoveTop2D(IJ_new);
+            int jt = J;
+            J = j;
+
+            MoveLeft2D(IJ_new);
+            int il = I;
+            MoveBottom2D(IJ_new);
+            int jb = J;
+
+            I = i; J = j;
+
+            int n = grid2D.global_num(i, j);
+            int nlb = grid2D.global_num(il, jb);
+            int nl = grid2D.global_num(il, j);
+            int nt = grid2D.global_num(i, jt);
+
+            float alb = CalcAR2D(nlb, n);
+            float alt = CalcAR2D(nl, nt);
+            float al = CalcAR2D(nlb, nt);
+
+            if ((CompareAR(alb, MaxAR) || CompareAR(alt, MaxAR)) &&
+                 CompareAR(alb, al) && CompareAR(alt, al))
             {
-                int n = grid2D.global_num(I, J);
-                int nb = grid2D.global_num(I, J - 1);
-                int nr = grid2D.global_num(I + 1, J);
-                int nt = grid2D.global_num(I, J + 1);
-                int nrt = grid2D.global_num(I + 1, J + 1);
-                int nrb = grid2D.global_num(I + 1, J - 1);
-
-                if (IJ_new[I][J - 1] != NodeType.Removed && IJ_new[I + 1][J] != NodeType.Removed &&
-                    IJ_new[I][J + 1] != NodeType.Removed && IJ_new[I + 1][J + 1] != NodeType.Removed &&
-                    IJ_new[I + 1][J - 1] != NodeType.Removed)
+                IJ_new[i][j] = NodeType.Right;
+                for (int ik = i - 1; ik >= 0; ik--)
                 {
-                    float art = CalcAR2D(n, nrt);
-                    float arb = CalcAR2D(nb, nr);
-                    float ar = CalcAR2D(nb, nrt);
-                    if (CompareAR(art, MaxAR) && CompareAR(arb, MaxAR) && CompareAR(art, ar) && CompareAR(arb, ar))
-                    {
-                        merged = true;
-                        if (IJ_new[I][J] == NodeType.Right)
-                        {
-                            IJ_new[I][J] = NodeType.Removed;
-                            if (I + 1 == Nx - 1)
-                                IJ_new[I + 1][J] = NodeType.Removed;
-                            else
-                                IJ_new[I + 1][J] = NodeType.Right;
-                        }
-                        else
-                        {
-                            if (IJ_new[I][J] == NodeType.Regular)
-                                IJ_new[I][J] = NodeType.Left;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            IJ_new[I + 1][J] = NodeType.Removed;
-
-
-                            bool end = MoveRight2D(IJ_new);
-                            if (!end)
-                                IJ_new[I][J] = NodeType.Right;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            return end;
-                        }
-                    }
+                    IJ_new[ik][j] = NodeType.Removed;
                 }
+                merged = true;
             }
-            return MoveRight2D(IJ_new);
         }
 
-        private bool MergeLeft2D(ByteMat2D IJ_new, out bool merged)
+        private void MergeTop2D(ByteMat2D IJ_new, ref bool merged)
         {
-            merged = false;
-            if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Left)
+            merged = true;
+            int i = I; int j = J;
+            MoveLeft2D(IJ_new);
+            int left = I;
+            I = i;
+            MoveRight2D(IJ_new);
+            int right = I;
+            I = i;
+            if (IJ_new[left][J] == NodeType.Bottom || IJ_new[I][J] == NodeType.Bottom || IJ_new[right][J] == NodeType.Bottom)
+                return;
+
+            MoveLeft2D(IJ_new);
+            int il = I;
+            I = i;
+
+            MoveTop2D(IJ_new);
+            int jt = J;
+            MoveRight2D(IJ_new);
+            int ir = I;
+
+            I = i; J = j;
+
+            int n = grid2D.global_num(i, j);
+            int nl = grid2D.global_num(il, j);
+            int nt = grid2D.global_num(i, jt);
+            int nrt = grid2D.global_num(ir, jt);
+
+            float alt = CalcAR2D(nl, nt);
+            float art = CalcAR2D(n, nrt);
+            float at = CalcAR2D(nl, nrt);
+
+            if ((CompareAR(alt, MaxAR) || CompareAR(art, MaxAR)) &&
+                 CompareAR(alt, at) && CompareAR(art, at))
             {
-                int n = grid2D.global_num(I, J);
-                int nb = grid2D.global_num(I, J - 1);
-                int nl = grid2D.global_num(I - 1, J);
-                int nt = grid2D.global_num(I, J + 1);
-                int nlt = grid2D.global_num(I - 1, J + 1);
-                int nlb = grid2D.global_num(I - 1, J - 1);
-
-                if (IJ_new[I][J - 1] != NodeType.Removed && IJ_new[I - 1][J] != NodeType.Removed &&
-                    IJ_new[I][J + 1] != NodeType.Removed && IJ_new[I - 1][J + 1] != NodeType.Removed &&
-                    IJ_new[I - 1][J - 1] != NodeType.Removed)
+                IJ_new[i][j] = NodeType.Bottom;
+                for (int jk = j + 1; jk < Ny; jk++)
                 {
-                    float alt = CalcAR2D(nl, nt);
-                    float alb = CalcAR2D(nlb, n);
-                    float al = CalcAR2D(nlb, nt);
-                    if (CompareAR(alt, MaxAR) && CompareAR(alb, MaxAR) && CompareAR(alt, al) && CompareAR(alb, al))
-                    {
-                        merged = true;
-                        if (IJ_new[I][J] == NodeType.Left)
-                        {
-                            IJ_new[I][J] = NodeType.Removed;
-                            if (I - 1 == 0)
-                                IJ_new[I - 1][J] = NodeType.Removed;
-                            else
-                                IJ_new[I - 1][J] = NodeType.Left;
-                        }
-                        else
-                        {
-                            if (IJ_new[I][J] == NodeType.Regular)
-                                IJ_new[I][J] = NodeType.Right;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            IJ_new[I - 1][J] = NodeType.Removed;
-
-
-                            bool end = MoveLeft2D(IJ_new);
-                            if (!end)
-                                IJ_new[I][J] = NodeType.Left;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            return end;
-                        }
-                    }
+                    IJ_new[i][jk] = NodeType.Removed;
                 }
+                merged = true;
             }
-            return MoveLeft2D(IJ_new);
         }
 
-        private bool MergeTop2D(ByteMat2D IJ_new, out bool merged)
+        private void MergeBottom2D(ByteMat2D IJ_new, ref bool merged)
         {
-            merged = false;
-            if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Top)
+            merged = true;
+            int i = I; int j = J;
+            MoveLeft2D(IJ_new);
+            int left = I;
+            I = i;
+            MoveRight2D(IJ_new);
+            int right = I;
+            I = i;
+            if (IJ_new[left][J] == NodeType.Top || IJ_new[I][J] == NodeType.Top || IJ_new[right][J] == NodeType.Top)
+                return;
+
+            MoveRight2D(IJ_new);
+            int ir = I;
+            I = i;
+
+            MoveBottom2D(IJ_new);
+            int jb = J;
+            MoveLeft2D(IJ_new);
+            int il = I;
+
+            I = i; J = j;
+
+            int n = grid2D.global_num(i, j);
+            int nb = grid2D.global_num(i, jb);
+            int nlb = grid2D.global_num(il, jb);
+            int nr = grid2D.global_num(ir, j);
+
+            float alb = CalcAR2D(nlb, n);
+            float arb = CalcAR2D(nb, nr);
+            float ab = CalcAR2D(nlb, nr);
+
+            if ((CompareAR(alb, MaxAR) || CompareAR(arb, MaxAR)) &&
+                 CompareAR(alb, ab) && CompareAR(arb, ab))
             {
-                int n = grid2D.global_num(I, J);
-                int nl = grid2D.global_num(I - 1, J);
-                int nr = grid2D.global_num(I + 1, J);
-                int nt = grid2D.global_num(I, J + 1);
-                int nlt = grid2D.global_num(I - 1, J + 1);
-                int nrt = grid2D.global_num(I + 1, J + 1);
-
-                if (IJ_new[I - 1][J] != NodeType.Removed && IJ_new[I + 1][J] != NodeType.Removed &&
-                    IJ_new[I][J + 1] != NodeType.Removed && IJ_new[I - 1][J + 1] != NodeType.Removed &&
-                    IJ_new[I + 1][J + 1] != NodeType.Removed)
+                IJ_new[i][j] = NodeType.Top;
+                for (int jk = j - 1; jk >= 0; jk--)
                 {
-                    float alt = CalcAR2D(nl, nt);
-                    float art = CalcAR2D(n, nrt);
-                    float at = CalcAR2D(nl, nrt);
-                    if (CompareAR(art, MaxAR) && CompareAR(alt, MaxAR) && CompareAR(alt, at) && CompareAR(art, at))
-                    {
-                        merged = true;
-                        if (IJ_new[I][J] == NodeType.Top)
-                        {
-                            IJ_new[I][J] = NodeType.Removed;
-                            if (J + 1 == Ny - 1)
-                                IJ_new[I][J + 1] = NodeType.Removed;
-                            else
-                                IJ_new[I][J + 1] = NodeType.Top;
-                        }
-                        else
-                        {
-                            if (IJ_new[I][J] == NodeType.Regular)
-                                IJ_new[I][J] = NodeType.Bottom;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            IJ_new[I][J + 1] = NodeType.Removed;
-
-
-                            bool end = MoveTop2D(IJ_new);
-                            if (!end)
-                                IJ_new[I][J] = NodeType.Top;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            return end;
-                        }
-                    }
+                    IJ_new[i][jk] = NodeType.Removed;
                 }
+                merged = true;
             }
-            return MoveTop2D(IJ_new);
-        }
-
-        private bool MergeBottom2D(ByteMat2D IJ_new, out bool merged)
-        {
-            merged = false;
-            if (IJ_new[I][J] == NodeType.Regular || IJ_new[I][J] == NodeType.Bottom)
-            {
-                int n = grid2D.global_num(I, J);
-                int nl = grid2D.global_num(I - 1, J);
-                int nr = grid2D.global_num(I + 1, J);
-                int nb = grid2D.global_num(I, J - 1);
-                int nlb = grid2D.global_num(I - 1, J - 1);
-                int nrb = grid2D.global_num(I + 1, J - 1);
-
-                if (IJ_new[I - 1][J] != NodeType.Removed && IJ_new[I + 1][J] != NodeType.Removed &&
-                    IJ_new[I][J - 1] != NodeType.Removed && IJ_new[I - 1][J - 1] != NodeType.Removed &&
-                    IJ_new[I + 1][J - 1] != NodeType.Removed)
-                {
-                    float alb = CalcAR2D(nlb, n);
-                    float arb = CalcAR2D(nb, nr);
-                    float ab = CalcAR2D(nlb, nr);
-                    if (CompareAR(alb, MaxAR) && CompareAR(arb, MaxAR) && CompareAR(alb, ab) && CompareAR(arb, ab))
-                    {
-                        merged = true;
-                        if (IJ_new[I][J] == NodeType.Bottom)
-                        {
-                            IJ_new[I][J] = NodeType.Removed;
-                            if (J - 1 == 0)
-                                IJ_new[I][J - 1] = NodeType.Removed;
-                            else
-                                IJ_new[I][J - 1] = NodeType.Bottom;
-                        }
-                        else
-                        {
-                            if (IJ_new[I][J] == NodeType.Regular)
-                                IJ_new[I][J] = NodeType.Top;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            IJ_new[I][J - 1] = NodeType.Removed;
-
-
-                            bool end = MoveBottom2D(IJ_new);
-                            if (!end)
-                                IJ_new[I][J] = NodeType.Bottom;
-                            else
-                                IJ_new[I][J] = NodeType.Removed;
-                            return end;
-                        }
-                    }
-                }
-            }
-            return MoveBottom2D(IJ_new);
         }
 
         private void MakeUnStructedMatrix2D(ByteMat2D IJ_new)
         {
-            bool end = true;
             bool merged = false;
-            while (!merged && NodeI < Nx - 1 && NodeJ < Ny - 1)
+            bool end = false;
+            Quadrant current_quad;
+            while (!merged && !End)
             {
-                switch (Dirs[DirIndex])
+                current_quad = Quadrants[QuadIndex];
+                switch (current_quad)
                 {
-                    case Direction.Left:
-                        end = MergeLeft2D(IJ_new, out merged);
+                    case Quadrant.RightTop:
+                        switch (Directions[current_quad][DirIndex])
+                        {
+                            case Direction.Right:
+                                if (!MoveRight2D(IJ_new))
+                                    MergeTop2D(IJ_new, ref merged);
+                                else {
+                                    I = NodeI;
+                                    end = MoveTop2D(IJ_new);
+                                    if (!end) MergeTop2D(IJ_new, ref merged);
+                                }
+                                break;
+                            case Direction.Top:
+                                if (!MoveTop2D(IJ_new))
+                                    MergeRight2D(IJ_new, ref merged);
+                                else
+                                {
+                                    J = MidJ;
+                                    end = MoveRight2D(IJ_new);
+                                    if (!end) MergeRight2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = NodeI; J = NodeJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && I < Nx - 1)
+                                            I++;
+                                        if (I < Nx - 1)
+                                        {
+                                            end = false;
+                                            MoveTop2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                        }
+                                        else
+                                            end = true;
+                                    }
+                                }
+                                break;
+                        }
                         break;
-                    case Direction.Right:
-                        end = MergeRight2D(IJ_new, out merged);
+
+                    case Quadrant.LeftTop:
+                        switch (Directions[current_quad][DirIndex])
+                        {
+                            case Direction.Left:
+                                if (!MoveLeft2D(IJ_new))
+                                    MergeTop2D(IJ_new, ref merged);
+                                else
+                                {
+                                    I = NodeI;
+                                    end = MoveTop2D(IJ_new);
+                                    if (!end) MergeTop2D(IJ_new, ref merged);
+                                }
+                                break;
+                            case Direction.Top:
+                                if (!MoveTop2D(IJ_new))
+                                    MergeLeft2D(IJ_new, ref merged);
+                                else
+                                {
+                                    J = NodeJ;
+                                    end = MoveLeft2D(IJ_new);
+                                    if (!end) MergeLeft2D(IJ_new, ref merged);
+                                }
+                                break;
+                        }
                         break;
-                    case Direction.Bottom:
-                        end = MergeBottom2D(IJ_new, out merged);
+
+                    case Quadrant.LeftBottom:
+                        switch (Directions[current_quad][DirIndex])
+                        {
+                            case Direction.Left:
+                                if (!MoveLeft2D(IJ_new))
+                                    MergeBottom2D(IJ_new, ref merged);
+                                else
+                                {
+                                    I = NodeI;
+                                    end = MoveBottom2D(IJ_new);
+                                    if (!end) MergeBottom2D(IJ_new, ref merged);
+                                }
+                                break;
+                            case Direction.Bottom:
+                                if (!MoveBottom2D(IJ_new))
+                                    MergeLeft2D(IJ_new, ref merged);
+                                else
+                                {
+                                    J = NodeJ;
+                                    end = MoveLeft2D(IJ_new);
+                                    if (!end) MergeLeft2D(IJ_new, ref merged);
+                                }
+                                break;
+                        }
                         break;
-                    case Direction.Top:
-                        end = MergeTop2D(IJ_new, out merged);
+
+                    case Quadrant.RightBottom:
+                        switch (Directions[current_quad][DirIndex])
+                        {
+                            case Direction.Right:
+                                if (!MoveRight2D(IJ_new))
+                                    MergeBottom2D(IJ_new, ref merged);
+                                else
+                                {
+                                    I = NodeI;
+                                    end = MoveBottom2D(IJ_new);
+                                    if (!end) MergeBottom2D(IJ_new, ref merged);
+                                }
+                                break;
+                            case Direction.Bottom:
+                                if (!MoveBottom2D(IJ_new))
+                                    MergeRight2D(IJ_new, ref merged);
+                                else
+                                {
+                                    J = NodeJ;
+                                    end = MoveRight2D(IJ_new);
+                                    if (!end) MergeRight2D(IJ_new, ref merged);
+                                }
+                                break;
+                        }
                         break;
                 }
-                if (IJ_new[NodeI][NodeJ] == NodeType.Removed)
-                    MoveNode2D(IJ_new);
                 if (end)
                 {
+                    end = false;
                     DirIndex++;
-                    I = NodeI;
-                    J = NodeJ;
-                }
-                if (DirIndex >= Dirs.Length)
-                {
-                    DirIndex = 0;
-                    MoveNode2D(IJ_new);
-                    I = NodeI;
-                    J = NodeJ;
+                    if (DirIndex >= 2)
+                    {
+                        DirIndex = 0;
+                        QuadIndex++;
+                        if (QuadIndex >= 4)
+                        {
+                            QuadIndex = 0;
+                            End = true;
+                        }
+                    }
+                    I = NodeI; J = NodeJ;
                 }
             }
         }
