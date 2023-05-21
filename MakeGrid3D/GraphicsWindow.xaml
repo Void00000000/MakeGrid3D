@@ -22,6 +22,7 @@
 
         <Menu Grid.Row="0">
             <MenuItem Header="Открыть" Click="OpenFileClick"/>
+            <MenuItem Header="Сохранить"/>
         </Menu>
 
         <Grid Grid.Row="1">

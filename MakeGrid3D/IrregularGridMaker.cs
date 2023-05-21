@@ -161,7 +161,8 @@ namespace MakeGrid3D
             MoveTop2D(IJ_new);
             int top = J;
             J = j;
-            if (IJ_new[I][bottom] == NodeType.Left || IJ_new[I][J] == NodeType.Left || IJ_new[I][top] == NodeType.Left)
+            if (IJ_new[I][bottom] == NodeType.Left || IJ_new[I][J] == NodeType.Left || IJ_new[I][top] == NodeType.Left ||
+                IJ_new[I][J] == NodeType.Bottom || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Right))
                 return;
 
             MoveBottom2D(IJ_new);
@@ -174,6 +175,14 @@ namespace MakeGrid3D
             int jt = J;
 
             I = i; J = j;
+
+            // Проверка
+            MoveBottom2D(IJ_new);
+            MoveRight2D(IJ_new);
+            int ix = I;
+            I = i; J = j;
+            if (ix != ir)
+                return;
 
             int n = grid2D.global_num(i, j);
             int nb = grid2D.global_num(i, jb);
@@ -206,7 +215,8 @@ namespace MakeGrid3D
             MoveTop2D(IJ_new);
             int top = J;
             J = j;
-            if (IJ_new[I][bottom] == NodeType.Right || IJ_new[I][J] == NodeType.Right || IJ_new[I][top] == NodeType.Right)
+            if (IJ_new[I][bottom] == NodeType.Right || IJ_new[I][J] == NodeType.Right || IJ_new[I][top] == NodeType.Right
+                || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Left))
                 return;
 
             MoveTop2D(IJ_new);
@@ -219,6 +229,14 @@ namespace MakeGrid3D
             int jb = J;
 
             I = i; J = j;
+
+            // Проверка
+            MoveBottom2D(IJ_new);
+            MoveLeft2D(IJ_new);
+            int ix = I;
+            I = i; J = j;
+            if (ix != il)
+                return;
 
             int n = grid2D.global_num(i, j);
             int nlb = grid2D.global_num(il, jb);
@@ -251,7 +269,8 @@ namespace MakeGrid3D
             MoveRight2D(IJ_new);
             int right = I;
             I = i;
-            if (IJ_new[left][J] == NodeType.Bottom || IJ_new[I][J] == NodeType.Bottom || IJ_new[right][J] == NodeType.Bottom)
+            if (IJ_new[left][J] == NodeType.Bottom || IJ_new[I][J] == NodeType.Bottom || IJ_new[right][J] == NodeType.Bottom
+                || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Top))
                 return;
 
             MoveLeft2D(IJ_new);
@@ -296,7 +315,8 @@ namespace MakeGrid3D
             MoveRight2D(IJ_new);
             int right = I;
             I = i;
-            if (IJ_new[left][J] == NodeType.Top || IJ_new[I][J] == NodeType.Top || IJ_new[right][J] == NodeType.Top)
+            if (IJ_new[left][J] == NodeType.Top || IJ_new[I][J] == NodeType.Top || IJ_new[right][J] == NodeType.Top
+                || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Bottom))
                 return;
 
             MoveRight2D(IJ_new);
@@ -348,9 +368,24 @@ namespace MakeGrid3D
                                 if (!MoveRight2D(IJ_new))
                                     MergeTop2D(IJ_new, ref merged);
                                 else {
-                                    I = NodeI;
+                                    I = MidI;
                                     end = MoveTop2D(IJ_new);
                                     if (!end) MergeTop2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = MidI; J = MidJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && J < Ny - 1)
+                                            J++;
+                                        if (J < Ny - 1)
+                                        {
+                                            end = false;
+                                            MoveRight2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                            MergeTop2D(IJ_new, ref merged);
+                                        }
+                                        else
+                                            end = true;
+                                    }
                                 }
                                 break;
                             case Direction.Top:
@@ -363,7 +398,7 @@ namespace MakeGrid3D
                                     if (!end) MergeRight2D(IJ_new, ref merged);
                                     else
                                     {
-                                        I = NodeI; J = NodeJ;
+                                        I = MidI; J = MidJ;
                                         while (IJ_new[I][J] != NodeType.Removed && I < Nx - 1)
                                             I++;
                                         if (I < Nx - 1)
@@ -371,6 +406,7 @@ namespace MakeGrid3D
                                             end = false;
                                             MoveTop2D(IJ_new);
                                             MidI = I; MidJ = J;
+                                            MergeRight2D(IJ_new, ref merged);
                                         }
                                         else
                                             end = true;
@@ -388,9 +424,24 @@ namespace MakeGrid3D
                                     MergeTop2D(IJ_new, ref merged);
                                 else
                                 {
-                                    I = NodeI;
+                                    I = MidI;
                                     end = MoveTop2D(IJ_new);
                                     if (!end) MergeTop2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = MidI; J = MidJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && J < Ny - 1)
+                                            J++;
+                                        if (J < Ny - 1)
+                                        {
+                                            end = false;
+                                            MoveLeft2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                            MergeTop2D(IJ_new, ref merged);
+                                        }
+                                        else
+                                            end = true;
+                                    }
                                 }
                                 break;
                             case Direction.Top:
@@ -398,9 +449,24 @@ namespace MakeGrid3D
                                     MergeLeft2D(IJ_new, ref merged);
                                 else
                                 {
-                                    J = NodeJ;
+                                    J = MidJ;
                                     end = MoveLeft2D(IJ_new);
                                     if (!end) MergeLeft2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = MidI; J = MidJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && I > 0)
+                                            I--;
+                                        if (I > 0)
+                                        {
+                                            end = false;
+                                            MoveTop2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                            MergeLeft2D(IJ_new, ref merged);
+                                        }
+                                        else
+                                            end = true;
+                                    }
                                 }
                                 break;
                         }
@@ -414,9 +480,24 @@ namespace MakeGrid3D
                                     MergeBottom2D(IJ_new, ref merged);
                                 else
                                 {
-                                    I = NodeI;
+                                    I = MidI;
                                     end = MoveBottom2D(IJ_new);
                                     if (!end) MergeBottom2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = MidI; J = MidJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && J > 0)
+                                            J--;
+                                        if (J > 0)
+                                        {
+                                            end = false;
+                                            MoveLeft2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                            MergeBottom2D(IJ_new, ref merged);
+                                        }
+                                        else
+                                            end = true;
+                                    }
                                 }
                                 break;
                             case Direction.Bottom:
@@ -424,9 +505,24 @@ namespace MakeGrid3D
                                     MergeLeft2D(IJ_new, ref merged);
                                 else
                                 {
-                                    J = NodeJ;
+                                    J = MidJ;
                                     end = MoveLeft2D(IJ_new);
                                     if (!end) MergeLeft2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = MidI; J = MidJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && I > 0)
+                                            I--;
+                                        if (I > 0)
+                                        {
+                                            end = false;
+                                            MoveBottom2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                            MergeLeft2D(IJ_new, ref merged);
+                                        }
+                                        else
+                                            end = true;
+                                    }
                                 }
                                 break;
                         }
@@ -440,9 +536,24 @@ namespace MakeGrid3D
                                     MergeBottom2D(IJ_new, ref merged);
                                 else
                                 {
-                                    I = NodeI;
+                                    I = MidI;
                                     end = MoveBottom2D(IJ_new);
                                     if (!end) MergeBottom2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = MidI; J = MidJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && J > 0)
+                                            J--;
+                                        if (J > 0)
+                                        {
+                                            end = false;
+                                            MoveRight2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                            MergeBottom2D(IJ_new, ref merged);
+                                        }
+                                        else
+                                            end = true;
+                                    }
                                 }
                                 break;
                             case Direction.Bottom:
@@ -450,9 +561,24 @@ namespace MakeGrid3D
                                     MergeRight2D(IJ_new, ref merged);
                                 else
                                 {
-                                    J = NodeJ;
+                                    J = MidJ;
                                     end = MoveRight2D(IJ_new);
                                     if (!end) MergeRight2D(IJ_new, ref merged);
+                                    else
+                                    {
+                                        I = MidI; J = MidJ;
+                                        while (IJ_new[I][J] != NodeType.Removed && I < Nx - 1)
+                                            I++;
+                                        if (I < Nx - 1)
+                                        {
+                                            end = false;
+                                            MoveBottom2D(IJ_new);
+                                            MidI = I; MidJ = J;
+                                            MergeRight2D(IJ_new, ref merged);
+                                        }
+                                        else
+                                            end = true;
+                                    }
                                 }
                                 break;
                         }
@@ -473,6 +599,7 @@ namespace MakeGrid3D
                         }
                     }
                     I = NodeI; J = NodeJ;
+                    MidI = NodeI; MidJ = NodeJ;
                 }
             }
         }
