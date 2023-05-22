@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace MakeGrid3D
 {
@@ -38,7 +39,7 @@ namespace MakeGrid3D
         public int Ny { get; private set; }
         public int Nz { get; private set; }
         public float MaxAR { get; set; } = (float)Default.maxAR_width / Default.maxAR_height;
-
+        public bool AllSteps { get; set; } = false;
         public int NodeI { get; set; } = 1;
         public int NodeJ { get; set; } = 1;
         public int NodeK { get; set; } = 1;
@@ -51,7 +52,7 @@ namespace MakeGrid3D
         public int J { get; set; } = 1;
         public int K { get; set; } = 1;
 
-        public bool End { get; private set; } = false; 
+        public bool End { get; set; } = false; 
 
         // По приоритету (от высшего к низшему ^ слева направо)
         public Quadrant[] Quadrants = { Quadrant.RightTop, Quadrant.LeftTop, Quadrant.LeftBottom, Quadrant.RightBottom };
@@ -84,6 +85,23 @@ namespace MakeGrid3D
             
         }
 
+        public void Set(GridState gridState)
+        {
+            Grid = gridState.Grid;
+            I = gridState.I;
+            J = gridState.J;
+            K = gridState.K;
+            MidI = gridState.MidI;
+            MidJ = gridState.MidJ;
+            MidK = gridState.MidK;
+            NodeI = gridState.NodeI;
+            NodeJ = gridState.NodeJ;
+            NodeK = gridState.NodeK;
+            QuadIndex = gridState.QuadIndex;
+            DirIndex = gridState.DirIndex;
+            End = gridState.End;
+        }
+
         // Calculate Aspect Ratio
         private float CalcAR2D(int n1, int n4)
         {
@@ -111,7 +129,7 @@ namespace MakeGrid3D
             do
             {
                 I++;
-            } while (IJ_new[I][J] == NodeType.Removed && I < Nx - 1);
+            } while (I < Nx - 1 && IJ_new[I][J] == NodeType.Removed);
             if (I >= Nx - 1)
                 return true;
             return false;
@@ -122,7 +140,7 @@ namespace MakeGrid3D
             do
             {
                 I--;
-            } while (IJ_new[I][J] == NodeType.Removed && I > 0);
+            } while (I > 0 && IJ_new[I][J] == NodeType.Removed);
             if (I <= 0)
                 return true;
             return false;
@@ -133,7 +151,7 @@ namespace MakeGrid3D
             do
             {
                 J++;
-            } while (IJ_new[I][J] == NodeType.Removed && J < Ny - 1);
+            } while (J < Ny - 1 && IJ_new[I][J] == NodeType.Removed);
             if (J >= Ny - 1)
                 return true;
             return false;
@@ -144,27 +162,41 @@ namespace MakeGrid3D
             do
             {
                 J--;
-            } while (IJ_new[I][J] == NodeType.Removed && J > 0);
+            } while (J > 0 && IJ_new[I][J] == NodeType.Removed);
             if (J <= 0)
                 return true;
             return false;
         }
 
+        private void GetCornerIJ(Direction dir1, Direction dir2, out int i, out int j, ByteMat2D IJ_new)
+        {
+            int i0 = I; int j0 = J;
+            Move(dir1, IJ_new);
+            Move(dir2, IJ_new);
+            i = I; j = J;
+            I = i0; J = j0;
+        }
+
+        private void GetNearIJ(Direction dir, out int ij, ByteMat2D IJ_new)
+        {
+            int i0 = I; int j0 = J;
+            Move(dir, IJ_new);
+            if (dir == Direction.Bottom || dir == Direction.Top)
+                ij = J;
+            else ij = I;
+            I = i0; J = j0;
+        }
+
         private void MergeRight2D(ByteMat2D IJ_new, ref bool merged)
-        
         {
             merged = true;
-            int i = I; int j = J;
-            MoveBottom2D(IJ_new);
-            int bottom = J;
-            J = j;
-            MoveTop2D(IJ_new);
-            int top = J;
-            J = j;
-            if (IJ_new[I][bottom] == NodeType.Left || IJ_new[I][J] == NodeType.Left || IJ_new[I][top] == NodeType.Left ||
-                IJ_new[I][J] == NodeType.Bottom || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Right))
+            int bottom, top;
+            GetNearIJ(Direction.Bottom, out bottom, IJ_new);
+            GetNearIJ(Direction.Top, out top, IJ_new);
+            if (IJ_new[I][bottom] == NodeType.Left || IJ_new[I][top] == NodeType.Left || IJ_new[I][J] != NodeType.Regular)
                 return;
 
+            int i = I; int j = J;
             MoveBottom2D(IJ_new);
             int jb = J;
             J = j;
@@ -215,8 +247,8 @@ namespace MakeGrid3D
             MoveTop2D(IJ_new);
             int top = J;
             J = j;
-            if (IJ_new[I][bottom] == NodeType.Right || IJ_new[I][J] == NodeType.Right || IJ_new[I][top] == NodeType.Right
-                || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Left))
+            if (IJ_new[I][bottom] == NodeType.Right || IJ_new[I][J] == NodeType.Right || IJ_new[I][top] == NodeType.Right ||
+                IJ_new[I][J] != NodeType.Regular)
                 return;
 
             MoveTop2D(IJ_new);
@@ -269,8 +301,8 @@ namespace MakeGrid3D
             MoveRight2D(IJ_new);
             int right = I;
             I = i;
-            if (IJ_new[left][J] == NodeType.Bottom || IJ_new[I][J] == NodeType.Bottom || IJ_new[right][J] == NodeType.Bottom
-                || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Top))
+            if (IJ_new[left][J] == NodeType.Bottom || IJ_new[I][J] == NodeType.Bottom || IJ_new[right][J] == NodeType.Bottom ||
+                IJ_new[I][J] != NodeType.Regular)
                 return;
 
             MoveLeft2D(IJ_new);
@@ -315,8 +347,8 @@ namespace MakeGrid3D
             MoveRight2D(IJ_new);
             int right = I;
             I = i;
-            if (IJ_new[left][J] == NodeType.Top || IJ_new[I][J] == NodeType.Top || IJ_new[right][J] == NodeType.Top
-                || (IJ_new[I][J] != NodeType.Regular && IJ_new[I][J] != NodeType.Bottom))
+            if (IJ_new[left][J] == NodeType.Top || IJ_new[I][J] == NodeType.Top || IJ_new[right][J] == NodeType.Top ||
+                IJ_new[I][J] != NodeType.Regular)
                 return;
 
             MoveRight2D(IJ_new);
@@ -351,12 +383,103 @@ namespace MakeGrid3D
             }
         }
 
+        private void Merge(Direction dir, ByteMat2D IJ_new, ref bool merged)
+        {
+            switch (dir)
+            {
+                case Direction.Top:
+                    MergeTop2D(IJ_new, ref merged); break;
+                case Direction.Bottom:
+                    MergeBottom2D(IJ_new, ref merged); break;
+                case Direction.Left:
+                    MergeLeft2D(IJ_new, ref merged); break;
+                case Direction.Right:
+                    MergeRight2D(IJ_new, ref merged); break;
+            }
+        }
+
+        private bool Move(Direction dir, ByteMat2D IJ_new)
+        {
+            switch (dir)
+            {
+                case Direction.Top:
+                    return MoveTop2D(IJ_new);
+                case Direction.Bottom:
+                    return MoveBottom2D(IJ_new);
+                case Direction.Left:
+                    return MoveLeft2D(IJ_new);
+                case Direction.Right:
+                    return MoveRight2D(IJ_new);
+                default:
+                    return false;
+            }
+        }
+
+        private void ProcessNode(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)
+        {
+            bool end = false;
+            if (I < Nx - 1 && I > 0 && J < Ny - 1 && J > 0)
+                Merge(mergeDir, IJ_new, ref merged);
+            if (Move(nodeDir, IJ_new))
+            {
+                if (mergeDir == Direction.Top || mergeDir == Direction.Bottom)
+                    I = MidI;
+                else
+                    J = MidJ;
+                if (Move(mergeDir, IJ_new))
+                {
+                    // Переход на новую строку
+                    I = MidI; J = MidJ;
+                    bool end_cond = true;
+                    switch (mergeDir) {
+                        case Direction.Top:
+                            while (IJ_new[I][J] != NodeType.Removed && J < Ny - 1)
+                                J++; 
+                            if (J < Ny - 1) end_cond = false; break;
+                        case Direction.Bottom:
+                            while (IJ_new[I][J] != NodeType.Removed && J > 0)
+                                J--;
+                            if (J > 0) end_cond = false; break;
+                        case Direction.Right:
+                            while (IJ_new[I][J] != NodeType.Removed && I < Nx - 1)
+                                I++;
+                            if (I < Nx - 1) end_cond = false; break;
+                        case Direction.Left:
+                            while (IJ_new[I][J] != NodeType.Removed && I > 0)
+                                I--;
+                            if (I > 0) end_cond = false; break;
+                    }
+                    if (!end_cond)
+                    {
+                        Move(nodeDir, IJ_new);
+                        MidI = I; MidJ = J;
+                    }
+                    else end = true;
+                }
+            }
+            if (end)
+            {
+                DirIndex++;
+                if (DirIndex >= 2)
+                {
+                    DirIndex = 0;
+                    QuadIndex++;
+                    if (QuadIndex >= 4)
+                    {
+                        QuadIndex = 0;
+                        End = true;
+                    }
+                }
+                I = NodeI; J = NodeJ;
+                MidI = NodeI; MidJ = NodeJ;
+            }
+        }
+
         private void MakeUnStructedMatrix2D(ByteMat2D IJ_new)
         {
             bool merged = false;
-            bool end = false;
             Quadrant current_quad;
-            while (!merged && !End)
+            while ((AllSteps || !merged) && !End)
             {
                 current_quad = Quadrants[QuadIndex];
                 switch (current_quad)
@@ -365,53 +488,10 @@ namespace MakeGrid3D
                         switch (Directions[current_quad][DirIndex])
                         {
                             case Direction.Right:
-                                if (!MoveRight2D(IJ_new))
-                                    MergeTop2D(IJ_new, ref merged);
-                                else {
-                                    I = MidI;
-                                    end = MoveTop2D(IJ_new);
-                                    if (!end) MergeTop2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && J < Ny - 1)
-                                            J++;
-                                        if (J < Ny - 1)
-                                        {
-                                            end = false;
-                                            MoveRight2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeTop2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Right, Direction.Top, IJ_new, ref merged);
                                 break;
                             case Direction.Top:
-                                if (!MoveTop2D(IJ_new))
-                                    MergeRight2D(IJ_new, ref merged);
-                                else
-                                {
-                                    J = MidJ;
-                                    end = MoveRight2D(IJ_new);
-                                    if (!end) MergeRight2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && I < Nx - 1)
-                                            I++;
-                                        if (I < Nx - 1)
-                                        {
-                                            end = false;
-                                            MoveTop2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeRight2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Top, Direction.Right, IJ_new, ref merged);
                                 break;
                         }
                         break;
@@ -420,54 +500,10 @@ namespace MakeGrid3D
                         switch (Directions[current_quad][DirIndex])
                         {
                             case Direction.Left:
-                                if (!MoveLeft2D(IJ_new))
-                                    MergeTop2D(IJ_new, ref merged);
-                                else
-                                {
-                                    I = MidI;
-                                    end = MoveTop2D(IJ_new);
-                                    if (!end) MergeTop2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && J < Ny - 1)
-                                            J++;
-                                        if (J < Ny - 1)
-                                        {
-                                            end = false;
-                                            MoveLeft2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeTop2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Left, Direction.Top, IJ_new, ref merged);
                                 break;
                             case Direction.Top:
-                                if (!MoveTop2D(IJ_new))
-                                    MergeLeft2D(IJ_new, ref merged);
-                                else
-                                {
-                                    J = MidJ;
-                                    end = MoveLeft2D(IJ_new);
-                                    if (!end) MergeLeft2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && I > 0)
-                                            I--;
-                                        if (I > 0)
-                                        {
-                                            end = false;
-                                            MoveTop2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeLeft2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Top, Direction.Left, IJ_new, ref merged);
                                 break;
                         }
                         break;
@@ -476,54 +512,10 @@ namespace MakeGrid3D
                         switch (Directions[current_quad][DirIndex])
                         {
                             case Direction.Left:
-                                if (!MoveLeft2D(IJ_new))
-                                    MergeBottom2D(IJ_new, ref merged);
-                                else
-                                {
-                                    I = MidI;
-                                    end = MoveBottom2D(IJ_new);
-                                    if (!end) MergeBottom2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && J > 0)
-                                            J--;
-                                        if (J > 0)
-                                        {
-                                            end = false;
-                                            MoveLeft2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeBottom2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Left, Direction.Bottom, IJ_new, ref merged);
                                 break;
                             case Direction.Bottom:
-                                if (!MoveBottom2D(IJ_new))
-                                    MergeLeft2D(IJ_new, ref merged);
-                                else
-                                {
-                                    J = MidJ;
-                                    end = MoveLeft2D(IJ_new);
-                                    if (!end) MergeLeft2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && I > 0)
-                                            I--;
-                                        if (I > 0)
-                                        {
-                                            end = false;
-                                            MoveBottom2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeLeft2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Bottom, Direction.Left, IJ_new, ref merged);
                                 break;
                         }
                         break;
@@ -532,74 +524,13 @@ namespace MakeGrid3D
                         switch (Directions[current_quad][DirIndex])
                         {
                             case Direction.Right:
-                                if (!MoveRight2D(IJ_new))
-                                    MergeBottom2D(IJ_new, ref merged);
-                                else
-                                {
-                                    I = MidI;
-                                    end = MoveBottom2D(IJ_new);
-                                    if (!end) MergeBottom2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && J > 0)
-                                            J--;
-                                        if (J > 0)
-                                        {
-                                            end = false;
-                                            MoveRight2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeBottom2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Right, Direction.Bottom, IJ_new, ref merged);
                                 break;
                             case Direction.Bottom:
-                                if (!MoveBottom2D(IJ_new))
-                                    MergeRight2D(IJ_new, ref merged);
-                                else
-                                {
-                                    J = MidJ;
-                                    end = MoveRight2D(IJ_new);
-                                    if (!end) MergeRight2D(IJ_new, ref merged);
-                                    else
-                                    {
-                                        I = MidI; J = MidJ;
-                                        while (IJ_new[I][J] != NodeType.Removed && I < Nx - 1)
-                                            I++;
-                                        if (I < Nx - 1)
-                                        {
-                                            end = false;
-                                            MoveBottom2D(IJ_new);
-                                            MidI = I; MidJ = J;
-                                            MergeRight2D(IJ_new, ref merged);
-                                        }
-                                        else
-                                            end = true;
-                                    }
-                                }
+                                ProcessNode(Direction.Bottom, Direction.Right, IJ_new, ref merged);
                                 break;
                         }
                         break;
-                }
-                if (end)
-                {
-                    end = false;
-                    DirIndex++;
-                    if (DirIndex >= 2)
-                    {
-                        DirIndex = 0;
-                        QuadIndex++;
-                        if (QuadIndex >= 4)
-                        {
-                            QuadIndex = 0;
-                            End = true;
-                        }
-                    }
-                    I = NodeI; J = NodeJ;
-                    MidI = NodeI; MidJ = NodeJ;
                 }
             }
         }

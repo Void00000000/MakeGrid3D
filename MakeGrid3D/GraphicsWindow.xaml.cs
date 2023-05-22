@@ -61,20 +61,30 @@ namespace MakeGrid3D
         public int I { get; } = 1;
         public int J { get; } = 1;
         public int K { get; } = 1;
+        public int MidI { get; } = 1;
+        public int MidJ { get; } = 1;
+        public int MidK { get; } = 1;
         public int NodeI { get; } = 1;
         public int NodeJ { get; } = 1;
         public int NodeK { get; } = 1;
+        public int QuadIndex { get; } = 0;
         public int DirIndex { get; } = 0;
-        public GridState(IGrid grid, int i, int j, int k, int nodeI, int nodeJ, int nodeK, int dirIndex)
+        public bool End { get; } = false;
+        public GridState(IGrid grid, IrregularGridMaker irregularGridMaker)
         {
             Grid = grid;
-            I = i;
-            J = j;
-            K = k;
-            NodeI = nodeI;
-            NodeJ = nodeJ;
-            NodeK = nodeK;
-            DirIndex = dirIndex;
+            I = irregularGridMaker.I;
+            J = irregularGridMaker.J;
+            K = irregularGridMaker.K;
+            MidI = irregularGridMaker.MidI;
+            MidJ = irregularGridMaker.MidJ;
+            MidK = irregularGridMaker.MidK;
+            NodeI = irregularGridMaker.NodeI;
+            NodeJ = irregularGridMaker.NodeJ;
+            NodeK = irregularGridMaker.NodeK;
+            QuadIndex = irregularGridMaker.QuadIndex;
+            DirIndex = irregularGridMaker.DirIndex;
+            End = irregularGridMaker.End;
         }
         public GridState(IGrid grid)
         {
@@ -1171,17 +1181,7 @@ namespace MakeGrid3D
             {
                 currentNode = currentNode.Previous;
                 renderGrid.Grid = currentNode.ValueRef.Grid;
-                irregularGridMaker.Grid = currentNode.ValueRef.Grid;
-                int i = currentNode.Value.I;
-                int j = currentNode.Value.J;
-                int nodeI = currentNode.Value.NodeI;
-                int nodeJ = currentNode.Value.NodeJ;
-                int dirIndex = currentNode.Value.DirIndex;
-                irregularGridMaker.I = i;
-                irregularGridMaker.J = j;
-                irregularGridMaker.NodeI = nodeI;
-                irregularGridMaker.NodeJ = nodeJ;
-                irregularGridMaker.DirIndex = dirIndex;
+                irregularGridMaker.Set(currentNode.ValueRef);
                 SetCurrentNodeMesh();
             }
         }
@@ -1192,17 +1192,7 @@ namespace MakeGrid3D
             {
                 currentNode = currentNode.Next;
                 renderGrid.Grid = currentNode.ValueRef.Grid;
-                irregularGridMaker.Grid = currentNode.ValueRef.Grid;
-                int i = currentNode.Value.I;
-                int j = currentNode.Value.J;
-                int nodeI = currentNode.Value.NodeI;
-                int nodeJ = currentNode.Value.NodeJ;
-                int dirIndex = currentNode.Value.DirIndex;
-                irregularGridMaker.I = i;
-                irregularGridMaker.J = j;
-                irregularGridMaker.NodeI = nodeI;
-                irregularGridMaker.NodeJ = nodeJ;
-                irregularGridMaker.DirIndex = dirIndex;
+                irregularGridMaker.Set(currentNode.ValueRef);
                 SetCurrentNodeMesh();
             }
         }
@@ -1211,18 +1201,12 @@ namespace MakeGrid3D
         {
             if (!irregularGridMaker.End)
             {
+                irregularGridMaker.AllSteps = false;
                 IGrid grid_new = irregularGridMaker.MakeUnStructedGrid();
                 while (currentNode != null && currentNode.Next != null)
                     gridList.Remove(currentNode.Next);
-                int nodeI = irregularGridMaker.NodeI;
-                int nodeJ = irregularGridMaker.NodeJ;
-                int nodeK = irregularGridMaker.NodeK;
-                int i = irregularGridMaker.I;
-                int j = irregularGridMaker.J;
-                int k = irregularGridMaker.K;
-                int dirIndex = irregularGridMaker.DirIndex;
                 SetCurrentNodeMesh();
-                gridList.AddLast(new GridState(grid_new, i, j, k, nodeI, nodeJ, nodeK, dirIndex));
+                gridList.AddLast(new GridState(grid_new, irregularGridMaker));
                 currentNode = gridList.Last;
                 renderGrid.Grid = grid_new;
                 irregularGridMaker.Grid = grid_new;
@@ -1231,23 +1215,15 @@ namespace MakeGrid3D
 
         private void RemoveAllElemsClick(object sender, RoutedEventArgs e)
         {
-            // TODO: Соптимизировать
-            IGrid? grid_new = null;
-            while (!irregularGridMaker.End)
+            if (!irregularGridMaker.End)
             {
-                grid_new = irregularGridMaker.MakeUnStructedGrid();
+                irregularGridMaker.AllSteps = true;
+                IGrid grid_new = irregularGridMaker.MakeUnStructedGrid();
                 irregularGridMaker.Grid = grid_new;
-            }
-            if (grid_new != null)
-            {
                 while (currentNode != null && currentNode.Next != null)
                     gridList.Remove(currentNode.Next);
                 SetCurrentNodeMesh();
-                int dirIndex = irregularGridMaker.DirIndex;
-                int Nx = irregularGridMaker.Nx;
-                int Ny = irregularGridMaker.Ny;
-                int Nz = irregularGridMaker.Nz;
-                gridList.AddLast(new GridState(grid_new, Nx - 1, Ny - 1, Nz - 1, Nx - 1, Ny - 1, Nz - 1, dirIndex));
+                gridList.AddLast(new GridState(grid_new, irregularGridMaker));
                 currentNode = gridList.Last;
                 renderGrid.Grid = grid_new;
             }
@@ -1266,9 +1242,16 @@ namespace MakeGrid3D
             irregularGridMaker.Grid = regularGrid;
             irregularGridMaker.I = 1;
             irregularGridMaker.J = 1;
+            irregularGridMaker.K = 1;
+            irregularGridMaker.MidI = 1;
+            irregularGridMaker.MidJ = 1;
+            irregularGridMaker.MidK = 1;
             irregularGridMaker.NodeI = 1;
             irregularGridMaker.NodeJ = 1;
+            irregularGridMaker.NodeK = 1;
+            irregularGridMaker.QuadIndex = 0;
             irregularGridMaker.DirIndex = 0;
+            irregularGridMaker.End = false;
             gridList.Clear();
             SetCurrentNodeMesh();
             gridList.AddLast(new GridState(regularGrid));
