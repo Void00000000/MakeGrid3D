@@ -168,15 +168,6 @@ namespace MakeGrid3D
             return false;
         }
 
-        private void GetCornerIJ(Direction dir1, Direction dir2, out int i, out int j, ByteMat2D IJ_new)
-        {
-            int i0 = I; int j0 = J;
-            Move(dir1, IJ_new);
-            Move(dir2, IJ_new);
-            i = I; j = J;
-            I = i0; J = j0;
-        }
-
         private void GetNearIJ(Direction dir, out int ij, ByteMat2D IJ_new)
         {
             int i0 = I; int j0 = J;
@@ -190,36 +181,28 @@ namespace MakeGrid3D
         private void MergeRight2D(ByteMat2D IJ_new, ref bool merged)
         {
             merged = true;
-            int bottom, top;
+            int right, bottom, top;
+            GetNearIJ(Direction.Right, out right, IJ_new);
             GetNearIJ(Direction.Bottom, out bottom, IJ_new);
             GetNearIJ(Direction.Top, out top, IJ_new);
+
             if (IJ_new[I][bottom] == NodeType.Left || IJ_new[I][top] == NodeType.Left || IJ_new[I][J] != NodeType.Regular)
                 return;
 
-            int i = I; int j = J;
-            MoveBottom2D(IJ_new);
-            int jb = J;
-            J = j;
+            int n = grid2D.global_num(I, J);
+            int nb = grid2D.global_num(I, bottom);
+            int nt = grid2D.global_num(I, top);
+            int nr = grid2D.global_num(right, J);
+            int nrb = grid2D.global_num(right, bottom);
+            int nrt = grid2D.global_num(right, top);
 
-            MoveRight2D(IJ_new);
-            int ir = I;
-            MoveTop2D(IJ_new);
-            int jt = J;
+            if (nrt < 0 || nrb < 0) return;
 
-            I = i; J = j;
-
-            // Проверка
-            MoveBottom2D(IJ_new);
-            MoveRight2D(IJ_new);
-            int ix = I;
-            I = i; J = j;
-            if (ix != ir)
-                return;
-
-            int n = grid2D.global_num(i, j);
-            int nb = grid2D.global_num(i, jb);
-            int nr = grid2D.global_num(ir, j);
-            int nrt = grid2D.global_num(ir, jt);
+            float xmin = grid2D.XY[nb].X;
+            float ymin = grid2D.XY[nb].Y;
+            float xmax = grid2D.XY[nrt].X;
+            float ymax = grid2D.XY[nrt].Y;
+            if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
             float arb = CalcAR2D(nb, nr);
             float art = CalcAR2D(n, nrt);
@@ -228,10 +211,14 @@ namespace MakeGrid3D
             if ((CompareAR(arb, MaxAR) || CompareAR(art, MaxAR)) &&
                  CompareAR(arb, ar) && CompareAR(art, ar))
             {
-                IJ_new[i][j] = NodeType.Left;
-                for (int ik = i + 1; ik < Nx; ik++)
+                for (int ik = I + 1; ik < Nx; ik++)
                 {
-                    IJ_new[ik][j] = NodeType.Removed;
+                    if (IJ_new[ik][J] == NodeType.Bottom || IJ_new[ik][J] == NodeType.Top) return;
+                }
+                IJ_new[I][J] = NodeType.Left;
+                for (int ik = I + 1; ik < Nx; ik++)
+                {
+                    IJ_new[ik][J] = NodeType.Removed;
                 }
                 merged = true;
             }
@@ -240,40 +227,27 @@ namespace MakeGrid3D
         private void MergeLeft2D(ByteMat2D IJ_new, ref bool merged)
         {
             merged = true;
-            int i = I; int j = J;
-            MoveBottom2D(IJ_new);
-            int bottom = J;
-            J = j;
-            MoveTop2D(IJ_new);
-            int top = J;
-            J = j;
-            if (IJ_new[I][bottom] == NodeType.Right || IJ_new[I][J] == NodeType.Right || IJ_new[I][top] == NodeType.Right ||
-                IJ_new[I][J] != NodeType.Regular)
+            int left, bottom, top;
+            GetNearIJ(Direction.Left, out left, IJ_new);
+            GetNearIJ(Direction.Bottom, out bottom, IJ_new);
+            GetNearIJ(Direction.Top, out top, IJ_new);
+            if (IJ_new[I][bottom] == NodeType.Right || IJ_new[I][top] == NodeType.Right || IJ_new[I][J] != NodeType.Regular)
                 return;
 
-            MoveTop2D(IJ_new);
-            int jt = J;
-            J = j;
+            int n = grid2D.global_num(I, J);
+            int nl = grid2D.global_num(left, J);
+            int nb = grid2D.global_num(I, bottom);
+            int nt = grid2D.global_num(I, top);
+            int nlb = grid2D.global_num(left, bottom);
+            int nlt = grid2D.global_num(left, top);
 
-            MoveLeft2D(IJ_new);
-            int il = I;
-            MoveBottom2D(IJ_new);
-            int jb = J;
+            if (nlb < 0 || nlt < 0) return;
 
-            I = i; J = j;
-
-            // Проверка
-            MoveBottom2D(IJ_new);
-            MoveLeft2D(IJ_new);
-            int ix = I;
-            I = i; J = j;
-            if (ix != il)
-                return;
-
-            int n = grid2D.global_num(i, j);
-            int nlb = grid2D.global_num(il, jb);
-            int nl = grid2D.global_num(il, j);
-            int nt = grid2D.global_num(i, jt);
+            float xmin = grid2D.XY[nlb].X;
+            float ymin = grid2D.XY[nlb].Y;
+            float xmax = grid2D.XY[nt].X;
+            float ymax = grid2D.XY[nt].Y;
+            if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
             float alb = CalcAR2D(nlb, n);
             float alt = CalcAR2D(nl, nt);
@@ -282,10 +256,14 @@ namespace MakeGrid3D
             if ((CompareAR(alb, MaxAR) || CompareAR(alt, MaxAR)) &&
                  CompareAR(alb, al) && CompareAR(alt, al))
             {
-                IJ_new[i][j] = NodeType.Right;
-                for (int ik = i - 1; ik >= 0; ik--)
+                for (int ik = I - 1; ik >= 0; ik--)
                 {
-                    IJ_new[ik][j] = NodeType.Removed;
+                    if (IJ_new[ik][J] == NodeType.Bottom || IJ_new[ik][J] == NodeType.Top) return;
+                }
+                IJ_new[I][J] = NodeType.Right;
+                for (int ik = I - 1; ik >= 0; ik--)
+                {
+                    IJ_new[ik][J] = NodeType.Removed;
                 }
                 merged = true;
             }
@@ -294,32 +272,27 @@ namespace MakeGrid3D
         private void MergeTop2D(ByteMat2D IJ_new, ref bool merged)
         {
             merged = true;
-            int i = I; int j = J;
-            MoveLeft2D(IJ_new);
-            int left = I;
-            I = i;
-            MoveRight2D(IJ_new);
-            int right = I;
-            I = i;
-            if (IJ_new[left][J] == NodeType.Bottom || IJ_new[I][J] == NodeType.Bottom || IJ_new[right][J] == NodeType.Bottom ||
-                IJ_new[I][J] != NodeType.Regular)
+            int top, left, right;
+            GetNearIJ(Direction.Left, out left, IJ_new);
+            GetNearIJ(Direction.Right, out right, IJ_new);
+            GetNearIJ(Direction.Top, out top, IJ_new);
+            if (IJ_new[left][J] == NodeType.Bottom || IJ_new[right][J] == NodeType.Bottom || IJ_new[I][J] != NodeType.Regular)
                 return;
 
-            MoveLeft2D(IJ_new);
-            int il = I;
-            I = i;
+            int n = grid2D.global_num(I, J);
+            int nl = grid2D.global_num(left, J);
+            int nr = grid2D.global_num(right, J);
+            int nt = grid2D.global_num(I, top);
+            int nlt = grid2D.global_num(left, top);
+            int nrt = grid2D.global_num(right, top);
 
-            MoveTop2D(IJ_new);
-            int jt = J;
-            MoveRight2D(IJ_new);
-            int ir = I;
+            if (nlt < 0 || nrt < 0) return;
 
-            I = i; J = j;
-
-            int n = grid2D.global_num(i, j);
-            int nl = grid2D.global_num(il, j);
-            int nt = grid2D.global_num(i, jt);
-            int nrt = grid2D.global_num(ir, jt);
+            float xmin = grid2D.XY[nl].X;
+            float ymin = grid2D.XY[nl].Y;
+            float xmax = grid2D.XY[nrt].X;
+            float ymax = grid2D.XY[nrt].Y;
+            if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
             float alt = CalcAR2D(nl, nt);
             float art = CalcAR2D(n, nrt);
@@ -328,10 +301,14 @@ namespace MakeGrid3D
             if ((CompareAR(alt, MaxAR) || CompareAR(art, MaxAR)) &&
                  CompareAR(alt, at) && CompareAR(art, at))
             {
-                IJ_new[i][j] = NodeType.Bottom;
-                for (int jk = j + 1; jk < Ny; jk++)
+                for (int jk = J + 1; jk < Ny; jk++)
                 {
-                    IJ_new[i][jk] = NodeType.Removed;
+                    if (IJ_new[I][jk] == NodeType.Left || IJ_new[I][jk] == NodeType.Right) return;
+                }
+                IJ_new[I][J] = NodeType.Bottom;
+                for (int jk = J + 1; jk < Ny; jk++)
+                {
+                    IJ_new[I][jk] = NodeType.Removed;
                 }
                 merged = true;
             }
@@ -340,32 +317,27 @@ namespace MakeGrid3D
         private void MergeBottom2D(ByteMat2D IJ_new, ref bool merged)
         {
             merged = true;
-            int i = I; int j = J;
-            MoveLeft2D(IJ_new);
-            int left = I;
-            I = i;
-            MoveRight2D(IJ_new);
-            int right = I;
-            I = i;
-            if (IJ_new[left][J] == NodeType.Top || IJ_new[I][J] == NodeType.Top || IJ_new[right][J] == NodeType.Top ||
-                IJ_new[I][J] != NodeType.Regular)
+            int bottom, left, right;
+            GetNearIJ(Direction.Left, out left, IJ_new);
+            GetNearIJ(Direction.Right, out right, IJ_new);
+            GetNearIJ(Direction.Bottom, out bottom, IJ_new);
+            if (IJ_new[left][J] == NodeType.Top || IJ_new[right][J] == NodeType.Top || IJ_new[I][J] != NodeType.Regular)
                 return;
 
-            MoveRight2D(IJ_new);
-            int ir = I;
-            I = i;
+            int n = grid2D.global_num(I, J);
+            int nl = grid2D.global_num(left, J);
+            int nr = grid2D.global_num(right, J);
+            int nb = grid2D.global_num(I, bottom);
+            int nlb = grid2D.global_num(left, bottom);
+            int nrb = grid2D.global_num(right, bottom);
 
-            MoveBottom2D(IJ_new);
-            int jb = J;
-            MoveLeft2D(IJ_new);
-            int il = I;
+            if (nlb < 0 || nrb < 0) return;
 
-            I = i; J = j;
-
-            int n = grid2D.global_num(i, j);
-            int nb = grid2D.global_num(i, jb);
-            int nlb = grid2D.global_num(il, jb);
-            int nr = grid2D.global_num(ir, j);
+            float xmin = grid2D.XY[nlb].X;
+            float ymin = grid2D.XY[nlb].Y;
+            float xmax = grid2D.XY[nr].X;
+            float ymax = grid2D.XY[nr].Y;
+            if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
             float alb = CalcAR2D(nlb, n);
             float arb = CalcAR2D(nb, nr);
@@ -374,10 +346,14 @@ namespace MakeGrid3D
             if ((CompareAR(alb, MaxAR) || CompareAR(arb, MaxAR)) &&
                  CompareAR(alb, ab) && CompareAR(arb, ab))
             {
-                IJ_new[i][j] = NodeType.Top;
-                for (int jk = j - 1; jk >= 0; jk--)
+                for (int jk = J - 1; jk >= 0; jk--)
                 {
-                    IJ_new[i][jk] = NodeType.Removed;
+                    if (IJ_new[I][jk] == NodeType.Left || IJ_new[I][jk] == NodeType.Right) return;
+                }
+                IJ_new[I][J] = NodeType.Top;
+                for (int jk = J - 1; jk >= 0; jk--)
+                {
+                    IJ_new[I][jk] = NodeType.Removed;
                 }
                 merged = true;
             }

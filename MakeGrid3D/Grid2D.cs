@@ -355,7 +355,8 @@ namespace MakeGrid3D
                 return l;
 
             for (int k = 0; k < removedNodes.Count; k++)
-                if (l < removedNodes[k]) return l - k;
+                if (l == removedNodes[k]) return -1;
+                else if (l < removedNodes[k]) return l - k;
             return l - removedNodes.Count;   
         }
 

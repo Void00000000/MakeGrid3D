@@ -285,9 +285,12 @@ namespace MakeGrid3D
                     firstNode.Dispose();
                     //----------------------
                     int node = grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J);
-                    float x = grid2D.XY[node].X;
-                    float y = grid2D.XY[node].Y;
-                    CurrentUnstructedNodeBlock.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", " + y.ToString("0.00");
+                    if (node >= 0)
+                    {
+                        float x = grid2D.XY[node].X;
+                        float y = grid2D.XY[node].Y;
+                        CurrentUnstructedNodeBlock.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", " + y.ToString("0.00");
+                    }
                 }
                 // -----------------------------------3D------------------------------------ -
                 else
@@ -638,6 +641,7 @@ namespace MakeGrid3D
                 Grid2D grid2D = (Grid2D)renderGrid.Grid;
                 int node_num_1 = grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J);
                 int node_num_2 = grid2D.global_num(irregularGridMaker.NodeI, irregularGridMaker.NodeJ);
+                if (node_num_1 < 0 || node_num_2 < 0) { return; }
                 float x1 = grid2D.XY[node_num_1].X;
                 float y1 = grid2D.XY[node_num_1].Y;
                 float[] vertices1 = { x1, y1, 0 };
