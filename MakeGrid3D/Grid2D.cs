@@ -348,14 +348,14 @@ namespace MakeGrid3D
             i0 = n + i0;
         }
 
-        public int global_num(int i, int j)
+        public int global_num(int i, int j, bool removedNode = false)
         {
             int l = j * Nx + i;
             if (removedNodes.Count == 0)
                 return l;
 
             for (int k = 0; k < removedNodes.Count; k++)
-                if (l == removedNodes[k]) return -1;
+                if (!removedNode && l == removedNodes[k]) return -1;
                 else if (l < removedNodes[k]) return l - k;
             return l - removedNodes.Count;   
         }
@@ -375,7 +375,7 @@ namespace MakeGrid3D
                 int reg_i = (removedNodes[k]) % Nx;
                 int reg_j = (removedNodes[k]) / Nx;
                 // TODO: Скорее всего неправильно
-                if (node_num < global_num(reg_i, reg_j) + 1)
+                if (node_num < global_num(reg_i, reg_j, true) + 1)
                 {
                     i = (node_num + k) % Nx;
                     j = (node_num + k) / Nx;

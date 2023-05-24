@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Diagnostics;
 
 namespace MakeGrid3D
 {
@@ -40,6 +41,8 @@ namespace MakeGrid3D
         public int Nz { get; private set; }
         public float MaxAR { get; set; } = (float)Default.maxAR_width / Default.maxAR_height;
         public bool AllSteps { get; set; } = false;
+        public bool SmartMerge { get; set; } = false;
+        private List<float> aspect_ratios; 
         public int NodeI { get; set; } = 1;
         public int NodeJ { get; set; } = 1;
         public int NodeK { get; set; } = 1;
@@ -391,7 +394,7 @@ namespace MakeGrid3D
             }
         }
 
-        private void ProcessNode(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)
+        private void ProcessNodeBasic(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)
         {
             bool end = false;
             if (I < Nx - 1 && I > 0 && J < Ny - 1 && J > 0)
@@ -449,6 +452,19 @@ namespace MakeGrid3D
                 I = NodeI; J = NodeJ;
                 MidI = NodeI; MidJ = NodeJ;
             }
+        }
+
+        private void ProcessNodeSmart(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)
+        {
+           
+        }
+
+        private void ProcessNode(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)
+        {
+            if (SmartMerge)
+                ProcessNodeSmart(nodeDir, mergeDir, IJ_new, ref merged);
+            else
+                ProcessNodeBasic(nodeDir, mergeDir, IJ_new, ref merged);
         }
 
         private void MakeUnStructedMatrix2D(ByteMat2D IJ_new)
