@@ -53,6 +53,8 @@ namespace MakeGrid3D
         public int Nnodes { get; }
         public int Nelems { get; }
         public int Nmats { get; }
+        public float MeanAR { get; set; }
+        public float WorstAR { get; set; }
     }
 
     class GridState
@@ -210,8 +212,8 @@ namespace MakeGrid3D
             BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid.Nmats;
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid.Nnodes;
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid.Nelems;
-            BlockRemovedNodesCount.Text = "***";
-            BlockRemovedElemsCount.Text = "***";
+            BlockMeanAR.Text = "Среднее соотношение сторон: " + renderGrid.Grid.MeanAR.ToString("0.00");
+            BlockWorstAR.Text = "Худшее соотношение сторон: " + renderGrid.Grid.WorstAR.ToString("0.00");
             //----------------------------------------------------------------------------
             GL.Enable(EnableCap.LineSmooth);
             GL.Enable(EnableCap.PointSmooth);
@@ -233,6 +235,8 @@ namespace MakeGrid3D
             BlockAreaCount.Text = "Количество подобластей: " + renderGrid.Grid.Nmats;
             BlockNodesCount.Text = "Количество узлов: " + renderGrid.Grid.Nnodes;
             BlockElemsCount.Text = "Количество элементов: " + renderGrid.Grid.Nelems;
+            BlockMeanAR.Text = "Среднее соотношение сторон: " + renderGrid.Grid.MeanAR.ToString("0.00");
+            BlockWorstAR.Text = "Худшее соотношение сторон: " + renderGrid.Grid.WorstAR.ToString("0.00");
 
             //------------------------------
             if (!twoD)
@@ -880,6 +884,7 @@ namespace MakeGrid3D
             BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
             WiremodeCheckBox.IsChecked = Default.wireframeMode;
             ShowGridCheckBox.IsChecked = Default.showGrid;
+            SmartMergeCheckBox.IsChecked = Default.smartMerge;
 
             DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
             WidthInput.Text = Default.maxAR_width.ToString();
@@ -888,6 +893,7 @@ namespace MakeGrid3D
             {
                 irregularGridMaker.MaxAR = Default.maxAR_width / Default.maxAR_height;
             }
+
             ShowCurrentUnstructedNodeCheckBox.IsChecked = Default.showCurrentUnstructedNode;
             CurrentUnstructedNodeColorPicker.SelectedColor = ColorFloatToByte(Default.currentUnstructedNodeColor);
         }
@@ -1244,22 +1250,21 @@ namespace MakeGrid3D
             if (renderGrid == null) return;
             renderGrid.Grid = regularGrid;
             irregularGridMaker.Grid = regularGrid;
-            irregularGridMaker.I = 1;
-            irregularGridMaker.J = 1;
-            irregularGridMaker.K = 1;
-            irregularGridMaker.MidI = 1;
-            irregularGridMaker.MidJ = 1;
-            irregularGridMaker.MidK = 1;
-            irregularGridMaker.NodeI = 1;
-            irregularGridMaker.NodeJ = 1;
-            irregularGridMaker.NodeK = 1;
-            irregularGridMaker.QuadIndex = 0;
-            irregularGridMaker.DirIndex = 0;
-            irregularGridMaker.End = false;
+            irregularGridMaker.Reset();
             gridList.Clear();
             SetCurrentNodeMesh();
             gridList.AddLast(new GridState(regularGrid));
             currentNode = gridList.Last;
+        }
+
+        private void SmartMergeChecked(object sender, RoutedEventArgs e)
+        {
+            irregularGridMaker.SmartMerge = true;
+        }
+
+        private void SmartMergeUnChecked(object sender, RoutedEventArgs e)
+        {
+            irregularGridMaker.SmartMerge = false;
         }
 
         private void ShowCurrentUnstructedNodeChecked(object sender, RoutedEventArgs e)

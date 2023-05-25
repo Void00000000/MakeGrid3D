@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Diagnostics;
+using System.Windows.Documents;
+using OpenTK.Audio.OpenAL;
 
 namespace MakeGrid3D
 {
@@ -41,8 +43,25 @@ namespace MakeGrid3D
         public int Nz { get; private set; }
         public float MaxAR { get; set; } = (float)Default.maxAR_width / Default.maxAR_height;
         public bool AllSteps { get; set; } = false;
-        public bool SmartMerge { get; set; } = false;
-        private List<float> aspect_ratios; 
+        private bool smartMerge = Default.smartMerge;
+        public bool SmartMerge
+        {
+            get => smartMerge;
+            set
+            {
+                if (value)
+                {
+                    aspect_ratios = new List<Tuple<float, int>>();
+                    calcAROnly = true;
+                }
+                else calcAROnly = false;
+                smartMerge = value;
+            }
+        }
+
+        private List<Tuple<float, int>> aspect_ratios = new List<Tuple<float, int>>();
+        private bool calcAROnly = Default.smartMerge;
+        
         public int NodeI { get; set; } = 1;
         public int NodeJ { get; set; } = 1;
         public int NodeK { get; set; } = 1;
@@ -87,7 +106,25 @@ namespace MakeGrid3D
             }
             
         }
+        public void Reset()
+        {
+            I = 1;
+            J = 1;
+            K = 1;
+            MidI = 1;
+            MidJ = 1;
+            MidK = 1;
+            NodeI = 1;
+            NodeJ = 1;
+            NodeK = 1;
+            QuadIndex = 0;
+            DirIndex = 0;
+            End = false;
+            if (aspect_ratios != null) aspect_ratios.Clear();
+            if (smartMerge) calcAROnly = true; else calcAROnly = false;
+        }
 
+        // TODO: В GridState нет инфы связанной с SmartMerge
         public void Set(GridState gridState)
         {
             Grid = gridState.Grid;
@@ -218,6 +255,16 @@ namespace MakeGrid3D
                 {
                     if (IJ_new[ik][J] == NodeType.Bottom || IJ_new[ik][J] == NodeType.Top) return;
                 }
+
+                if (calcAROnly)
+                {
+                    if (arb < 1f) arb = 1f / arb;
+                    if (art < 1f) art = 1f / art;
+                    float a = (arb > art) ? arb : art;
+                    aspect_ratios.Add(Tuple.Create(a, J));
+                    return;
+                }
+
                 IJ_new[I][J] = NodeType.Left;
                 for (int ik = I + 1; ik < Nx; ik++)
                 {
@@ -263,6 +310,16 @@ namespace MakeGrid3D
                 {
                     if (IJ_new[ik][J] == NodeType.Bottom || IJ_new[ik][J] == NodeType.Top) return;
                 }
+
+                if (calcAROnly)
+                {
+                    if (alb < 1f) alb = 1f / alb;
+                    if (alt < 1f) alt = 1f / alt;
+                    float a = (alb > alt) ? alb : alt;
+                    aspect_ratios.Add(Tuple.Create(a, J));
+                    return;
+                }
+
                 IJ_new[I][J] = NodeType.Right;
                 for (int ik = I - 1; ik >= 0; ik--)
                 {
@@ -308,6 +365,16 @@ namespace MakeGrid3D
                 {
                     if (IJ_new[I][jk] == NodeType.Left || IJ_new[I][jk] == NodeType.Right) return;
                 }
+
+                if (calcAROnly)
+                {
+                    if (alt < 1f) alt = 1f / alt;
+                    if (art < 1f) art = 1f / art;
+                    float a = (alt > art) ? alt : art;
+                    aspect_ratios.Add(Tuple.Create(a, I));
+                    return;
+                }
+
                 IJ_new[I][J] = NodeType.Bottom;
                 for (int jk = J + 1; jk < Ny; jk++)
                 {
@@ -353,6 +420,16 @@ namespace MakeGrid3D
                 {
                     if (IJ_new[I][jk] == NodeType.Left || IJ_new[I][jk] == NodeType.Right) return;
                 }
+
+                if (calcAROnly)
+                {
+                    if (alb < 1f) alb = 1f / alb;
+                    if (arb < 1f) arb = 1f / arb;
+                    float a = (alb > arb) ? alb : arb;
+                    aspect_ratios.Add(Tuple.Create(a, I));
+                    return;
+                }
+
                 IJ_new[I][J] = NodeType.Top;
                 for (int jk = J - 1; jk >= 0; jk--)
                 {
@@ -364,16 +441,19 @@ namespace MakeGrid3D
 
         private void Merge(Direction dir, ByteMat2D IJ_new, ref bool merged)
         {
-            switch (dir)
+            if (I < Nx - 1 && I > 0 && J < Ny - 1 && J > 0)
             {
-                case Direction.Top:
-                    MergeTop2D(IJ_new, ref merged); break;
-                case Direction.Bottom:
-                    MergeBottom2D(IJ_new, ref merged); break;
-                case Direction.Left:
-                    MergeLeft2D(IJ_new, ref merged); break;
-                case Direction.Right:
-                    MergeRight2D(IJ_new, ref merged); break;
+                switch (dir)
+                {
+                    case Direction.Top:
+                        MergeTop2D(IJ_new, ref merged); break;
+                    case Direction.Bottom:
+                        MergeBottom2D(IJ_new, ref merged); break;
+                    case Direction.Left:
+                        MergeLeft2D(IJ_new, ref merged); break;
+                    case Direction.Right:
+                        MergeRight2D(IJ_new, ref merged); break;
+                }
             }
         }
 
@@ -397,14 +477,11 @@ namespace MakeGrid3D
         private void ProcessNodeBasic(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)
         {
             bool end = false;
-            if (I < Nx - 1 && I > 0 && J < Ny - 1 && J > 0)
-                Merge(mergeDir, IJ_new, ref merged);
+            Merge(mergeDir, IJ_new, ref merged);
             if (Move(nodeDir, IJ_new))
             {
-                if (mergeDir == Direction.Top || mergeDir == Direction.Bottom)
-                    I = MidI;
-                else
-                    J = MidJ;
+                if (mergeDir == Direction.Top || mergeDir == Direction.Bottom) I = MidI; else J = MidJ;
+
                 if (Move(mergeDir, IJ_new))
                 {
                     // Переход на новую строку
@@ -456,7 +533,84 @@ namespace MakeGrid3D
 
         private void ProcessNodeSmart(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)
         {
-           
+            merged = true;
+            bool end = false;
+            bool end_row = false;
+            if (!calcAROnly)
+            {
+                if (aspect_ratios.Count != 0)
+                {
+                    var index = aspect_ratios[aspect_ratios.Count - 1].Item2;
+                    aspect_ratios.RemoveAt(aspect_ratios.Count - 1);
+                    if (nodeDir == Direction.Left || nodeDir == Direction.Right) I = index; else J = index;
+                }
+                else end_row = true;
+            }
+            if (!end_row) Merge(mergeDir, IJ_new, ref merged);
+            if (calcAROnly) end_row = Move(nodeDir, IJ_new);
+            if (end_row)
+            {
+                if (calcAROnly)
+                {
+                    aspect_ratios.Sort((a, b) => a.Item1.CompareTo(b.Item1));
+                    calcAROnly = false;
+                    return;
+                }
+                else
+                {
+                    calcAROnly = true;
+                    aspect_ratios.Clear();
+                }
+                if (mergeDir == Direction.Top || mergeDir == Direction.Bottom) I = MidI; else J = MidJ;
+
+                if (Move(mergeDir, IJ_new))
+                {
+                    // Переход на новую строку
+                    I = MidI; J = MidJ;
+                    bool end_cond = true;
+                    switch (mergeDir)
+                    {
+                        case Direction.Top:
+                            while (IJ_new[I][J] != NodeType.Removed && J < Ny - 1)
+                                J++;
+                            if (J < Ny - 1) end_cond = false; break;
+                        case Direction.Bottom:
+                            while (IJ_new[I][J] != NodeType.Removed && J > 0)
+                                J--;
+                            if (J > 0) end_cond = false; break;
+                        case Direction.Right:
+                            while (IJ_new[I][J] != NodeType.Removed && I < Nx - 1)
+                                I++;
+                            if (I < Nx - 1) end_cond = false; break;
+                        case Direction.Left:
+                            while (IJ_new[I][J] != NodeType.Removed && I > 0)
+                                I--;
+                            if (I > 0) end_cond = false; break;
+                    }
+                    if (!end_cond)
+                    {
+                        Move(nodeDir, IJ_new);
+                        MidI = I; MidJ = J;
+                    }
+                    else end = true;
+                }
+            }
+            if (end)
+            {
+                DirIndex++;
+                if (DirIndex >= 2)
+                {
+                    DirIndex = 0;
+                    QuadIndex++;
+                    if (QuadIndex >= 4)
+                    {
+                        QuadIndex = 0;
+                        End = true;
+                    }
+                }
+                I = NodeI; J = NodeJ;
+                MidI = NodeI; MidJ = NodeJ;
+            }
         }
 
         private void ProcessNode(Direction nodeDir, Direction mergeDir, ByteMat2D IJ_new, ref bool merged)

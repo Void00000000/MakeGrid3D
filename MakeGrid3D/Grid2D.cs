@@ -162,6 +162,9 @@ namespace MakeGrid3D
         public int Nnodes { get; }
         public int Nelems { get; }
         public int Nmats { get; }
+        public float MeanAR { get; set; } = 0;
+        public float WorstAR { get; set; } = 0;
+
         public int Nx { get; private set; }
         public int Ny { get; private set; }
 
@@ -188,6 +191,7 @@ namespace MakeGrid3D
                     if (IJ[i][j] == NodeType.Removed)
                         removedNodes.Add(j * Nx + i);
                 }
+            CalcAR();
         }
 
         // Создание регулярной сетки
@@ -234,6 +238,7 @@ namespace MakeGrid3D
                 for (int j = 0; j < Ny; j++)
                     IJ[i].Add(NodeType.Regular);
             }
+            CalcAR();
         }
 
         private void ReadGrid2D(string path, List<float> X, List<float> Y)
@@ -402,6 +407,22 @@ namespace MakeGrid3D
                 }
             }
             return false;
+        }
+
+        public void CalcAR()
+        {
+            foreach (Elem2D elem in Elems)
+            {
+                float xmin = XY[elem.n1].X;
+                float ymin = XY[elem.n1].Y;
+                float xmax = XY[elem.n4].X;
+                float ymax = XY[elem.n4].Y;
+                float ar = (xmax - xmin) / (ymax - ymin);
+                if (ar < 1f) ar = 1f / ar;
+                if (ar > WorstAR) WorstAR = ar;
+                MeanAR += ar;
+            }
+            MeanAR /= Nelems;
         }
     }
 }

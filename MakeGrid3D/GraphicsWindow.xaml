@@ -245,6 +245,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0" Margin="10 10 10 0" HorizontalAlignment="Center">
                                 <Grid.ColumnDefinitions>
@@ -287,10 +288,11 @@
                                 <Image Source="Images/do.png"></Image>
                             </Button>
                             <TextBlock Name="CurrentUnstructedNodeBlock" Grid.Row="3" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="4" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="5" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center"></xctk:ColorPicker>
-                            <Button Grid.Row="6" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
-                            <Grid Grid.Row="7" Margin="10 10 10 0" HorizontalAlignment="Center">
+                            <CheckBox Name="SmartMergeCheckBox" Content="Умное объединение" Grid.Row="4" Checked="SmartMergeChecked" Unchecked="SmartMergeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="5" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="6" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center" Margin="10 10 10 0"></xctk:ColorPicker>
+                            <Button Grid.Row="7" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
+                            <Grid Grid.Row="8" Margin="10 10 10 0" HorizontalAlignment="Center">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
@@ -386,14 +388,13 @@
             </StatusBarItem>
             <Separator Grid.Column="7" Width="2"/>
             <StatusBarItem Grid.Column="8">
-                <TextBlock Name="BlockRemovedNodesCount"/>
+                <TextBlock Name="BlockMeanAR"/>
             </StatusBarItem>
             <Separator Grid.Column="9" Width="2"/>
             <StatusBarItem Grid.Column="10">
-                <TextBlock Name="BlockRemovedElemsCount"/>
+                <TextBlock Name="BlockWorstAR"/>
             </StatusBarItem>
-            <Separator Grid.Column="11" Width="2"/>
-            <StatusBarItem Grid.Column="12" HorizontalAlignment="Right">
+            <StatusBarItem Grid.Column="11" HorizontalAlignment="Right">
                 <TextBlock Name="BlockCoordinates"/>
             </StatusBarItem>
         </StatusBar>
