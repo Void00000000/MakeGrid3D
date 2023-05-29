@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Runtime.InteropServices;
 using System.IO;
 using OpenTK.Windowing.Common;
+using System.Windows.Controls;
 
 namespace MakeGrid3D
 {
@@ -42,7 +43,7 @@ namespace MakeGrid3D
         RightBottom
     }
 
-    enum PlaneSection
+    enum Plane
     {
         XY,
         XZ,
@@ -94,11 +95,155 @@ namespace MakeGrid3D
         }
     }
 
+    // TODO: В UI значения по умолчаниюплохо ставятся при загрузке новой сетки
+    // TODO: в нерегулярных сетках не все слои выделяются
+    class CrossSections
+    {
+        // XY - 0; XZ - 1; YZ - 2;
+        private List<Tuple< Mesh, float>>[] planes = new List<Tuple<Mesh, float>>[3];
+        private int indexPlane = 0;
+        private int indexPlaneSec = -1;
+        public int MaxPlaneIndex { get; private set; } = int.MinValue;
+        public bool Active { get; set; } = false;
+        public float CurrentValue { get; private set; }
+        public Plane CurrentPlane 
+        { 
+            get { return (Plane)indexPlane; }
+            set 
+            { 
+                try 
+                {
+                    indexPlane = (int)value;
+                    MaxPlaneIndex = planes[indexPlane].Count - 1;
+                    indexPlaneSec = -1;
+                    Active = false;
+                } catch (InvalidCastException) { Active = false; }
+            }
+        }
+
+        public int CurrentPlaneSec
+        {
+            get => indexPlaneSec;
+            set 
+            {
+                if (value < 0)
+                {
+                    indexPlaneSec = -1;
+                    Active = false;
+                }
+                else if (value > MaxPlaneIndex)
+                {
+                    indexPlaneSec = MaxPlaneIndex + 1;
+                    Active = false;
+                }
+                else 
+                { 
+                    Active = true;
+                    indexPlaneSec = value;
+                    CurrentValue = planes[indexPlane][indexPlaneSec].Item2;
+                }  
+            }
+        }
+
+        public Color4 PlaneColor { get; set; } = new Color4(50 / 255f, 168 / 255f, 107 / 255f, 0.75f);
+        public CrossSections(Grid3D grid3D)
+        {
+            float xmin = grid3D.Area.X0;
+            float ymin = grid3D.Area.Y0;
+            float zmin = grid3D.Area.Z0;
+            float xmax = grid3D.Area.Xn;
+            float ymax = grid3D.Area.Yn;
+            float zmax = grid3D.Area.Zn;
+            // XY
+            planes[0] = new List<Tuple<Mesh, float>>(grid3D.Nz);
+            for (int k = 0; k < grid3D.Nz; k++)
+            {
+                int n = -1;
+                for (int j = 0; j < grid3D.Ny; j++)
+                    for (int i = 0; i < grid3D.Nx; i++)
+                    {
+                        n = grid3D.global_num(i, j, k);
+                        if (n >= 0)
+                            break;
+                    }
+                if (n >= 0)
+                {
+                    float z = grid3D.XYZ[n].Z;
+                    float[] vertices = { xmin, ymin, z,
+                                         xmax, ymin, z,
+                                         xmin, ymax, z,
+                                         xmax, ymax, z};
+                    uint[] indices = { 0, 2, 3, 0, 1, 3 };
+                    Mesh mesh = new Mesh(vertices, indices);
+                    planes[0].Add(Tuple.Create(mesh, z));
+                }
+            }
+            // XZ
+            planes[1] = new List<Tuple<Mesh, float>>(grid3D.Ny);
+            for (int j = 0; j < grid3D.Ny; j++)
+            {
+                int n = -1;
+                for (int k = 0; k < grid3D.Nz; k++)
+                    for (int i = 0; i < grid3D.Nx; i++)
+                    {
+                        n = grid3D.global_num(i, j, k);
+                        if (n >= 0)
+                            break;
+                    }
+                if (n >= 0)
+                {
+                    float y = grid3D.XYZ[n].Y;
+                    float[] vertices = { xmin, y, zmin,
+                                         xmax, y, zmin,
+                                         xmin, y, zmax,
+                                         xmax, y, zmax};
+                    uint[] indices = { 0, 2, 3, 0, 1, 3 };
+                    Mesh mesh = new Mesh(vertices, indices);
+                    planes[1].Add(Tuple.Create(mesh, y));
+                }
+            }
+            // YZ
+            planes[2] = new List<Tuple<Mesh, float>>(grid3D.Nx);
+            for (int i = 0; i < grid3D.Nx; i++)
+            {
+                int n = -1;
+                for (int k = 0; k < grid3D.Nz; k++)
+                    for (int j = 0; j < grid3D.Ny; j++)
+                    {
+                        n = grid3D.global_num(i, j, k);
+                        if (n >= 0)
+                            break;
+                    }
+                if (n >= 0)
+                {
+                    float x = grid3D.XYZ[n].X;
+                    float[] vertices = { x, ymin, zmin,
+                                     x, ymax, zmin,
+                                     x, ymin, zmax,
+                                     x, ymax, zmax};
+                    uint[] indices = { 0, 2, 3, 0, 1, 3 };
+                    Mesh mesh = new Mesh(vertices, indices);
+                    planes[2].Add(Tuple.Create(mesh, x));
+                }
+            }
+        }
+
+        public void DrawPlane(Shader shader)
+        {
+            if (Active)
+            {
+                shader.SetColor4("current_color", PlaneColor);
+                planes[indexPlane][indexPlaneSec].Item1.DrawElems(6, 0, PrimitiveType.Triangles);
+            }
+        }
+    }
+
     public partial class GraphicsWindow : Window
     {
         RenderGrid renderGrid;
         IrregularGridMaker irregularGridMaker;
         IGrid regularGrid;
+        CrossSections crossSections;
         LinkedList<GridState> gridList;
         LinkedListNode<GridState> currentNode;
 
@@ -130,7 +275,7 @@ namespace MakeGrid3D
         float speedHor = 0;
         float speedVer = 0;
         Color4 bgColor = Default.bgColor;
-        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\тесты на практику\\TEST2.txt";
+        string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\ДИПЛОМ ТЕСТЫ\\TEST2.txt";
         Elem2D selectedElem;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
@@ -201,6 +346,7 @@ namespace MakeGrid3D
             {
                 Area3D area = new Area3D(fileName);
                 regularGrid = new Grid3D(fileName, area);
+                crossSections = new CrossSections((Grid3D)regularGrid);
             }
         }
 
@@ -272,6 +418,9 @@ namespace MakeGrid3D
             {
                 renderGrid.RenderFrame();
             }
+
+            if (crossSections != null)
+                crossSections.DrawPlane(renderGrid.shader);
 
             if (showCurrentUnstructedNode)
             {
@@ -1345,10 +1494,100 @@ namespace MakeGrid3D
                 BlockCurrentMode.Text = "Режим: 3D";
                 List<float> z = new List<float>{ 1f, 2f, 3f };
                 regularGrid = new Grid3D((Grid2D)renderGrid.Grid, z);
+                crossSections = new CrossSections((Grid3D)regularGrid);
                 SetRenderGrid();
                 ResetPosition();
             }
             else MessageBox.Show("Тиражирование сечения не доступно в режиме 3D");
+        }
+
+        private void PlaneSectionChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (crossSections == null) return;
+            crossSections.CurrentPlaneSec = (int)e.NewValue;
+        }
+
+        private void PlaneChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!twoD && crossSections != null)
+            {
+                ComboBox comboBox = (ComboBox)sender;
+                string selectedItem = comboBox.SelectedItem.ToString();
+                string plane_str = selectedItem.Substring(selectedItem.Length - 2);
+                switch (plane_str)
+                {
+                    case "XY":
+                        crossSections.CurrentPlane = Plane.XY;
+                        CurrentPlaneBlock.Text = "Z = ";
+                        break;
+                    case "XZ":
+                        crossSections.CurrentPlane = Plane.XZ;
+                        CurrentPlaneBlock.Text = "Y = ";
+                        break;
+                    case "YZ":
+                        crossSections.CurrentPlane = Plane.YZ;
+                        CurrentPlaneBlock.Text = "X = ";
+                        break;
+                }
+            }
+            else MessageBox.Show("Выбор плоскости сечения не доступно в режиме 2D");
+        }
+
+        private void PrevPlaneCLick(object sender, RoutedEventArgs e)
+        {
+            if (!twoD && crossSections != null)
+            {
+                crossSections.CurrentPlaneSec--;
+                CurrentPlaneSecBlock.Text = crossSections.CurrentValue.ToString("0.00");
+            }
+            else MessageBox.Show("Выбор плоскости сечения не доступно в режиме 2D");
+        }
+
+        private void NextPlaneCLick(object sender, RoutedEventArgs e)
+        {
+            if (!twoD && crossSections != null)
+            {
+                crossSections.CurrentPlaneSec++;
+                CurrentPlaneSecBlock.Text = crossSections.CurrentValue.ToString("0.00");
+            }
+            else MessageBox.Show("Выбор плоскости сечения не доступно в режиме 2D");
+        }
+
+        private void DrawCrossSectionClick(object sender, RoutedEventArgs e)
+        {
+            if (twoD)
+            {
+                MessageBox.Show("Не доступно в режиме 2D");
+            }
+            else if (crossSections == null || !crossSections.Active)
+            {
+                MessageBox.Show("Не удалось построить сечение");
+            }
+            else
+            {
+                Grid3D grid3D = (Grid3D)renderGrid.Grid;
+                Plane plane = crossSections.CurrentPlane;
+                int index = crossSections.CurrentPlaneSec;
+                float value = crossSections.CurrentValue;
+                regularGrid = new Grid2D(grid3D, plane, index, value);
+                twoD = true;
+                BlockCurrentMode.Text = twoD ? "Режим: 2D" : "Режим: 3D";
+                SetRenderGrid();
+                ResetPosition();
+                crossSections.Active = false;
+            }
+        }
+
+        private void Return3DClick(object sender, RoutedEventArgs e)
+        {
+            if (!twoD)
+            {
+                MessageBox.Show("Не доступно в режиме 3D");
+            }
+            else
+            {
+
+            }
         }
     }
 }

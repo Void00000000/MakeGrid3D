@@ -47,7 +47,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!--Instrument Panel -->
+                <!-- Instrument Panel -->
                 <TabControl Grid.RowSpan="4" Name="Panel" Grid.Column="3" Background="WhiteSmoke">
                     <TabItem Header="Движение">
                         <Grid Margin="10 10 10 0">
@@ -60,8 +60,14 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
+                            <!-- Speed move slider -->
                             <Grid Grid.Row="0" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -70,7 +76,7 @@
                                 <TextBlock Grid.Column="0" Text="Скорость движения: " Foreground="Black" FontSize="14"/>
                                 <Slider Name = "SpeedMoveSlider" Grid.Column="1" Minimum="0" Maximum="5" ValueChanged="SpeedMoveChanged"/>
                             </Grid>
-
+                            <!-- Speed zoom slider -->
                             <Grid Grid.Row="1" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -79,7 +85,7 @@
                                 <TextBlock Grid.Column="0" Text="Скорость зума:          " Foreground="Black" FontSize="14"/>
                                 <Slider Name="SpeedZoomSlider" Grid.Column="1" Minimum="0.001" Maximum="0.1" ValueChanged="SpeedZoomChanged"/>
                             </Grid>
-
+                            <!-- Move buttons -->
                             <Grid Grid.Row="2" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -109,7 +115,7 @@
                                 </RepeatButton>
                             </Grid>
 
-                            <!-- Rotating row-->
+                            <!-- Rotating -->
                             <Grid Grid.Row="3" Margin="10 10 10 0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -154,15 +160,62 @@
                                     </RepeatButton>
                                 </Grid>
                             </Grid>
-
-                            <Button Grid.Row="4" Click="ReplicateCrossSectionsClick" Content="Тиражировать сечение" HorizontalAlignment="Center" Margin="0 10 0 0"/>
-                            <Button Grid.Row="5" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
-                            <TextBlock Grid.Row="6" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
-                            <TextBlock Grid.Row="7" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <!-- Separator: Rotating|Replication -->
+                            <Separator Grid.Row="4" Margin="10 10 10 0" Background="Black">
+                                <Separator.RenderTransform>
+                                    <ScaleTransform ScaleY="2.5" />
+                                </Separator.RenderTransform>
+                            </Separator>
+                            <!-- Replicate cross section -->
+                            <Button Grid.Row="5" Click="ReplicateCrossSectionsClick" Content="Тиражировать сечение" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <!-- Separator: Replication|CrossSections -->
+                            <Separator Grid.Row="6" Margin="10 10 10 0" Background="Black">
+                                <Separator.RenderTransform>
+                                    <ScaleTransform ScaleY="2" />
+                                </Separator.RenderTransform>
+                            </Separator>
+                            <!-- Cross section -->
+                            <Grid Grid.Row="7" Margin="10 10 10 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Плоскость сечения: " Foreground="Black" FontSize="14"/>
+                                <ComboBox Grid.Column="1" Name="PlaneDropDownMenu" SelectionChanged="PlaneChanged" Margin="0,0,5,0">
+                                    <ComboBoxItem Content="XY"/>
+                                    <ComboBoxItem Content="XZ"/>
+                                    <ComboBoxItem Content="YZ"/>
+                                </ComboBox>
+                                <RepeatButton Grid.Column="2" Click="PrevPlaneCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                                    <Image Source="Images/tri_left.png"></Image>
+                                </RepeatButton>
+                                <RepeatButton Grid.Column="3" Click="NextPlaneCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,5,0">
+                                    <Image Source="Images/tri_right.png"></Image>
+                                </RepeatButton>
+                                <TextBlock Grid.Column="4" Name="CurrentPlaneBlock" Margin="0,2,0,0"/>
+                                <TextBlock Grid.Column="5" Name="CurrentPlaneSecBlock" Margin="0,2,0,0"/>
+                            </Grid>
+                            <Button Grid.Row="8" Content="Вернуться в 3D" Click="Return3DClick" HorizontalAlignment="Left" Margin="10 10 10 0"/>
+                            <Button Grid.Row="8" Content="Построить сечение" Click="DrawCrossSectionClick" HorizontalAlignment="Right" Margin="10 10 10 0"/>
+                            <!-- Separator: CrossSection|Reset -->
+                            <Separator Grid.Row="9" Margin="10 10 10 0" Background="Black">
+                                <Separator.RenderTransform>
+                                    <ScaleTransform ScaleY="2" />
+                                </Separator.RenderTransform>
+                            </Separator>
+                            <!-- Reset -->
+                            <Button Grid.Row="10" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <!-- Camera -->
+                            <TextBlock Grid.Row="11" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <TextBlock Grid.Row="12" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                         </Grid>
                     </TabItem>
 
-                    <!--Nodes size row-->
+                    <!-- Settings tab -->
                     <TabItem Header="Настройки">
                         <Grid Margin="10 10 10 0">
                             <Grid.RowDefinitions>
@@ -173,6 +226,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
+                            <!-- Node size row -->
                             <Grid Grid.Row="0" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -182,7 +236,7 @@
                                 <Slider Name="PointsSizeSlider" Grid.Column="1" Minimum="1" Maximum="50" ValueChanged="PointsSizeChanged"/>
                             </Grid>
 
-                            <!--Lines size row-->
+                            <!-- Lines size row -->
                             <Grid Grid.Row="1" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -192,7 +246,7 @@
                                 <Slider Name="LinesSizeSlider" Grid.Column="1" Minimum="1" Maximum="15" ValueChanged="LinesSizeChanged"/>
                             </Grid>
 
-                            <!--Color pickers-->
+                            <!-- Color pickers -->
                             <Grid Grid.Row="2" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -215,7 +269,7 @@
                                 <xctk:ColorPicker Name="BgColorPicker" Grid.Column="1" Width="50" SelectedColorChanged="BgColorChanged"></xctk:ColorPicker>
                             </Grid>
 
-                            <!--Wirefrrame mode-->
+                            <!-- Wirefrrame mode -->
                             <Grid Grid.Row="4" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -228,7 +282,7 @@
                                 <TextBlock Grid.Column="2" Text="Отображать сетку: " Foreground="Black"/>
                                 <CheckBox Name="ShowGridCheckBox" Grid.Column="3" Checked="ShowGridChecked" Unchecked="ShowGridUnChecked"/>
                             </Grid>
-                            <!--Reset Settings-->
+                            <!-- Reset Settings -->
                             <Button Grid.Row="5" Click="ResetSettingsClick" Content="Сбросить настройки по умолчанию" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                         </Grid>
                     </TabItem>

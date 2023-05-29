@@ -23,6 +23,8 @@
     <None Remove="Images\rotate_right.png" />
     <None Remove="Images\rotate_top.png" />
     <None Remove="Images\single_arrow.png" />
+    <None Remove="Images\tri_left.png" />
+    <None Remove="Images\tri_right.png" />
     <None Remove="Images\undo.png" />
     <None Remove="Images\zoom_in.png" />
     <None Remove="Images\zoom_out.png" />
@@ -50,6 +52,8 @@
     <Resource Include="Images\rotate_right.png" />
     <Resource Include="Images\rotate_top.png" />
     <Resource Include="Images\single_arrow.png" />
+    <Resource Include="Images\tri_left.png" />
+    <Resource Include="Images\tri_right.png" />
     <Resource Include="Images\undo.png" />
     <Resource Include="Images\zoom_in.png" />
     <Resource Include="Images\zoom_out.png" />

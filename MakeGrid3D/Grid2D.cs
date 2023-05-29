@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Windows.Controls;
 
 namespace MakeGrid3D
 {
@@ -135,6 +136,93 @@ namespace MakeGrid3D
             }
         }
 
+        // Сечение
+        public Area2D(Area3D area3D, Plane plane, float value)
+        {
+            Mw = new List<SubArea2D>();
+            List<int> Wi = new List<int>();
+            Nareas = 0;
+            Nmats = 0;
+            switch (plane)
+            {
+                case Plane.XY:
+                    X0 = area3D.X0;
+                    Y0 = area3D.Y0;
+                    Xn = area3D.Xn;
+                    Yn = area3D.Yn;
+                    NXw = area3D.NXw;
+                    NYw = area3D.NYw;
+                    Xw = area3D.Xw;
+                    Yw = area3D.Yw;
+                    foreach (SubArea3D subArea3D in area3D.Mw)
+                    {
+                        float zAreaMin = area3D.Zw[subArea3D.nz1];
+                        float zAreaMax = area3D.Zw[subArea3D.nz2];
+                        if (value >= zAreaMin && value <= zAreaMax)
+                        {
+                            if (!Wi.Contains(subArea3D.wi))
+                            {
+                                Wi.Add(subArea3D.wi);
+                                Nmats++;
+                            }
+                            Mw.Add(new SubArea2D(subArea3D.wi, subArea3D.nx1, subArea3D.nx2, subArea3D.ny1, subArea3D.ny2));
+                            Nareas++;
+                        }
+                    }
+                    break;
+                case Plane.XZ:
+                    X0 = area3D.X0;
+                    Y0 = area3D.Z0;
+                    Xn = area3D.Xn;
+                    Yn = area3D.Zn;
+                    NXw = area3D.NXw;
+                    NYw = area3D.NZw;
+                    Xw = area3D.Xw;
+                    Yw = area3D.Zw;
+                    foreach (SubArea3D subArea3D in area3D.Mw)
+                    {
+                        float yAreaMin = area3D.Yw[subArea3D.ny1];
+                        float yAreaMax = area3D.Yw[subArea3D.ny2];
+                        if (value >= yAreaMin && value <= yAreaMax)
+                        {
+                            if (!Wi.Contains(subArea3D.wi))
+                            {
+                                Wi.Add(subArea3D.wi);
+                                Nmats++;
+                            }
+                            Mw.Add(new SubArea2D(subArea3D.wi, subArea3D.nx1, subArea3D.nx2, subArea3D.nz1, subArea3D.nz2));
+                            Nareas++;
+                        }
+                    }
+                    break;
+                case Plane.YZ:
+                    X0 = area3D.Y0;
+                    Y0 = area3D.Z0;
+                    Xn = area3D.Yn;
+                    Yn = area3D.Zn;
+                    NXw = area3D.NYw;
+                    NYw = area3D.NZw;
+                    Xw = area3D.Yw;
+                    Yw = area3D.Zw;
+                    foreach (SubArea3D subArea3D in area3D.Mw)
+                    {
+                        float xAreaMin = area3D.Xw[subArea3D.nx1];
+                        float xAreaMax = area3D.Xw[subArea3D.nx2];
+                        if (value >= xAreaMin && value <= xAreaMax)
+                        {
+                            if (!Wi.Contains(subArea3D.wi))
+                            {
+                                Wi.Add(subArea3D.wi);
+                                Nmats++;
+                            }
+                            Mw.Add(new SubArea2D(subArea3D.wi, subArea3D.ny1, subArea3D.ny2, subArea3D.nz1, subArea3D.nz2));
+                            Nareas++;
+                        }
+                    }
+                    break;
+            }
+        }
+
         public int FindSubArea(float xElemMin, float xElemMax, float yElemMin, float yElemMax)
         {
             foreach (SubArea2D subArea in Mw)
@@ -160,7 +248,7 @@ namespace MakeGrid3D
     {
         public Area2D Area { get; }
         public int Nnodes { get; }
-        public int Nelems { get; }
+        public int Nelems { get; private set; }
         public int Nmats { get; }
         public float MeanAR { get; set; } = 0;
         public float WorstAR { get; set; } = 0;
@@ -239,6 +327,128 @@ namespace MakeGrid3D
                     IJ[i].Add(NodeType.Regular);
             }
             CalcAR();
+        }
+
+        // Сечение
+        public Grid2D(Grid3D grid3D, Plane plane, int index, float value)
+        {
+            Area = new Area2D(grid3D.Area, plane, value);
+            Nmats = Area.Nmats;
+            switch (plane) 
+            {
+                case Plane.XY:
+                    Nx = grid3D.Nx; Ny = grid3D.Ny; break;
+                case Plane.XZ:
+                    Nx = grid3D.Nx; Ny = grid3D.Nz; break;
+                case Plane.YZ: 
+                    Nx = grid3D.Ny; Ny = grid3D.Nz; break;
+            }
+            // СБОРКА IJ
+            IJ = new ByteMat2D(Nx);
+            for (int i = 0; i < Nx; i++)
+            {
+                IJ.Add(new List<NodeType>(Ny));
+                for (int j = 0; j < Ny; j++)
+                    switch (plane)
+                    {
+                        case Plane.XY:
+                            IJ[i].Add(grid3D.IJK[i][j][index]); break;
+                        case Plane.XZ:
+                            IJ[i].Add(grid3D.IJK[i][index][j]); break;
+                        case Plane.YZ:
+                            IJ[i].Add(grid3D.IJK[index][i][j]); break; ;
+                    }
+            }
+            // СБОРКА removedNodes
+            removedNodes = new List<int>();
+            for (int j = 0; j < Ny; j++)
+                for (int i = 0; i < Nx; i++)
+                {
+                    if (IJ[i][j] == NodeType.Removed)
+                        removedNodes.Add(j * Nx + i);
+                }
+            // СБОРКА МАССИВА УЗЛОВ
+            Nnodes = 0;
+            XY = new List<Vector2>();
+            for (int j = 0; j < Ny; j++)
+                for (int i = 0; i < Nx; i++)
+                {
+                    if (IJ[i][j] != NodeType.Removed)
+                    {
+                        switch (plane)
+                        {
+                            case Plane.XY:
+                                int nxy = grid3D.global_num(i, j, index);
+                                XY.Add(new Vector2(grid3D.XYZ[nxy].X, grid3D.XYZ[nxy].Y)); break;
+                            case Plane.XZ:
+                                int nxz = grid3D.global_num(i, index, j);
+                                XY.Add(new Vector2(grid3D.XYZ[nxz].X, grid3D.XYZ[nxz].Z)); break;
+                            case Plane.YZ:
+                                int nyz = grid3D.global_num(index, i, j);
+                                XY.Add(new Vector2(grid3D.XYZ[nyz].Y, grid3D.XYZ[nyz].Z)); break;
+                        }
+                        Nnodes++;
+                    }
+                }
+            Elems = new List<Elem2D>();
+            BuildElemsFromByteMat();
+            CalcAR();
+        }
+
+        private void BuildElemsFromByteMat()
+        {
+            Nelems = 0;
+            int n1, n2, n3, n4, n5;
+            for (int j = 0; j < Ny - 1; j++)
+                for (int i = 0; i < Nx - 1; i++)
+                {
+                    if (IJ[i][j] == NodeType.Removed || IJ[i][j] == NodeType.Left || IJ[i][j] == NodeType.Bottom)
+                        continue;
+                    n5 = -1;
+                    n1 = global_num(i, j);
+
+                    int ik = i + 1;
+                    // Bottom line
+                    while (IJ[ik][j] == NodeType.Removed || IJ[ik][j] == NodeType.Bottom)
+                    {
+                        if (IJ[ik][j] == NodeType.Bottom)
+                            n5 = global_num(ik, j);
+                        ik++;
+                    }
+                    n2 = global_num(ik, j);
+
+                    int jk = j + 1;
+                    // Left line
+                    while (IJ[i][jk] == NodeType.Removed || IJ[i][jk] == NodeType.Left)
+                    {
+                        if (IJ[i][jk] == NodeType.Left)
+                            n5 = global_num(i, jk);
+                        jk++;
+                    }
+                    n3 = global_num(i, jk);
+                    n4 = global_num(ik, jk);
+
+                    // Top line
+                    for (int ikk = i; ikk < ik; ikk++)
+                    {
+                        if (IJ[ikk][jk] == NodeType.Top)
+                            n5 = global_num(ikk, jk);
+                    }
+
+                    // Right line
+                    for (int jkk = j; jkk < jk; jkk++)
+                    {
+                        if (IJ[ik][jkk] == NodeType.Right)
+                            n5 = global_num(ik, jkk);
+                    }
+                    float xmin = XY[n1].X;
+                    float xmax = XY[n4].X;
+                    float ymin = XY[n1].Y;
+                    float ymax = XY[n4].Y;
+                    int wi = Area.FindSubArea(xmin, xmax, ymin, ymax);
+                    Elems.Add(new Elem2D(wi, n1, n2, n3, n4, n5));
+                    Nelems++;
+                }
         }
 
         private void ReadGrid2D(string path, List<float> X, List<float> Y)

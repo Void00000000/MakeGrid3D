@@ -23,19 +23,19 @@ namespace MakeGrid3D
         public static void FileReadingErrorMessage(string message, bool shutdown=true)
         {
             MessageBox.Show(message, "Ошибка чтения файла");
-            if (shutdown)
+            if (shutdown && Application.Current != null)
                 Application.Current.Shutdown();
         }
         public static void BuildingErrorMessage(string message, bool shutdown=true)
         {
             MessageBox.Show(message, "Ошибка сборки");
-            if (shutdown)
+            if (shutdown && Application.Current != null)
                 Application.Current.Shutdown();
         }
         public static void DataErrorMessage(string message, bool shutdown = true)
         {
             MessageBox.Show(message, "Введены некорректные данные");
-            if (shutdown)
+            if (shutdown && Application.Current != null)
                 Application.Current.Shutdown();
         }
     }

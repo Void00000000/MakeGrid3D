@@ -515,14 +515,15 @@ namespace MakeGrid3D
             i0 = n + i0;
         }
 
-        public int global_num(int i, int j, int k)
+        public int global_num(int i, int j, int k, bool removedNode = false)
         {
             int l = j * Nx + i + k * Nx * Ny;
             if (removedNodes.Count == 0)
                 return l;
 
             for (int s = 0; s < removedNodes.Count; s++)
-                if (l < removedNodes[s]) return l - s;
+                if (!removedNode && l == removedNodes[s]) return -1;
+                else if (l < removedNodes[s]) return l - s;
             return l - removedNodes.Count;
         }
 
