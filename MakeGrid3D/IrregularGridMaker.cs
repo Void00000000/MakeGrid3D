@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Diagnostics;
-using System.Windows.Documents;
-using OpenTK.Audio.OpenAL;
+
+//TODO: Для некоторых сечений может выскакивать ошибка: выход за пределы массива
 
 namespace MakeGrid3D
 {
@@ -16,7 +11,8 @@ namespace MakeGrid3D
 
     class IrregularGridMaker
     {
-        public IGrid Grid { 
+        public IGrid Grid
+        {
             get
             {
                 if (grid2D != null && grid3D == null) { return grid2D; }
@@ -61,7 +57,7 @@ namespace MakeGrid3D
 
         private List<Tuple<float, int>> aspect_ratios = new List<Tuple<float, int>>();
         private bool calcAROnly = Default.smartMerge;
-        
+
         public int NodeI { get; set; } = 1;
         public int NodeJ { get; set; } = 1;
         public int NodeK { get; set; } = 1;
@@ -74,7 +70,7 @@ namespace MakeGrid3D
         public int J { get; set; } = 1;
         public int K { get; set; } = 1;
 
-        public bool End { get; set; } = false; 
+        public bool End { get; set; } = false;
 
         // По приоритету (от высшего к низшему ^ слева направо)
         public Quadrant[] Quadrants = { Quadrant.RightTop, Quadrant.LeftTop, Quadrant.LeftBottom, Quadrant.RightBottom };
@@ -104,7 +100,7 @@ namespace MakeGrid3D
                 Ny = grid3D.Ny;
                 Nz = grid3D.Nz;
             }
-            
+
         }
         public void Reset()
         {
@@ -487,10 +483,11 @@ namespace MakeGrid3D
                     // Переход на новую строку
                     I = MidI; J = MidJ;
                     bool end_cond = true;
-                    switch (mergeDir) {
+                    switch (mergeDir)
+                    {
                         case Direction.Top:
                             while (IJ_new[I][J] != NodeType.Removed && J < Ny - 1)
-                                J++; 
+                                J++;
                             if (J < Ny - 1) end_cond = false; break;
                         case Direction.Bottom:
                             while (IJ_new[I][J] != NodeType.Removed && J > 0)

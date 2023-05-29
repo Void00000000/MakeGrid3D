@@ -11,6 +11,9 @@ using System.Runtime.InteropServices;
 using System.IO;
 using OpenTK.Windowing.Common;
 using System.Windows.Controls;
+using System.Windows.Shapes;
+using System.Windows.Media.Media3D;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace MakeGrid3D
 {
@@ -47,7 +50,7 @@ namespace MakeGrid3D
     {
         XY,
         XZ,
-        YZ
+        YZ,
     }
     interface IGrid
     {
@@ -243,6 +246,7 @@ namespace MakeGrid3D
         RenderGrid renderGrid;
         IrregularGridMaker irregularGridMaker;
         IGrid regularGrid;
+        Grid3D? prevGrid3D; // Чтобы после сечения вернутся к трёхмерной сетке
         CrossSections crossSections;
         LinkedList<GridState> gridList;
         LinkedListNode<GridState> currentNode;
@@ -254,6 +258,7 @@ namespace MakeGrid3D
         Mesh currentPosMesh;
 
         bool twoD;
+        Plane currentPlane;
 
         Matrix4 projectionSelectedElem = Matrix4.Identity;
         Matrix4 rtranslate = Matrix4.Identity;
@@ -341,12 +346,15 @@ namespace MakeGrid3D
             {
                 Area2D area = new Area2D(fileName);
                 regularGrid = new Grid2D(fileName, area);
+                currentPlane = Plane.XY;
+                prevGrid3D = null;
             }
             else
             {
                 Area3D area = new Area3D(fileName);
                 regularGrid = new Grid3D(fileName, area);
                 crossSections = new CrossSections((Grid3D)regularGrid);
+                prevGrid3D = (Grid3D)regularGrid;
             }
         }
 
@@ -371,7 +379,9 @@ namespace MakeGrid3D
                 return;
             renderGrid.WindowWidth = (float)OpenTkControl.ActualWidth;
             renderGrid.WindowHeight = (float)OpenTkControl.ActualHeight;
-            renderGrid.SetSize();
+            if (twoD)
+                renderGrid.SetSize();
+            else renderGrid.Camera.AspectRatio = (float)OpenTkControl.ActualWidth / (float)OpenTkControl.ActualHeight;
         }
 
         private void OpenTkControl_OnRender(TimeSpan obj)
@@ -470,16 +480,7 @@ namespace MakeGrid3D
             {
                 renderGrid.CleanUp();
                 axis.Dispose();
-                if (selectedElemMesh != null)
-                {
-                    selectedElemMesh.Dispose();
-                    selectedElemMesh = null;
-                }
-                if (selectedElemLines != null)
-                {
-                    selectedElemLines.Dispose();
-                    selectedElemLines = null;
-                }
+                ResetSelectedElem();
             }
         }
 
@@ -533,7 +534,14 @@ namespace MakeGrid3D
                 Point new_position = MouseMap(position);
                 double x = new_position.X;
                 double y = new_position.Y;
-                BlockCoordinates.Text = "X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
+                string axis1 = ""; string axis2 = "";
+                switch (currentPlane)
+                {
+                    case Plane.XY: axis1 = "X"; axis2 = "Y"; break;
+                    case Plane.XZ: axis1 = "X"; axis2 = "Z"; break;
+                    case Plane.YZ: axis1 = "Y"; axis2 = "Z"; break;
+                }
+                BlockCoordinates.Text = $"{axis1}: {x.ToString("0.00")}, {axis2}: {y.ToString("0.00")}";
             }
             // ------------------------------------- 3D -------------------------------------
             else
@@ -722,10 +730,7 @@ namespace MakeGrid3D
                     uint[] indices = { 0, 1, 3, 0, 2, 3 };
                     uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
 
-                    if (selectedElemMesh != null)
-                        selectedElemMesh.Dispose();
-                    if (selectedElemLines != null)
-                        selectedElemLines.Dispose();
+                    ResetSelectedElem();
                     selectedElemMesh = new Mesh(vertices, indices);
                     selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
 
@@ -756,16 +761,7 @@ namespace MakeGrid3D
                 }
                 else
                 {
-                    if (selectedElemMesh != null)
-                    {
-                        selectedElemMesh.Dispose();
-                        selectedElemMesh = null;
-                    }
-                    if (selectedElemLines != null)
-                    {
-                        selectedElemLines.Dispose();
-                        selectedElemLines = null;
-                    }
+                    ResetSelectedElem();
 
                     BlockSubAreaNum.Text = "";
                     BlockNodesNum1.Text = "";
@@ -892,51 +888,74 @@ namespace MakeGrid3D
                 return;
             GL.ClearColor(Color4.Black);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
             renderGrid.shader.Use();
+            GL.LineWidth(2);
             float fov = renderGrid.Camera.Fov;
-            if (!twoD)
+            if (twoD)
             {
-                renderGrid.Camera.Fov /= 2f;
+                Matrix4 projection = Matrix4.CreateOrthographicOffCenter(-1f, 1f, -1f, 1f, -0.01f, 100f);
+                renderGrid.shader.SetMatrix4("projection", ref projection);
+                Matrix4 model = Matrix4.Identity;
+                renderGrid.shader.SetMatrix4("model", ref model);
+            }
+            else
+            {
+                renderGrid.Camera.Fov /= 1.5f;
                 Matrix4 axis_proj3d = renderGrid.Camera.GetProjectionMatrix();
                 renderGrid.shader.SetMatrix4("projection", ref axis_proj3d);
+                float width = renderGrid.Right - renderGrid.Left;
+                float height = renderGrid.Top - renderGrid.Bottom;
+                float depth = renderGrid.Back - renderGrid.Front;
+                float min, max;
+                if (width >= height && width >= depth)
+                {
+                    min = renderGrid.Left; max = renderGrid.Right;
+                }
+                else if (height >= width && height >= depth)
+                {
+                    min = renderGrid.Bottom; max = renderGrid.Top;
+                }
+                else
+                {
+                    min = renderGrid.Front; max = renderGrid.Back;
+                }
+                float center = (min + max) / 2;
+                Matrix4 translate = Matrix4.CreateTranslation(-center, -center, -center);
+                Matrix4 model = translate * renderGrid.Rotate;
+                renderGrid.shader.SetMatrix4("model", ref model);
             }
             renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
-            axis.DrawElems(6, 0, PrimitiveType.Lines);
+            if (twoD) axis.DrawElems(6, 0, PrimitiveType.Lines); else axis.DrawElems(10, 0, PrimitiveType.Lines);
             renderGrid.shader.SetColor4("current_color", Color4.Red);
-            axis.DrawElems(6, 6, PrimitiveType.Lines);
+            if (twoD) axis.DrawElems(6, 6, PrimitiveType.Lines); else axis.DrawElems(10, 10, PrimitiveType.Lines);
             if (!twoD)
             {
                 renderGrid.shader.SetColor4("current_color", Color4.Blue);
-                axis.DrawElems(6, 12, PrimitiveType.Lines);
+                axis.DrawElems(10, 20, PrimitiveType.Lines);
 
                 renderGrid.Camera.Fov = fov;
                 Matrix4 axis_proj3d = renderGrid.Camera.GetProjectionMatrix();
                 renderGrid.shader.SetMatrix4("projection", ref axis_proj3d);
             }
-
         }
 
         private void SetAxis()
         {
-            float mid_x = (renderGrid.Right + renderGrid.Left) / 2f;
-            float mid_y = (renderGrid.Top + renderGrid.Bottom) / 2f;
-            float offset_x = (renderGrid.Right - renderGrid.Left) * 0.05f;
-            float offset_y = (renderGrid.Top - renderGrid.Bottom) * 0.1f;
             // ----------------------------------- 2D -------------------------------------------
             if (twoD)
             {
+                float offset = 2 * 0.05f;
                 float[] vertices = {
                                                     // x
-                                 mid_x, renderGrid.Bottom, 0, //0
-                                 mid_x, renderGrid.Top, 0, // 1
-                                 mid_x - offset_x, renderGrid.Top - offset_y, 0, // 2
-                                 mid_x + offset_x, renderGrid.Top - offset_y, 0, // 3
+                                 0, -1, 0, //0
+                                 0, 1, 0, // 1
+                                 0 - offset, 1 - offset, 0, // 2
+                                 0 + offset, 1 - offset, 0, // 3
                                                     // y
-                                 renderGrid.Left, mid_y, 0, // 4
-                                 renderGrid.Right, mid_y, 0,// 5
-                                 renderGrid.Right - offset_x, mid_y + offset_y, 0, // 6
-                                 renderGrid.Right - offset_x, mid_y - offset_y, 0 }; // 7
+                                 -1, 0, 0, // 4
+                                 1, 0, 0,// 5
+                                 1 - offset, 0 + offset, 0, // 6
+                                 1 - offset, 0 - offset, 0 }; // 7
                 uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7 };
                 if (axis != null)
                     axis.Dispose();
@@ -945,26 +964,48 @@ namespace MakeGrid3D
             // ----------------------------------- 3D -------------------------------------------
             else
             {
-                float mid_z = (renderGrid.Back + renderGrid.Front) / 2f;
-                float offset_z = (renderGrid.Back - renderGrid.Front) * 0.05f;
+                float width = renderGrid.Right - renderGrid.Left;
+                float height = renderGrid.Top - renderGrid.Bottom;
+                float depth = renderGrid.Back - renderGrid.Front;
+                float min, max;
+                if (width >= height && width >= depth)
+                {
+                    min = renderGrid.Left; max = renderGrid.Right;
+                }
+                else if (height >= width && height >= depth)
+                {
+                    min = renderGrid.Bottom; max = renderGrid.Top;
+                }
+                else
+                {
+                    min = renderGrid.Front; max = renderGrid.Back;
+                }
+                float mid = (max + min) / 2f;
+                float offset = (max - min) * 0.05f;
                 float[] vertices = {
                                                     // y
-                                 mid_x, renderGrid.Bottom, mid_z, //0
-                                 mid_x, renderGrid.Top, mid_z, // 1
-                                 mid_x - offset_x, renderGrid.Top - offset_y, mid_z, // 2
-                                 mid_x + offset_x, renderGrid.Top - offset_y, mid_z, // 3
+                                 mid, min, mid, //0
+                                 mid, max, mid, // 1
+                                 mid - offset, max - offset, mid, // 2
+                                 mid + offset, max - offset, mid, // 3
+                                 mid, max - offset, mid - offset, // 4
+                                 mid, max - offset, mid + offset, // 5
                                                     // x
-                                 renderGrid.Left, mid_y, mid_z, // 4
-                                 renderGrid.Right, mid_y, mid_z,// 5
-                                 renderGrid.Right - offset_x, mid_y + offset_y, mid_z, // 6
-                                 renderGrid.Right - offset_x, mid_y - offset_y, mid_z, // 7
+                                 min, mid, mid, // 6
+                                 max, mid, mid,// 7
+                                 max - offset, mid + offset, mid, // 8
+                                 max - offset, mid - offset, mid, // 9
+                                 max - offset, mid, mid + offset, // 10
+                                 max - offset, mid, mid - offset, // 11
                                                     // z
-                                 mid_x, mid_y, renderGrid.Front, // 8
-                                 mid_x, mid_y, renderGrid.Back, // 9
-                                 mid_x + offset_x, mid_y, renderGrid.Front + offset_z, // 10
-                                 mid_x - offset_x, mid_y, renderGrid.Front + offset_z, // 11            
+                                 mid, mid, min, // 12
+                                 mid, mid, max, // 13
+                                 mid + offset, mid, max - offset, // 14
+                                 mid - offset, mid, max - offset, // 15
+                                 mid, mid + offset, max - offset, // 16
+                                 mid, mid - offset, max - offset, // 17
                                  };
-                uint[] indices = { 0, 1, 1, 2, 1, 3, 4, 5, 5, 6, 5, 7, 8, 9, 8, 10, 8, 11 };
+                uint[] indices = { 0, 1, 1, 2, 1, 3, 1, 4, 1, 5, 6, 7, 7, 8, 7, 9, 7, 10, 7, 11, 12, 13, 13, 14, 13, 15, 13, 16, 13, 17 };
                 if (axis != null)
                     axis.Dispose();
                 axis = new Mesh(vertices, indices);
@@ -985,16 +1026,7 @@ namespace MakeGrid3D
             {
                 // Open document
                 fileName = dialog.FileName;
-                if (selectedElemMesh != null)
-                {
-                    selectedElemMesh.Dispose();
-                    selectedElemMesh = null;
-                }
-                if (selectedElemLines != null)
-                {
-                    selectedElemLines.Dispose();
-                    selectedElemLines = null;
-                }
+                ResetSelectedElem();
                 ResetPosition();
                 ResetUI();
                 InitRegularGrid();
@@ -1045,6 +1077,20 @@ namespace MakeGrid3D
 
             ShowCurrentUnstructedNodeCheckBox.IsChecked = Default.showCurrentUnstructedNode;
             CurrentUnstructedNodeColorPicker.SelectedColor = ColorFloatToByte(Default.currentUnstructedNodeColor);
+        }
+
+        private void ResetSelectedElem()
+        {
+            if (selectedElemMesh != null)
+            {
+                selectedElemMesh.Dispose();
+                selectedElemMesh = null;
+            }
+            if (selectedElemLines != null)
+            {
+                selectedElemLines.Dispose();
+                selectedElemLines = null;
+            }
         }
 
         private void RollLeftClick(object sender, RoutedEventArgs e)
@@ -1495,8 +1541,10 @@ namespace MakeGrid3D
                 List<float> z = new List<float>{ 1f, 2f, 3f };
                 regularGrid = new Grid3D((Grid2D)renderGrid.Grid, z);
                 crossSections = new CrossSections((Grid3D)regularGrid);
+                prevGrid3D = (Grid3D)regularGrid;
                 SetRenderGrid();
                 ResetPosition();
+                ResetSelectedElem();
             }
             else MessageBox.Show("Тиражирование сечения не доступно в режиме 3D");
         }
@@ -1553,6 +1601,7 @@ namespace MakeGrid3D
             else MessageBox.Show("Выбор плоскости сечения не доступно в режиме 2D");
         }
 
+        // TODO: Для некоторых сечений не рисуются рёбра
         private void DrawCrossSectionClick(object sender, RoutedEventArgs e)
         {
             if (twoD)
@@ -1574,7 +1623,9 @@ namespace MakeGrid3D
                 BlockCurrentMode.Text = twoD ? "Режим: 2D" : "Режим: 3D";
                 SetRenderGrid();
                 ResetPosition();
+                ResetSelectedElem();
                 crossSections.Active = false;
+                currentPlane = plane;
             }
         }
 
@@ -1586,7 +1637,17 @@ namespace MakeGrid3D
             }
             else
             {
-
+                if (prevGrid3D != null)
+                {
+                    twoD = false;
+                    BlockCurrentMode.Text = "Режим: 3D";
+                    regularGrid = prevGrid3D;
+                    renderGrid.Grid = regularGrid;
+                    crossSections.Active = true;
+                    SetRenderGrid();
+                    ResetPosition();
+                    ResetSelectedElem();
+                }
             }
         }
     }

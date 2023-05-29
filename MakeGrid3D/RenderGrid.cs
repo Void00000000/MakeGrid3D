@@ -363,10 +363,7 @@ namespace MakeGrid3D
             Top = grid3D.Area.Yn;
             Front = grid3D.Area.Z0;
             Back = grid3D.Area.Zn;
-            if (Camera != null)
-                Camera.AspectRatio = WindowWidth / WindowHeight;
-            else
-                Camera = new Camera(new Vector3(0, 0, Back), WindowWidth / WindowHeight);
+            Camera = new Camera(new Vector3(0, 0, Back), WindowWidth / WindowHeight);
         }
 
         public void SetSize()
