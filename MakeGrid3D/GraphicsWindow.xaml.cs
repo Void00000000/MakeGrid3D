@@ -371,6 +371,8 @@ namespace MakeGrid3D
             //----------------------------------------------------------------------------
             GL.Enable(EnableCap.LineSmooth);
             GL.Enable(EnableCap.PointSmooth);
+            GL.Enable(EnableCap.PolygonOffsetFill);
+            GL.PolygonOffset(3.0f, 3.0f);
         }
 
         private void OpenTkControl_Resize(object sender, SizeChangedEventArgs e)

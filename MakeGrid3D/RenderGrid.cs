@@ -591,14 +591,19 @@ namespace MakeGrid3D
             {
                 if (grid is Grid2D) DrawArea2D();
                 else DrawArea3D();
+                GL.DepthMask(false);
             }
             if (ShowGrid)
             {
+                GL.DepthMask(true);
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
                 if (drawLines)
                     DrawLines(gridMesh, LinesColor);
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Point);
                 if (drawNodes)
                     DrawNodes(gridMesh, PointsColor);
-                
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+                GL.DepthMask(true);
             }
         }
 
