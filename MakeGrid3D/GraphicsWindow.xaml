@@ -65,6 +65,8 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <!-- Speed move slider -->
@@ -201,17 +203,44 @@
                             </Grid>
                             <Button Grid.Row="8" Content="Вернуться в 3D" Click="Return3DClick" HorizontalAlignment="Left" Margin="10 10 10 0"/>
                             <Button Grid.Row="8" Content="Построить сечение" Click="DrawCrossSectionClick" HorizontalAlignment="Right" Margin="10 10 10 0"/>
-                            <!-- Separator: CrossSection|Reset -->
+                            <!-- Separator: CrossSection|Elem Selector -->
                             <Separator Grid.Row="9" Margin="10 10 10 0" Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2" />
                                 </Separator.RenderTransform>
                             </Separator>
+                            <!-- Elem Selector -->
+                            <Grid Grid.Row="10" Margin="10 10 10 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Name ="ElemNumBlock" Text="№ элемента: |" Foreground="Black" FontSize="14" Margin="0,0,5,0"/>
+                                <TextBlock Grid.Column="1" Text="Шаг: " Foreground="Black" FontSize="14" Margin="0,0,5,0"/>
+                                <TextBox Grid.Column="2" Name="StepSelectorInput" Text="1" Margin="0,0,5,0" Width="25"/>
+                                <RepeatButton Grid.Column="3" Click="PrevElemCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                                    <Image Source="Images/tri_left.png"></Image>
+                                </RepeatButton>
+                                <RepeatButton Grid.Column="4" Click="NextElemCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,5,0">
+                                    <Image Source="Images/tri_right.png"></Image>
+                                </RepeatButton>
+                                <Button Grid.Column="5" Click="ResetElemClick" Content="Сброс"/>
+                            </Grid>
+                            <!-- Separator: Elem Selector|Reset -->
+                            <Separator Grid.Row="11" Margin="10 10 10 0" Background="Black">
+                                <Separator.RenderTransform>
+                                    <ScaleTransform ScaleY="3" />
+                                </Separator.RenderTransform>
+                            </Separator>
                             <!-- Reset -->
-                            <Button Grid.Row="10" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <Button Grid.Row="12" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                             <!-- Camera -->
-                            <TextBlock Grid.Row="11" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
-                            <TextBlock Grid.Row="12" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <TextBlock Grid.Row="13" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <TextBlock Grid.Row="14" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                         </Grid>
                     </TabItem>
 

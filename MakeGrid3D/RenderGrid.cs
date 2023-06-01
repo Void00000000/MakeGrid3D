@@ -602,9 +602,9 @@ namespace MakeGrid3D
                 GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Point);
                 if (drawNodes)
                     DrawNodes(gridMesh, PointsColor);
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-                GL.DepthMask(true);
             }
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            GL.DepthMask(true);
         }
 
         // When application exists OS and GPU drives handle cleaning up but closing the GraphicsWindow

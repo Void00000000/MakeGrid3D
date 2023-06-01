@@ -605,17 +605,18 @@ namespace MakeGrid3D
             return new Vector2i(i, j);
         }
 
-        public bool FindElem(float x, float y, ref Elem2D foundElem)
+        public bool FindElem(float x, float y, ref int num)
         {
-            foreach (Elem2D elem in Elems)
+            for (int i = 0; i < Nelems; i++)
             {
+                Elem2D elem = Elems[i];
                 float xElemMin = XY[elem.n1].X;
                 float yElemMin = XY[elem.n1].Y;
                 float xElemMax = XY[elem.n4].X;
                 float yElemMax = XY[elem.n4].Y;
                 if (x >= xElemMin && x <= xElemMax && y >= yElemMin && y <= yElemMax)
                 {
-                    foundElem = elem;
+                    num = i;
                     return true;
                 }
             }

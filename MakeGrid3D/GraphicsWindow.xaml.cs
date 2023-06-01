@@ -11,9 +11,6 @@ using System.Runtime.InteropServices;
 using System.IO;
 using OpenTK.Windowing.Common;
 using System.Windows.Controls;
-using System.Windows.Shapes;
-using System.Windows.Media.Media3D;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace MakeGrid3D
 {
@@ -281,7 +278,7 @@ namespace MakeGrid3D
         float speedVer = 0;
         Color4 bgColor = Default.bgColor;
         string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\ДИПЛОМ ТЕСТЫ\\TEST2.txt";
-        Elem2D selectedElem;
+        int currentElemIndex = -1;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
 
@@ -415,6 +412,7 @@ namespace MakeGrid3D
             // Чтобы работали прозрачные цвета
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
+
             if (renderGrid.DrawRemovedLinesMode)
             {
                 renderGrid.Grid = regularGrid;
@@ -433,6 +431,16 @@ namespace MakeGrid3D
 
             if (crossSections != null)
                 crossSections.DrawPlane(renderGrid.shader);
+
+            if (selectedElemMesh != null)
+            {
+                if (!renderGrid.WireframeMode)
+                    renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                else
+                    renderGrid.shader.SetColor4("current_color", Color4.Red);
+                int count = twoD ? 6 : 36;
+                selectedElemMesh.DrawElems(count, 0, PrimitiveType.Triangles);
+            }
 
             if (showCurrentUnstructedNode)
             {
@@ -541,13 +549,14 @@ namespace MakeGrid3D
                 {
                     case Plane.XY: axis1 = "X"; axis2 = "Y"; break;
                     case Plane.XZ: axis1 = "X"; axis2 = "Z"; break;
-                    case Plane.YZ: axis1 = "Y"; axis2 = "Z"; break;
+                    case Plane.YZ: axis1 = "Z"; axis2 = "Y"; break;
                 }
                 BlockCoordinates.Text = $"{axis1}: {x.ToString("0.00")}, {axis2}: {y.ToString("0.00")}";
             }
             // ------------------------------------- 3D -------------------------------------
             else
             {
+                BlockCoordinates.Text = "";
                 float x = (float)position.X;
                 float y = (float)position.Y;
                 if (firstMove)
@@ -627,9 +636,26 @@ namespace MakeGrid3D
                 renderGrid.shader.SetMatrix4("model", ref model);
                 if (!renderGrid.WireframeMode)
                 {
-                    renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem.wi]);
-                    selectedElemMesh.DrawElems(6, 0, PrimitiveType.Triangles);
+                    int count;
+                    if (twoD)
+                    {
+                        Grid2D grid2D = (Grid2D)renderGrid.Grid;
+                        Elem2D selectedElem2D = grid2D.Elems[currentElemIndex];
+                        renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem2D.wi]);
+                        count = 6;
+                    }
+                    else
+                    {
+                        Grid3D grid3D = (Grid3D)renderGrid.Grid;
+                        Elem3D selectedElem3D = grid3D.Elems[currentElemIndex];
+                        renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem3D.wi]);
+                        count = 36;
+                    }
+                    selectedElemMesh.DrawElems(count, 0, PrimitiveType.Triangles);
                 }
+                Matrix4 view = Matrix4.Identity;
+                renderGrid.shader.SetMatrix4("view", ref view);
+                GL.LineWidth(renderGrid.LinesSize);
                 renderGrid.DrawLines(selectedElemLines, renderGrid.LinesColor);
                 renderGrid.DrawNodes(selectedElemLines, renderGrid.PointsColor);
             }
@@ -641,10 +667,11 @@ namespace MakeGrid3D
             if (twoD)
             {
                 Grid2D grid2D = (Grid2D)renderGrid.Grid;
-                float left = grid2D.XY[selectedElem.n1].X;
-                float right = grid2D.XY[selectedElem.n4].X;
-                float bottom = grid2D.XY[selectedElem.n1].Y;
-                float top = grid2D.XY[selectedElem.n4].Y;
+                Elem2D selectedElem2D = grid2D.Elems[currentElemIndex];
+                float left = grid2D.XY[selectedElem2D.n1].X;
+                float right = grid2D.XY[selectedElem2D.n4].X;
+                float bottom = grid2D.XY[selectedElem2D.n1].Y;
+                float top = grid2D.XY[selectedElem2D.n4].Y;
 
                 float width = right - left;
                 float height = top - bottom;
@@ -682,7 +709,7 @@ namespace MakeGrid3D
             // -----------------------------------3D------------------------------------ -
             else
             {
-
+                
             }
         }
 
@@ -692,6 +719,140 @@ namespace MakeGrid3D
                 SetSelectedElemWindowSize();
         }
 
+        private void SetSelectedElem2DMeshes()
+        {
+            SetSelectedElemWindowSize();
+            Grid2D grid2D = (Grid2D)renderGrid.Grid;
+            Elem2D selectedElem2D = grid2D.Elems[currentElemIndex];
+            float left = grid2D.XY[selectedElem2D.n1].X;
+            float right = grid2D.XY[selectedElem2D.n4].X;
+            float bottom = grid2D.XY[selectedElem2D.n1].Y;
+            float top = grid2D.XY[selectedElem2D.n4].Y;
+            float xt, yt;
+            if (selectedElem2D.n5 >= 0)
+            {
+                xt = grid2D.XY[selectedElem2D.n5].X;
+                yt = grid2D.XY[selectedElem2D.n5].Y;
+            }
+            else
+            {
+                xt = left;
+                yt = bottom;
+            }
+            float[] vertices = { left,  bottom, 0,  // 0
+                                     right, bottom, 0,  // 1
+                                     left,  top,    0,  // 2
+                                     right, top,    0,  // 3
+                                     xt,    yt,     0};
+            uint[] indices = { 0, 1, 3, 0, 2, 3 };
+            uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
+
+            selectedElemMesh = new Mesh(vertices, indices);
+            selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
+
+            ElemNumBlock.Text = $"№ элемента: {currentElemIndex} |";
+            BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem2D.wi + 1).ToString();
+            BlockNodesNum1.Text = "Л.Н. №: " + selectedElem2D.n1;
+            BlockNodesCoords1.Text = "x: " + grid2D.XY[selectedElem2D.n1].X.ToString("0.00")
+                                   + " y: " + grid2D.XY[selectedElem2D.n1].Y.ToString("0.00");
+            BlockNodesNum2.Text = "П.Н. №: " + selectedElem2D.n2;
+            BlockNodesCoords2.Text = "x: " + grid2D.XY[selectedElem2D.n2].X.ToString("0.00")
+                                   + " y: " + grid2D.XY[selectedElem2D.n2].Y.ToString("0.00");
+            BlockNodesNum3.Text = "Л.В. №: " + selectedElem2D.n3;
+            BlockNodesCoords3.Text = "x: " + grid2D.XY[selectedElem2D.n3].X.ToString("0.00")
+                                   + " y: " + grid2D.XY[selectedElem2D.n3].Y.ToString("0.00");
+            BlockNodesNum4.Text = "П.В. №: " + selectedElem2D.n4;
+            BlockNodesCoords4.Text = "x: " + grid2D.XY[selectedElem2D.n4].X.ToString("0.00")
+                                   + " y: " + grid2D.XY[selectedElem2D.n4].Y.ToString("0.00");
+            if (selectedElem2D.n5 >= 0)
+            {
+                BlockNodesNum5.Text = "ДОП. №: " + selectedElem2D.n5;
+                BlockNodesCoords5.Text = "x: " + grid2D.XY[selectedElem2D.n5].X.ToString("0.00")
+                                       + " y: " + grid2D.XY[selectedElem2D.n5].Y.ToString("0.00");
+            }
+            else
+            {
+                BlockNodesNum5.Text = "";
+                BlockNodesCoords5.Text = "";
+            }
+        }
+
+        private void SetSelectedElem3DMeshes()
+        {
+            SetSelectedElemWindowSize();
+            Grid3D grid3D = (Grid3D)renderGrid.Grid;
+            Elem3D selectedElem3D = grid3D.Elems[currentElemIndex];
+            float left = grid3D.XYZ[selectedElem3D.n1].X;
+            float right = grid3D.XYZ[selectedElem3D.n8].X;
+            float bottom = grid3D.XYZ[selectedElem3D.n1].Y;
+            float top = grid3D.XYZ[selectedElem3D.n8].Y;
+            float front = grid3D.XYZ[selectedElem3D.n1].Z;
+            float back = grid3D.XYZ[selectedElem3D.n8].Z;
+
+            float[] vertices = {     left,  bottom, front,  // 0
+                                     right, bottom, front,  // 1
+                                     left,  top,    front,  // 2
+                                     right, top,    front,  // 3
+                                     left,  bottom, back,   // 4
+                                     right, bottom, back,   // 5
+                                     left,  top,    back,   // 6
+                                     right, top,    back,   // 7
+                               };
+            uint n1 = 0; uint n2 = 1; uint n3 = 2; uint n4 = 3; uint n5 = 4; uint n6 = 5; uint n7 = 6; uint n8 = 7;
+            
+            uint[] indices = new uint[36];
+            // Front face
+            indices[0] = n1; indices[1] = n3; indices[2] = n4;
+            indices[3] = n1; indices[4] = n4; indices[5] = n2;
+            // Right face
+            indices[6] = n2; indices[7] = n4; indices[8] = n8;
+            indices[9] = n2; indices[10] = n8; indices[11] = n6;
+            // Back face
+            indices[12] = n6; indices[13] = n8; indices[14] = n7;
+            indices[15] = n6; indices[16] = n7; indices[17] = n5;
+            // Left face
+            indices[18] = n5; indices[19] = n7; indices[20] = n3;
+            indices[21] = n5; indices[22] = n3; indices[23] = n1;
+            // Top face
+            indices[24] = n3; indices[25] = n7; indices[26] = n8;
+            indices[27] = n3; indices[28] = n8; indices[29] = n4;
+            // Bottom face
+            indices[30] = n6; indices[31] = n5; indices[32] = n1;
+            indices[33] = n6; indices[34] = n1; indices[35] = n2;
+
+            uint[] indices_lines = new uint[24];
+            indices_lines[0] = n1; indices_lines[1] = n2; indices_lines[2] = n2; indices_lines[3] = n4;
+            indices_lines[4] = n3; indices_lines[5] = n4; indices_lines[6] = n1; indices_lines[7] = n3;
+            indices_lines[8] = n1; indices_lines[9] = n5; indices_lines[10] = n3; indices_lines[11] = n7;
+            indices_lines[12] = n7; indices_lines[13] = n8; indices_lines[14] = n7; indices_lines[15] = n5;
+            indices_lines[16] = n5; indices_lines[17] = n6; indices_lines[18] = n6; indices_lines[19] = n8;
+            indices_lines[20] = n2; indices_lines[21] = n6; indices_lines[22] = n4; indices_lines[23] = n8;
+
+            selectedElemMesh = new Mesh(vertices, indices);
+            selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
+
+            ElemNumBlock.Text = $"№ элемента: {currentElemIndex} |";
+            BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem3D.wi + 1).ToString();
+            BlockNodesNum1.Text = "Л.Н. №: " + selectedElem3D.n1;
+            BlockNodesCoords1.Text = "x: " + grid3D.XYZ[selectedElem3D.n1].X.ToString("0.00")
+                                   + " y: " + grid3D.XYZ[selectedElem3D.n1].Y.ToString("0.00");
+            BlockNodesNum2.Text = "П.Н. №: " + selectedElem3D.n2;
+            BlockNodesCoords2.Text = "x: " + grid3D.XYZ[selectedElem3D.n2].X.ToString("0.00")
+                                   + " y: " + grid3D.XYZ[selectedElem3D.n2].Y.ToString("0.00");
+            BlockNodesNum3.Text = "Л.В. №: " + selectedElem3D.n3;
+            BlockNodesCoords3.Text = "x: " + grid3D.XYZ[selectedElem3D.n3].X.ToString("0.00")
+                                   + " y: " + grid3D.XYZ[selectedElem3D.n3].Y.ToString("0.00");
+            BlockNodesNum4.Text = "П.В. №: " + selectedElem3D.n4;
+            BlockNodesCoords4.Text = "x: " + grid3D.XYZ[selectedElem3D.n4].X.ToString("0.00")
+                                   + " y: " + grid3D.XYZ[selectedElem3D.n4].Y.ToString("0.00");
+        }
+
+        private void SetSelectedElemMeshes()
+        {
+            if (twoD) SetSelectedElem2DMeshes(); else SetSelectedElem3DMeshes();
+        }
+
+
         private void OpenTkControl_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (renderGrid == null)
@@ -700,83 +861,17 @@ namespace MakeGrid3D
             Point new_position = MouseMap(position);
             float x = (float)new_position.X;
             float y = (float)new_position.Y;
-            OpenTkControl.ReleaseMouseCapture();
             if (twoD)
             {
                 // ----------------------------------------- 2D -----------------------------------------
                 Grid2D grid2D = (Grid2D)renderGrid.Grid;
-                if (grid2D.FindElem(x, y, ref selectedElem))
+                if (grid2D.FindElem(x, y, ref currentElemIndex))
                 {
                     SetSelectedElemWindowSize();
-                    float left = grid2D.XY[selectedElem.n1].X;
-                    float right = grid2D.XY[selectedElem.n4].X;
-                    float bottom = grid2D.XY[selectedElem.n1].Y;
-                    float top = grid2D.XY[selectedElem.n4].Y;
-                    float xt, yt;
-                    if (selectedElem.n5 >= 0)
-                    {
-                        xt = grid2D.XY[selectedElem.n5].X;
-                        yt = grid2D.XY[selectedElem.n5].Y;
-                    }
-                    else
-                    {
-                        xt = left;
-                        yt = bottom;
-                    }
-
-                    float[] vertices = { left,  bottom, 0,  // 0
-                                     right, bottom, 0,  // 1
-                                     left,  top,    0,  // 2
-                                     right, top,    0,  // 3
-                                     xt,    yt,     0};
-                    uint[] indices = { 0, 1, 3, 0, 2, 3 };
-                    uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
-
-                    ResetSelectedElem();
-                    selectedElemMesh = new Mesh(vertices, indices);
-                    selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
-
-                    BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem.wi + 1).ToString();
-                    BlockNodesNum1.Text = "Л.Н. №: " + selectedElem.n1;
-                    BlockNodesCoords1.Text = "x: " + grid2D.XY[selectedElem.n1].X.ToString("0.00")
-                                           + " y: " + grid2D.XY[selectedElem.n1].Y.ToString("0.00");
-                    BlockNodesNum2.Text = "П.Н. №: " + selectedElem.n2;
-                    BlockNodesCoords2.Text = "x: " + grid2D.XY[selectedElem.n2].X.ToString("0.00")
-                                           + " y: " + grid2D.XY[selectedElem.n2].Y.ToString("0.00");
-                    BlockNodesNum3.Text = "Л.В. №: " + selectedElem.n3;
-                    BlockNodesCoords3.Text = "x: " + grid2D.XY[selectedElem.n3].X.ToString("0.00")
-                                           + " y: " + grid2D.XY[selectedElem.n3].Y.ToString("0.00");
-                    BlockNodesNum4.Text = "П.В. №: " + selectedElem.n4;
-                    BlockNodesCoords4.Text = "x: " + grid2D.XY[selectedElem.n4].X.ToString("0.00")
-                                           + " y: " + grid2D.XY[selectedElem.n4].Y.ToString("0.00");
-                    if (selectedElem.n5 >= 0)
-                    {
-                        BlockNodesNum5.Text = "ДОП. №: " + selectedElem.n5;
-                        BlockNodesCoords5.Text = "x: " + grid2D.XY[selectedElem.n5].X.ToString("0.00")
-                                               + " y: " + grid2D.XY[selectedElem.n5].Y.ToString("0.00");
-                    }
-                    else
-                    {
-                        BlockNodesNum5.Text = "";
-                        BlockNodesCoords5.Text = "";
-                    }
+                    SetSelectedElem2DMeshes();
                 }
                 else
-                {
                     ResetSelectedElem();
-
-                    BlockSubAreaNum.Text = "";
-                    BlockNodesNum1.Text = "";
-                    BlockNodesCoords1.Text = "";
-                    BlockNodesNum2.Text = "";
-                    BlockNodesCoords2.Text = "";
-                    BlockNodesNum3.Text = "";
-                    BlockNodesCoords3.Text = "";
-                    BlockNodesNum4.Text = "";
-                    BlockNodesCoords4.Text = "";
-                    BlockNodesNum5.Text = "";
-                    BlockNodesCoords5.Text = "";
-                }
             }
             else
             {
@@ -810,6 +905,7 @@ namespace MakeGrid3D
             {
 
             }
+            ResetSelectedElem();
         }
 
         private void OpenTkControl_MouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -825,12 +921,14 @@ namespace MakeGrid3D
             {
                 // ----------------------------------------- 2D -----------------------------------------
                 Grid2D grid2D = (Grid2D)renderGrid.Grid;
-                if (grid2D.FindElem(x, y, ref selectedElem))
+                int num = 0;
+                if (grid2D.FindElem(x, y, ref num))
                 {
-                    float x1 = grid2D.XY[selectedElem.n1].X;
-                    float x2 = grid2D.XY[selectedElem.n4].X;
-                    float y1 = grid2D.XY[selectedElem.n1].Y;
-                    float y2 = grid2D.XY[selectedElem.n4].Y;
+                    Elem2D selectedElem2D = grid2D.Elems[num];
+                    float x1 = grid2D.XY[selectedElem2D.n1].X;
+                    float x2 = grid2D.XY[selectedElem2D.n4].X;
+                    float y1 = grid2D.XY[selectedElem2D.n1].Y;
+                    float y2 = grid2D.XY[selectedElem2D.n4].Y;
 
                     // TODO: Что за...
                     Tuple<int, float> distance_lb = new Tuple<int, float>(1, MathF.Sqrt(MathF.Pow(x - x1, 2) + MathF.Pow(y - y1, 2)));
@@ -845,22 +943,22 @@ namespace MakeGrid3D
                     switch (id)
                     {
                         case 1:
-                            node = selectedElem.n1;
+                            node = selectedElem2D.n1;
                             i = grid2D.global_ij(node).X;
                             j = grid2D.global_ij(node).Y;
                             break;
                         case 2:
-                            node = selectedElem.n2;
+                            node = selectedElem2D.n2;
                             i = grid2D.global_ij(node).X;
                             j = grid2D.global_ij(node).Y;
                             break;
                         case 3:
-                            node = selectedElem.n3;
+                            node = selectedElem2D.n3;
                             i = grid2D.global_ij(node).X;
                             j = grid2D.global_ij(node).Y;
                             break;
                         case 4:
-                            node = selectedElem.n4;
+                            node = selectedElem2D.n4;
                             i = grid2D.global_ij(node).X;
                             j = grid2D.global_ij(node).Y;
                             break;
@@ -926,9 +1024,18 @@ namespace MakeGrid3D
                 Matrix4 model = translate * renderGrid.Rotate;
                 renderGrid.shader.SetMatrix4("model", ref model);
             }
-            renderGrid.shader.SetColor4("current_color", new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1));
+            Color4 x_color = Color4.Red;
+            Color4 y_color = new Color4(78 / 255f, 252 / 255f, 3 / 255f, 1);
+            Color4 z_color = Color4.Blue;
+            if (twoD)
+                switch (currentPlane)
+                {
+                    case Plane.XZ: y_color = z_color; break;
+                    case Plane.YZ: x_color = z_color; break;
+                }
+            renderGrid.shader.SetColor4("current_color", y_color);
             if (twoD) axis.DrawElems(6, 0, PrimitiveType.Lines); else axis.DrawElems(10, 0, PrimitiveType.Lines);
-            renderGrid.shader.SetColor4("current_color", Color4.Red);
+            renderGrid.shader.SetColor4("current_color", x_color);
             if (twoD) axis.DrawElems(6, 6, PrimitiveType.Lines); else axis.DrawElems(10, 10, PrimitiveType.Lines);
             if (!twoD)
             {
@@ -1093,6 +1200,19 @@ namespace MakeGrid3D
                 selectedElemLines.Dispose();
                 selectedElemLines = null;
             }
+            currentElemIndex = -1;
+            ElemNumBlock.Text = "№ элемента: |";
+            BlockSubAreaNum.Text = "";
+            BlockNodesNum1.Text = "";
+            BlockNodesCoords1.Text = "";
+            BlockNodesNum2.Text = "";
+            BlockNodesCoords2.Text = "";
+            BlockNodesNum3.Text = "";
+            BlockNodesCoords3.Text = "";
+            BlockNodesNum4.Text = "";
+            BlockNodesCoords4.Text = "";
+            BlockNodesNum5.Text = "";
+            BlockNodesCoords5.Text = "";
         }
 
         private void RollLeftClick(object sender, RoutedEventArgs e)
@@ -1498,7 +1618,7 @@ namespace MakeGrid3D
         {
             irregularGridMaker.DirIndex = 3;
         }
-
+        
         private void KeyDownHandler(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Tab && !twoD)
@@ -1507,6 +1627,7 @@ namespace MakeGrid3D
                 {
                     rotateState = false;
                     firstMove = true;
+                    OpenTkControl.ReleaseMouseCapture();
                 }
                 else rotateState = true;
             }
@@ -1651,6 +1772,38 @@ namespace MakeGrid3D
                     ResetSelectedElem();
                 }
             }
+        }
+
+        private void PrevElemCLick(object sender, RoutedEventArgs e)
+        {
+            int step;
+            if (int.TryParse(StepSelectorInput.Text, out step) && step > 0)
+            {
+                currentElemIndex -= step;
+                if (currentElemIndex < 0)
+                    currentElemIndex = 0;
+                SetSelectedElemMeshes();
+            }
+            else ErrorHandler.DataErrorMessage("Некорректный шаг", false);
+        }
+
+        private void NextElemCLick(object sender, RoutedEventArgs e)
+        {
+            int step;
+            if (int.TryParse(StepSelectorInput.Text, out step) && step > 0)
+            {
+                currentElemIndex += step;
+                if (currentElemIndex >= renderGrid.Grid.Nelems)
+                    currentElemIndex = renderGrid.Grid.Nelems - 1;
+                SetSelectedElemMeshes();
+            }
+            else ErrorHandler.DataErrorMessage("Некорректный шаг", false);
+        }
+
+        private void ResetElemClick(object sender, RoutedEventArgs e)
+        {
+            currentElemIndex = 0;
+            ResetSelectedElem();
         }
     }
 }
