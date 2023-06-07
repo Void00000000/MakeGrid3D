@@ -9,7 +9,7 @@ namespace MakeGrid3D
 {
     using ByteMat3D = List<List<List<NodeType>>>;
     using ByteMat2D = List<List<NodeType>>;
-    struct SubArea3D
+    public struct SubArea3D
     {
         public int wi; // Номер подобласти
         // Индексы в массивах Xw и Yw
@@ -30,7 +30,7 @@ namespace MakeGrid3D
     }
 
     // Прямоугольный конечный элемент
-    struct Elem3D
+    public struct Elem3D
     {
         public int wi;
         // Граничные узлы
@@ -84,82 +84,12 @@ namespace MakeGrid3D
         // Массив, содержащий подобласти
         public List<SubArea3D> Mw { get; }
 
-        public Area3D(string path)
+        public Area3D(List<float> xw, List<float> yw, List<float> zw, List<SubArea3D> mw, int nmats)
         {
-            try
-            {
-                using (TextReader reader = File.OpenText(path))
-                {
-                    string line = "*";
-                    while (line != "")
-                        line = reader.ReadLine();
-                    string nXw_txt = reader.ReadLine();
-                    NXw = int.Parse(nXw_txt);
-                    Xw = new List<float>(NXw);
-                    string Xwi_txt = reader.ReadLine();
-                    string[] Xwi = Xwi_txt.Split(' ');
-                    for (int i = 0; i < NXw; i++)
-                        Xw.Add(float.Parse(Xwi[i], CultureInfo.InvariantCulture));
-
-                    string nYw_txt = reader.ReadLine();
-                    NYw = int.Parse(nYw_txt);
-                    Yw = new List<float>(NYw);
-                    string Ywi_txt = reader.ReadLine();
-                    string[] Ywi = Ywi_txt.Split(' ');
-                    for (int i = 0; i < NYw; i++)
-                        Yw.Add(float.Parse(Ywi[i], CultureInfo.InvariantCulture));
-
-                    string nZw_txt = reader.ReadLine();
-                    NZw = int.Parse(nZw_txt);
-                    Zw = new List<float>(NZw);
-                    string Zwi_txt = reader.ReadLine();
-                    string[] Zwi = Zwi_txt.Split(' ');
-                    for (int i = 0; i < NZw; i++)
-                        Zw.Add(float.Parse(Zwi[i], CultureInfo.InvariantCulture));
-
-                    X0 = Xw[0];
-                    Xn = Xw[NXw - 1];
-                    Y0 = Yw[0];
-                    Yn = Yw[NYw - 1];
-                    Z0 = Zw[0];
-                    Zn = Zw[NZw - 1];
-
-                    string nmat_nw_txt = reader.ReadLine();
-                    string[] nmat_nw = nmat_nw_txt.Split(' ');
-                    Nmats = int.Parse(nmat_nw[0]);
-                    Nareas = int.Parse(nmat_nw[1]);
-                    Mw = new List<SubArea3D>(Nareas);
-
-                    for (int i = 0; i < Nareas; i++)
-                    {
-                        string Mwi_txt = reader.ReadLine();
-                        string[] Mwi = Mwi_txt.Split(' ');
-                        int wi = int.Parse(Mwi[0]) - 1;
-                        int nx1 = int.Parse(Mwi[1]) - 1;
-                        int nx2 = int.Parse(Mwi[2]) - 1;
-                        int ny1 = int.Parse(Mwi[3]) - 1;
-                        int ny2 = int.Parse(Mwi[4]) - 1;
-                        int nz1 = int.Parse(Mwi[5]) - 1;
-                        int nz2 = int.Parse(Mwi[6]) - 1;
-                        Mw.Add(new SubArea3D(wi, nx1, nx2, ny1, ny2, nz1, nz2));
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                if (e is DirectoryNotFoundException || e is FileNotFoundException)
-                {
-                    ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
-                }
-                else if (e is FormatException)
-                {
-                    ErrorHandler.FileReadingErrorMessage("Некорректный формат файла");
-                }
-                else
-                {
-                    ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл");
-                }
-            }
+            Xw = xw; Yw = yw; Zw = zw; Mw = mw;
+            NXw = xw.Count; NYw = yw.Count; NZw = zw.Count; Nareas = mw.Count;
+            X0 = xw[0]; Xn = xw[NXw - 1]; Y0 = yw[0]; Yn = yw[NYw - 1]; Z0 = zw[0]; Zn = zw[NZw - 1];
+            Nmats = nmats;
         }
 
         // Тиражирование сечений
@@ -257,6 +187,229 @@ namespace MakeGrid3D
                     }
         }
 
+        // Создание регулярной сетки не из файла
+        public Grid3D(GridParams gridParams) 
+        {
+            Area = new Area3D(gridParams.Xw, gridParams.Yw, gridParams.Zw, gridParams.Mw, gridParams.Mats.Count);
+            Nmats = Area.Nmats;
+            Default.areaColors = gridParams.Mats;
+            List<int> nx = gridParams.NX;
+            List<int> ny = gridParams.NY;
+            List<int> nz = gridParams.NZ;
+            List<float> qx = gridParams.QX;
+            List<float> qy = gridParams.QY;
+            List<float> qz = gridParams.QZ;
+            List<float> X = new List<float>();
+            List<float> Y = new List<float>();
+            List<float> Z = new List<float>();
+            Nx = 0; Ny = 0; Nz = 0;
+            foreach (int nxi in nx)
+                Nx += nxi;
+            Nx++;
+            foreach (int nyi in ny)
+                Ny += nyi;
+            Ny++;
+            foreach (int nzi in nz)
+                Nz += nzi;
+            Nz++;
+
+            X.Capacity = Nx;
+            Y.Capacity = Ny;
+            Z.Capacity = Nz;
+            for (int i = 0; i < X.Capacity; i++)
+                X.Add(0);
+            for (int i = 0; i < Y.Capacity; i++)
+                Y.Add(0);
+            for (int i = 0; i < Z.Capacity; i++)
+                Z.Add(0);
+
+            int ix0 = 0, iy0 = 0, iz0 = 0;
+            int jx = 0, jy = 0, jz = 0;
+
+            for (int i = 0; i < Area.NXw - 1; i++)
+                MakeGrid1D(X, Area.Xw[i], Area.Xw[i + 1], nx[i], qx[i], ref ix0, ref jx);
+            for (int i = 0; i < Area.NYw - 1; i++)
+                MakeGrid1D(Y, Area.Yw[i], Area.Yw[i + 1], ny[i], qy[i], ref iy0, ref jy);
+            for (int i = 0; i < Area.NZw - 1; i++)
+                MakeGrid1D(Z, Area.Zw[i], Area.Zw[i + 1], nz[i], qz[i], ref iz0, ref jz);
+            X[Nx - 1] = Area.Xw[Area.NXw - 1];
+            Y[Ny - 1] = Area.Yw[Area.NYw - 1];
+            Z[Nz - 1] = Area.Zw[Area.NZw - 1];
+
+            Nnodes = Nx * Ny * Nz;
+            Nelems = (Nx - 1) * (Ny - 1) * (Nz - 1);
+            Elems = new List<Elem3D>(Nelems);
+            XYZ = new List<Vector3>(Nnodes);
+            removedNodes = new List<int>();
+
+            for (int k = 0; k < Nz; k++)
+                for (int j = 0; j < Ny; j++)
+                    for (int i = 0; i < Nx; i++)
+                    {
+                        Vector3 Vector3 = new Vector3(X[i], Y[j], Z[k]);
+                        XYZ.Add(Vector3);
+                    };
+
+            for (int k = 0; k < Nz - 1; k++)
+                for (int j = 0; j < Ny - 1; j++)
+                    for (int i = 0; i < Nx - 1; i++)
+                    {
+                        int n1 = global_num(i, j, k);
+                        int n2 = global_num(i + 1, j, k);
+                        int n3 = global_num(i, j + 1, k);
+                        int n4 = global_num(i + 1, j + 1, k);
+                        int n5 = global_num(i, j, k + 1);
+                        int n6 = global_num(i + 1, j, k + 1);
+                        int n7 = global_num(i, j + 1, k + 1);
+                        int n8 = global_num(i + 1, j + 1, k + 1);
+                        float xmin = XYZ[n1].X; float xmax = XYZ[n4].X;
+                        float ymin = XYZ[n1].Y; float ymax = XYZ[n4].Y;
+                        float zmin = XYZ[n1].Z; float zmax = XYZ[n4].Z;
+                        int wi = Area.FindSubArea(xmin, xmax, ymin, ymax, zmin, zmax);
+                        Elem3D elem = new Elem3D(wi, n1, n2, n3, n4, n5, n6, n7, n8);
+                        Elems.Add(elem);
+                    }
+
+            IJK = new ByteMat3D(Nx);
+            for (int i = 0; i < Nx; i++)
+            {
+                IJK.Add(new ByteMat2D(Ny));
+                for (int j = 0; j < Ny; j++)
+                {
+                    IJK[i].Add(new List<NodeType>(Nz));
+                    for (int k = 0; k < Nz; k++)
+                        IJK[i][j].Add(NodeType.Regular);
+                }
+            }
+        }
+
+        // Создание сетки через файл
+        public Grid3D(string fName)
+        {
+            try
+            {
+                using (TextReader reader = File.OpenText(fName))
+                {
+                    reader.ReadLine(); reader.ReadLine();
+
+                    string NXw_txt = reader.ReadLine();
+                    int NXw = int.Parse(NXw_txt);
+                    List<float> Xw = new List<float>(NXw);
+                    string[] Xw_txt = reader.ReadLine().Split('|');
+                    for (int i = 0; i < NXw; i++)
+                    {
+                        Xw.Add(float.Parse(Xw_txt[i]));
+                    }
+
+                    string NYw_txt = reader.ReadLine();
+                    int NYw = int.Parse(NYw_txt);
+                    List<float> Yw = new List<float>(NYw);
+                    string[] Yw_txt = reader.ReadLine().Split('|');
+                    for (int i = 0; i < NYw; i++)
+                    {
+                        Yw.Add(float.Parse(Yw_txt[i]));
+                    }
+
+                    string NZw_txt = reader.ReadLine();
+                    int NZw = int.Parse(NZw_txt);
+                    List<float> Zw = new List<float>(NZw);
+                    string[] Zw_txt = reader.ReadLine().Split('|');
+                    for (int i = 0; i < NZw; i++)
+                    {
+                        Zw.Add(float.Parse(Zw_txt[i]));
+                    }
+
+                    string Nmats_txt = reader.ReadLine();
+                    Nmats = int.Parse(Nmats_txt);
+                    Default.areaColors = new List<Color4>(Nmats);
+                    for (int i = 0; i < Nmats; i++)
+                    {
+                        string[] areaColor_txt = reader.ReadLine().Split('|');
+                        Color4 color4 = new Color4(float.Parse(areaColor_txt[0]), float.Parse(areaColor_txt[1]),
+                                                   float.Parse(areaColor_txt[2]), float.Parse(areaColor_txt[3]));
+                        Default.areaColors.Add(color4);
+                    }
+
+                    string Nareas_txt = reader.ReadLine();
+                    int Nareas = int.Parse(Nareas_txt);
+                    List<SubArea3D> Mw = new List<SubArea3D>(Nareas);
+                    for (int i = 0; i < Nareas; i++)
+                    {
+                        string[] subArea_txt = reader.ReadLine().Split('|');
+                        SubArea3D subArea3D = new SubArea3D(int.Parse(subArea_txt[0]), int.Parse(subArea_txt[1]),
+                                                   int.Parse(subArea_txt[2]), int.Parse(subArea_txt[3]), int.Parse(subArea_txt[4]),
+                                                   int.Parse(subArea_txt[5]), int.Parse(subArea_txt[6]));
+                        Mw.Add(subArea3D);
+                    }
+
+                    Area = new Area3D(Xw, Yw, Zw, Mw, Nmats);
+                    reader.ReadLine();
+                    string Nnodes_txt = reader.ReadLine();
+                    Nnodes = int.Parse(Nnodes_txt);
+                    XYZ = new List<Vector3>(Nnodes);
+                    for (int i = 0; i < Nnodes; i++)
+                    {
+                        string[] node_txt = reader.ReadLine().Split('|');
+                        Vector3 node = new Vector3(float.Parse(node_txt[0]), float.Parse(node_txt[1]), float.Parse(node_txt[2]));
+                        XYZ.Add(node);
+                    }
+                    reader.ReadLine();
+                    string Nelems_txt = reader.ReadLine();
+                    Nelems = int.Parse(Nelems_txt);
+                    Elems = new List<Elem3D>(Nelems);
+                    for (int i = 0; i < Nelems; i++)
+                    {
+                        string[] elem_txt = reader.ReadLine().Split('|');
+                        Elem3D elem = new Elem3D(int.Parse(elem_txt[0]), int.Parse(elem_txt[1]), int.Parse(elem_txt[2]), 
+                                                 int.Parse(elem_txt[3]), int.Parse(elem_txt[4]), int.Parse(elem_txt[5]),
+                                                 int.Parse(elem_txt[6]), int.Parse(elem_txt[7]), int.Parse(elem_txt[8]),
+                                                 int.Parse(elem_txt[9]), int.Parse(elem_txt[10]));
+                        Elems.Add(elem);
+                    }
+                    reader.ReadLine();
+                    string[] NxNyNz_txt = reader.ReadLine().Split('|');
+                    Nx = int.Parse(NxNyNz_txt[0]); Ny = int.Parse(NxNyNz_txt[1]); Nz = int.Parse(NxNyNz_txt[2]);
+                    IJK = new ByteMat3D(Nx);
+                    for (int i = 0; i < Nx; i++)
+                    {
+                        IJK.Add(new ByteMat2D(Ny));
+                        for (int j = 0; j < Ny; j++)
+                        {
+                            string[] row = reader.ReadLine().Split('|');
+                            IJK[i].Add(new List<NodeType>(Nz));
+                            for (int k = 0; k < Nz; k++)
+                            {
+                                Enum.TryParse(row[k], out NodeType nodeType);
+                                IJK[i][j].Add(nodeType);
+                            }
+                        }
+                        reader.ReadLine();
+                    }
+                    reader.ReadLine();
+                    int removedNodesNum = int.Parse(reader.ReadLine());
+                    removedNodes = new List<int>(removedNodesNum);
+                    if (removedNodesNum > 0)
+                    {
+                        string[] removedNodes_txt = reader.ReadLine().Split('|');
+                        for (int i = 0; i < removedNodesNum; i++)
+                        {
+                            removedNodes.Add(int.Parse(removedNodes_txt[i]));
+                        }
+                    }
+                    //CalcAR();
+                }
+            }
+            catch (Exception e)
+            {
+                if (e is DirectoryNotFoundException || e is FileNotFoundException)
+                    ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
+                else if (e is FormatException)
+                    ErrorHandler.FileReadingErrorMessage("Некорректный формат файла");
+                else
+                    ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл");
+            }
+        }
+
         // Тиражирование сечений
         public Grid3D(Grid2D grid2D, List<float> z)
         {
@@ -319,171 +472,6 @@ namespace MakeGrid3D
                         int n10 = elem2D.n5 + (i + 1) * grid2D.Nnodes;
                         Elems.Add(new Elem3D(elem2D.wi, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10));
                     }
-                }
-            }
-        }
-
-        // Создание регулярной сетки
-        public Grid3D(string path, Area3D area)
-        {
-            Area = area;
-            Nmats = area.Nmats;
-            List<float> X = new List<float>();
-            List<float> Y = new List<float>();
-            List<float> Z = new List<float>();
-            ReadGrid3D(path, X, Y, Z);
-
-            Nnodes = Nx * Ny * Nz;
-            Nelems = (Nx - 1) * (Ny - 1) * (Nz - 1);
-
-            Elems = new List<Elem3D>(Nelems);
-            XYZ = new List<Vector3>(Nnodes);
-            removedNodes = new List<int>();
-
-            for (int k = 0; k < Nz; k++)
-                for (int j = 0; j < Ny; j++)
-                    for (int i = 0; i < Nx; i++)
-                    {
-                        Vector3 Vector3 = new Vector3(X[i], Y[j], Z[k]);
-                        XYZ.Add(Vector3);
-                    };
-
-            for (int k = 0; k < Nz - 1; k++)
-                for (int j = 0; j < Ny - 1; j++)
-                    for (int i = 0; i < Nx - 1; i++)
-                    {
-                        int n1 = global_num(i, j, k);
-                        int n2 = global_num(i + 1, j, k);
-                        int n3 = global_num(i, j + 1, k);
-                        int n4 = global_num(i + 1, j + 1, k);
-                        int n5 = global_num(i, j, k + 1);
-                        int n6 = global_num(i + 1, j, k + 1);
-                        int n7 = global_num(i, j + 1, k + 1);
-                        int n8 = global_num(i + 1, j + 1, k + 1);
-                        float xmin = XYZ[n1].X; float xmax = XYZ[n4].X;
-                        float ymin = XYZ[n1].Y; float ymax = XYZ[n4].Y;
-                        float zmin = XYZ[n1].Z; float zmax = XYZ[n4].Z;
-                        int wi = area.FindSubArea(xmin, xmax, ymin, ymax, zmin, zmax);
-                        Elem3D elem = new Elem3D(wi, n1, n2, n3, n4, n5, n6, n7, n8);
-                        Elems.Add(elem);
-                    }
-
-            IJK = new ByteMat3D(Nx);
-            for (int i = 0; i < Nx; i++)
-            {
-                IJK.Add(new ByteMat2D(Ny));
-                for (int j = 0; j < Ny; j++)
-                {
-                    IJK[i].Add(new List<NodeType>(Nz));
-                    for (int k = 0; k < Nz; k++)
-                        IJK[i][j].Add(NodeType.Regular);
-                }
-            }
-        }
-
-        private void ReadGrid3D(string path, List<float> X, List<float> Y, List<float> Z)
-        {
-            List<int> nx, ny, nz;
-            List<float> qx, qy, qz;
-            Nx = 0; Ny = 0; Nz = 0;
-            try
-            {
-                using (TextReader reader = File.OpenText(path))
-                {
-                    string line = "*";
-                    while (line != "")
-                        line = reader.ReadLine();
-                    line = "*";
-                    while (line != "")
-                        line = reader.ReadLine();
-                    nx = new List<int>(Area.NXw - 1);
-                    string nxi_txt = reader.ReadLine();
-                    string[] nxi = nxi_txt.Split(' ');
-                    for (int i = 0; i < Area.NXw - 1; i++)
-                    {
-                        int current_nx = int.Parse(nxi[i]);
-                        Nx += current_nx;
-                        nx.Add(current_nx);
-                    }
-                    Nx++;
-
-                    qx = new List<float>(Area.NXw - 1);
-                    string qxi_txt = reader.ReadLine();
-                    string[] qxi = qxi_txt.Split(' ');
-                    for (int i = 0; i < Area.NXw - 1; i++)
-                        qx.Add(float.Parse(qxi[i], CultureInfo.InvariantCulture));
-
-                    ny = new List<int>(Area.NYw - 1);
-                    string nyi_txt = reader.ReadLine();
-                    string[] nyi = nyi_txt.Split(' ');
-                    for (int i = 0; i < Area.NYw - 1; i++)
-                    {
-                        int current_ny = int.Parse(nyi[i]);
-                        Ny += current_ny;
-                        ny.Add(current_ny);
-                    }
-                    Ny++;
-
-                    qy = new List<float>(Area.NYw - 1);
-                    string qyi_txt = reader.ReadLine();
-                    string[] qyi = qyi_txt.Split(' ');
-                    for (int i = 0; i < Area.NYw - 1; i++)
-                        qy.Add(float.Parse(qyi[i], CultureInfo.InvariantCulture));
-
-                    nz = new List<int>(Area.NZw - 1);
-                    string nzi_txt = reader.ReadLine();
-                    string[] nzi = nzi_txt.Split(' ');
-                    for (int i = 0; i < Area.NZw - 1; i++)
-                    {
-                        int current_nz = int.Parse(nzi[i]);
-                        Nz += current_nz;
-                        nz.Add(current_nz);
-                    }
-                    Nz++;
-
-                    qz = new List<float>(Area.NZw - 1);
-                    string qzi_txt = reader.ReadLine();
-                    string[] qzi = qzi_txt.Split(' ');
-                    for (int i = 0; i < Area.NZw - 1; i++)
-                        qz.Add(float.Parse(qzi[i], CultureInfo.InvariantCulture));
-
-                    X.Capacity = Nx;
-                    Y.Capacity = Ny;
-                    Z.Capacity = Nz;
-                    for (int i = 0; i < X.Capacity; i++)
-                        X.Add(0);
-                    for (int i = 0; i < Y.Capacity; i++)
-                        Y.Add(0);
-                    for (int i = 0; i < Z.Capacity; i++)
-                        Z.Add(0);
-
-                    int ix0 = 0, iy0 = 0, iz0 = 0;
-                    int jx = 0, jy = 0, jz = 0;
-
-                    for (int i = 0; i < Area.NXw - 1; i++)
-                        MakeGrid1D(X, Area.Xw[i], Area.Xw[i + 1], nx[i], qx[i], ref ix0, ref jx);
-                    for (int i = 0; i < Area.NYw - 1; i++)
-                        MakeGrid1D(Y, Area.Yw[i], Area.Yw[i + 1], ny[i], qy[i], ref iy0, ref jy);
-                    for (int i = 0; i < Area.NZw - 1; i++)
-                        MakeGrid1D(Z, Area.Zw[i], Area.Zw[i + 1], nz[i], qz[i], ref iz0, ref jz);
-                    X[Nx - 1] = Area.Xw[Area.NXw - 1];
-                    Y[Ny - 1] = Area.Yw[Area.NYw - 1];
-                    Z[Nz - 1] = Area.Zw[Area.NZw - 1];
-                }
-            }
-            catch (Exception e)
-            {
-                if (e is DirectoryNotFoundException || e is FileNotFoundException)
-                {
-                    ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
-                }
-                else if (e is FormatException)
-                {
-                    ErrorHandler.FileReadingErrorMessage("Некорректный формат файла");
-                }
-                else
-                {
-                    ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл");
                 }
             }
         }
@@ -577,6 +565,69 @@ namespace MakeGrid3D
                 }
             }
             return false;
+        }
+
+        public string PrintInfo()
+        {
+            string infoText = "3D\n";
+            infoText += "*** AREA ***\n";
+            infoText += $"{Area.NXw}\n";
+            for (int i = 0; i < Area.NXw; i++)
+            {
+                infoText += $"{Area.Xw[i]}|";
+            }
+            infoText += $"\n{Area.NYw}\n";
+            for (int i = 0; i < Area.NYw; i++)
+            {
+                infoText += $"{Area.Yw[i]}|";
+            }
+            infoText += $"\n{Area.NZw}\n";
+            for (int i = 0; i < Area.NZw; i++)
+            {
+                infoText += $"{Area.Zw[i]}|";
+            }
+            infoText += $"\n{Nmats}\n";
+            for (int i = 0; i < Nmats; i++)
+            {
+                infoText += $"{Default.areaColors[i].R}|{Default.areaColors[i].G}|{Default.areaColors[i].B}|{Default.areaColors[i].A}\n";
+            }
+            infoText += $"{Area.Nareas}\n";
+            for (int i = 0; i < Area.Nareas; i++)
+            {
+                infoText += $"{Area.Mw[i].wi}|{Area.Mw[i].nx1}|{Area.Mw[i].nx2}|{Area.Mw[i].ny1}|{Area.Mw[i].ny2}|{Area.Mw[i].nz1}|{Area.Mw[i].nz2}\n";
+            }
+
+            infoText += "*** NODES ***\n";
+            infoText += $"{Nnodes}\n";
+            for (int i = 0; i < Nnodes; i++)
+            {
+                infoText += $"{XYZ[i].X}|{XYZ[i].Y}|{XYZ[i].Z}\n";
+            }
+            infoText += "*** ELEMS ***\n";
+            infoText += $"{Nelems}\n";
+            for (int i = 0; i < Nelems; i++)
+            {
+                infoText += $"{Elems[i].wi}|{Elems[i].n1}|{Elems[i].n2}|{Elems[i].n3}|{Elems[i].n4}|{Elems[i].n5}|{Elems[i].n6}|{Elems[i].n7}|{Elems[i].n8}|{Elems[i].n9}|{Elems[i].n10}\n";
+            }
+            infoText += "*** NODE TYPES MATRIX ***\n";
+            infoText += $"{Nx}|{Ny}|{Nz}\n";
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    for (int k = 0; k < Nz; k++)
+                        infoText += $"{IJK[i][j][k]}|";
+                    infoText += "\n";
+                }
+                infoText += "\n";
+            }
+            infoText += "*** REMOVED NODES ***\n";
+            infoText += $"{removedNodes.Count}\n";
+            for (int i = 0; i < removedNodes.Count; i++)
+            {
+                infoText += $"{removedNodes[i]}|";
+            }
+            return infoText;
         }
     }
 }

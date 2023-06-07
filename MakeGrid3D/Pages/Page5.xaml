@@ -1,0 +1,58 @@
+﻿<Page x:Class="MakeGrid3D.Pages.Page5"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:MakeGrid3D.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Page5">
+
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="Введите количество подынтервалов и коэффициент сгущения между соседними границами по оси X" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Click="PrevXClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
+                    <Image Source="../Images/tri_left.png"></Image>
+                </Button>
+                <TextBox Name="NXBlock" TextChanged="NXChanged" Width="50" Margin="0 0 10 0"/>
+                <TextBox Name="QXBlock" TextChanged="QXChanged" Width="50" Margin="0 0 10 0"/>
+                <Button Click="NextXClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                    <Image Source="../Images/tri_right.png"></Image>
+                </Button>
+            </StackPanel>
+            <CheckBox Name="ReverseXCheckBox" Checked="ReverseXChecked" Unchecked="ReverseXUnChecked" Content="Сгущение в обратном направлении" HorizontalAlignment="Center" Margin="0,10,10,0"/>
+            <TextBlock Name = "XIntervalsCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+
+            <TextBlock Text="Введите количество подынтервалов и коэффициент сгущения между соседними границами по оси Y" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Click="PrevYClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
+                    <Image Source="../Images/tri_left.png"></Image>
+                </Button>
+                <TextBox Name="NYBlock" TextChanged="NYChanged" Width="50" Margin="0 0 10 0"/>
+                <TextBox Name="QYBlock" TextChanged="QYChanged" Width="50" Margin="0 0 10 0"/>
+                <Button Click="NextYClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                    <Image Source="../Images/tri_right.png"></Image>
+                </Button>
+            </StackPanel>
+            <CheckBox Name="ReverseYCheckBox" Checked="ReverseYChecked" Unchecked="ReverseYUnChecked" Content="Сгущение в обратном направлении" HorizontalAlignment="Center" Margin="0,10,10,0"/>
+            <TextBlock Name = "YIntervalsCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+
+            <TextBlock Text="Введите количество подынтервалов и коэффициент сгущения между соседними границами по оси Z" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Name="PrevZButton" Click="PrevZClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
+                    <Image Source="../Images/tri_left.png"></Image>
+                </Button>
+                <TextBox Name="NZBlock" TextChanged="NZChanged" Width="50" Margin="0 0 10 0"/>
+                <TextBox Name="QZBlock" TextChanged="QZChanged" Width="50" Margin="0 0 10 0"/>
+                <Button Name="NextZButton" Click="NextZClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                    <Image Source="../Images/tri_right.png"></Image>
+                </Button>
+            </StackPanel>
+            <CheckBox Name="ReverseZCheckBox" Checked="ReverseZChecked" Unchecked="ReverseZUnChecked" Content="Сгущение в обратном направлении" HorizontalAlignment="Center" Margin="0,10,10,0"/>
+            <TextBlock Name = "ZIntervalsCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+        </StackPanel>
+        <Button VerticalAlignment="Bottom" Width="100" Content="Назад" Click="PrevPageClick" HorizontalAlignment="Left" Margin="20,0,0,20"/>
+        <Button VerticalAlignment="Bottom" Width="100" Content="Создать сетку" Click="CreateGridClick" HorizontalAlignment="Right" Margin="0,0,20,20"/>
+    </Grid>
+</Page>

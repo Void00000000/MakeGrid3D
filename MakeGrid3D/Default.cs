@@ -25,10 +25,7 @@ namespace MakeGrid3D
         static public int maxAR_width = 20;
         static public int maxAR_height = 9;
 
-        static public Color4 area1Color = new Color4(252/255f, 78/255f, 3/255f, 1f);
-        static public Color4 area2Color = new Color4(78/255f, 252/255f, 3/255f, 1f);
-        static public Color4 area3Color = new Color4(78/255f, 78/255f, 252/255f, 1f);
-        static public Color4[] areaColors = {area1Color, area2Color, area3Color};
+        static public List<Color4> areaColors;
 
         static public float indent = 0.2f;
 

@@ -26,6 +26,7 @@ namespace MakeGrid3D
         CrossSections crossSections;
         LinkedList<GridState> gridList;
         LinkedListNode<GridState> currentNode;
+        GridParams gridParams;
 
         Mesh axis;
         Mesh? selectedElemMesh = null;
@@ -57,6 +58,7 @@ namespace MakeGrid3D
         float speedVer = 0;
         Color4 bgColor = Default.bgColor;
         string fileName = "C:\\Users\\artor\\OneDrive\\Рабочий стол\\ДИПЛОМ ТЕСТЫ\\TEST2.txt";
+        bool gridFromFile;
         int currentElemIndex = -1;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
@@ -69,7 +71,7 @@ namespace MakeGrid3D
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
 
-        public GraphicsWindow()
+        public GraphicsWindow(GridParams gridParams)
         {
             InitializeComponent();
             var settings = new GLWpfControlSettings
@@ -77,6 +79,24 @@ namespace MakeGrid3D
                 MajorVersion = 3,
                 MinorVersion = 3
             };
+            this.gridParams = gridParams;
+            gridFromFile = false;
+            OpenTkControl.Start(settings);
+            AxisOpenTkControl.Start(settings);
+            SelectedElemOpenTkControl.Start(settings);
+            ResetUI();
+        }
+
+        public GraphicsWindow(string fileName)
+        {
+            InitializeComponent();
+            var settings = new GLWpfControlSettings
+            {
+                MajorVersion = 3,
+                MinorVersion = 3
+            };
+            this.fileName = fileName;
+            gridFromFile = true;
             OpenTkControl.Start(settings);
             AxisOpenTkControl.Start(settings);
             SelectedElemOpenTkControl.Start(settings);
@@ -102,33 +122,23 @@ namespace MakeGrid3D
 
         private void InitRegularGrid()
         {
-            try
-            {
+            if (gridFromFile)
                 using (TextReader reader = File.OpenText(fileName))
                 {
                     string dim_txt = reader.ReadLine();
-                    if (dim_txt == "2D") twoD = true; else twoD = false; 
+                    if (dim_txt == "2D") twoD = true; else twoD = false;
                 }
-            }
-            catch (Exception e)
-            {
-                if (e is DirectoryNotFoundException || e is FileNotFoundException)
-                {
-                    ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
-                }
-            }
+            else twoD = gridParams.TwoD;
             BlockCurrentMode.Text = twoD ? "Режим: 2D" : "Режим: 3D";
             if (twoD)
             {
-                Area2D area = new Area2D(fileName);
-                regularGrid = new Grid2D(fileName, area);
+                if (gridFromFile) regularGrid = new Grid2D(fileName); else regularGrid = new Grid2D(gridParams);
                 currentPlane = Plane.XY;
                 prevGrid3D = null;
             }
             else
             {
-                Area3D area = new Area3D(fileName);
-                regularGrid = new Grid3D(fileName, area);
+                if (gridFromFile) regularGrid = new Grid3D(fileName); else regularGrid = new Grid3D(gridParams);
                 crossSections = new CrossSections((Grid3D)regularGrid);
                 prevGrid3D = (Grid3D)regularGrid;
             }
@@ -900,30 +910,8 @@ namespace MakeGrid3D
                 axis = new Mesh(vertices, indices);
             }
         }
-        private void OpenFileClick(object sender, RoutedEventArgs e)
-        {
-            // Configure open file dialog box
-            var dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.DefaultExt = ".txt"; // Default file extension
-            dialog.Filter = "Text documents (.txt)|*.txt"; // Filter files by extension
 
-            // Show open file dialog box
-            bool? result = dialog.ShowDialog();
-
-            // Process open file dialog box results
-            if (result == true)
-            {
-                // Open document
-                fileName = dialog.FileName;
-                ResetSelectedElem();
-                ResetPosition();
-                ResetUI();
-                InitRegularGrid();
-                SetRenderGrid();
-            }
-        }
-
-        private Color ColorFloatToByte(Color4 color4)
+        static public Color ColorFloatToByte(Color4 color4)
         {
             Color color = new Color();
             color.R = (byte)(color4.R * 255);
@@ -932,7 +920,7 @@ namespace MakeGrid3D
             color.A = (byte)(color4.A * 255);
             return color;
         }
-        private Color4 ColorByteToFloat(Color color)
+        static public Color4 ColorByteToFloat(Color color)
         {
             Color4 color4 = new Color4();
             color4.R = color.R / 255f;
@@ -1584,6 +1572,58 @@ namespace MakeGrid3D
         {
             currentElemIndex = 0;
             ResetSelectedElem();
+        }
+
+        private void CreateNewGridClick(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Текущая сетка не будет сохранена. Продолжить?", "Предупреждение", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.No)
+            {
+                MainWindow mainWindow = new MainWindow();
+                mainWindow.Show();
+                Close();
+            }
+        }
+
+        private void OpenFileClick(object sender, RoutedEventArgs e)
+        {
+            // Configure open file dialog box
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.DefaultExt = ".mkgrid"; // Default file extension
+            dialog.Filter = "MakeGrid format (.mkgrid)|*.mkgrid"; // Filter files by extension
+
+            // Show open file dialog box
+            bool? result = dialog.ShowDialog();
+
+            // Process open file dialog box results
+            if (result == true)
+            {
+                // Open document
+                fileName = dialog.FileName;
+                gridFromFile = true;
+                ResetSelectedElem();
+                ResetPosition();
+                ResetUI();
+                InitRegularGrid();
+                SetRenderGrid();
+            }
+        }
+
+        private void SaveFileClick(object sender, RoutedEventArgs e)
+        {
+            // Configure save file dialog box
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "New Grid"; // Default file name
+            dlg.DefaultExt = ".mkgrid"; // Default file extension
+            dlg.Filter = "MakeGrid format (.mkgrid)|*.mkgrid"; // Filter files by extension
+
+            // Show save file dialog box
+            bool? result = dlg.ShowDialog();
+
+            // Process save file dialog box results
+            if (result == true)
+            {
+                File.WriteAllText(dlg.FileName, renderGrid.Grid.PrintInfo());
+            }
         }
     }
 }

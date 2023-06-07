@@ -1,0 +1,64 @@
+﻿<Page x:Class="MakeGrid3D.Pages.Page3"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:MakeGrid3D.Pages" xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Page3">
+
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="Введите границы подобластей по оси X" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Click="PrevXwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
+                <Image Source="../Images/tri_left.png"></Image>
+            </Button>
+            <TextBox Name="XwBlock" TextChanged="XwChanged" Width="50" Margin="0 0 10 0"/>
+            <Button Click="NextXwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                <Image Source="../Images/tri_right.png"></Image>
+            </Button>
+            </StackPanel>
+            <TextBlock Name = "XwCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+
+            <TextBlock Text="Введите границы подобластей по оси Y" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Click="PrevYwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
+                    <Image Source="../Images/tri_left.png"></Image>
+                </Button>
+                <TextBox Name="YwBlock" TextChanged="YwChanged" Width="50" Margin="0 0 10 0"/>
+                <Button Click="NextYwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                    <Image Source="../Images/tri_right.png"></Image>
+                </Button>
+            </StackPanel>
+            <TextBlock Name = "YwCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+
+            <TextBlock Text="Введите границы подобластей по оси Z" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Name="PrevZwButton" Click="PrevZwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
+                    <Image Source="../Images/tri_left.png"></Image>
+                </Button>
+                <TextBox Name="ZwBlock" TextChanged="ZwChanged" Width="50" Margin="0 0 10 0"/>
+                <Button Name="NextZwButton" Click="NextZwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                    <Image Source="../Images/tri_right.png"></Image>
+                </Button>
+            </StackPanel>
+            <TextBlock Name = "ZwCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+
+            <TextBlock Text="Введите цвета подобластей" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Click="PrevMatColorClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
+                    <Image Source="../Images/tri_left.png"></Image>
+                </Button>
+                <xctk:ColorPicker Name="MatColorPicker" Width="50" SelectedColorChanged="MatColorChanged" Margin="0 0 10 0"></xctk:ColorPicker>
+                <Button Click="NextMatColorClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
+                    <Image Source="../Images/tri_right.png"></Image>
+                </Button>
+            </StackPanel>
+            <TextBlock Name = "MatColorCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+        </StackPanel>
+        <Button VerticalAlignment="Bottom" Width="100" Content="Назад" Click="PrevPageClick" HorizontalAlignment="Left" Margin="20,0,0,20"/>
+        <Button VerticalAlignment="Bottom" Width="100" Content="Далее" Click="NextPageClick" HorizontalAlignment="Right" Margin="0,0,20,20"/>
+    </Grid>
+</Page>

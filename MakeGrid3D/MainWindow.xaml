@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MakeGrid3D"
         mc:Ignorable="d"
-        Title="MakeGrid3D" Height="300" Width="450"
+        Title="MakeGrid3D" Height="500" Width="600"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip">
 
     <Grid Background="White">
-        <Button Content="Открыть файл" Click="OpenFileClick" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Frame Source="/Pages/Page1.xaml" NavigationUIVisibility="Hidden"/>
     </Grid>
 </Window>

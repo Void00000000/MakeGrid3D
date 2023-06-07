@@ -47,6 +47,7 @@ namespace MakeGrid3D
         public int Nmats { get; }
         public float MeanAR { get; set; }
         public float WorstAR { get; set; }
+        public string PrintInfo();
     }
 
     class GridState
@@ -170,6 +171,38 @@ namespace MakeGrid3D
             GL.DeleteBuffer(Vbo);
             GL.DeleteVertexArray(Vao);
             GL.DeleteBuffer(Ebo);
+        }
+    }
+
+    public class GridParams
+    {
+        public bool TwoD { get; }
+        public List<float> Xw { get; }
+        public List<float> Yw {get;}
+        public List<float> Zw {get;}
+        public List<SubArea3D> Mw { get; }
+        public List<int> NX { get; }
+        public List<int> NY { get; }
+        public List<int> NZ { get; }
+        public List<float> QX { get; }
+        public List<float> QY { get; }
+        public List<float> QZ { get; }
+        public List<Color4> Mats { get; }
+
+        public GridParams(bool twoD, List<float> xw, List<float> yw, List<float> zw, List<SubArea3D> mw, List<int> nx, List<int> ny, List<int> nz, List<float> qx, List<float> qy, List<float> qz, List<Color4> mats)
+        {
+            TwoD = twoD;
+            Xw = xw;
+            Yw = yw;
+            Zw = zw;
+            Mw = mw;
+            NX = nx;
+            NY = ny;
+            NZ = nz;
+            QX = qx;
+            QY = qy;
+            QZ = qz;
+            Mats = mats;
         }
     }
 }

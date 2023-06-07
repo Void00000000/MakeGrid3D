@@ -21,8 +21,9 @@
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0">
+            <MenuItem Header="Новая сетка" Click="CreateNewGridClick"/>
             <MenuItem Header="Открыть" Click="OpenFileClick"/>
-            <MenuItem Header="Сохранить"/>
+            <MenuItem Header="Сохранить" Click="SaveFileClick"/>
         </Menu>
 
         <Grid Grid.Row="1">
