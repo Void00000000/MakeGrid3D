@@ -74,7 +74,7 @@ namespace MakeGrid3D
 
         // По приоритету (от высшего к низшему ^ слева направо)
         public Quadrant[] Quadrants = { Quadrant.RightTop, Quadrant.LeftTop, Quadrant.LeftBottom, Quadrant.RightBottom };
-        Dictionary<Quadrant, Direction[]> Directions = new Dictionary<Quadrant, Direction[]>()
+        public Dictionary<Quadrant, Direction[]> Directions = new Dictionary<Quadrant, Direction[]>()
         {
             { Quadrant.RightTop, new Direction[]{Direction.Right, Direction.Top} },
             { Quadrant.LeftTop, new Direction[]{Direction.Left, Direction.Top} },

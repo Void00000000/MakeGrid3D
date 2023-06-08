@@ -9,6 +9,14 @@
       Title="Page1">
 
     <Grid>
+        <Border Width="450" Height="350" BorderThickness="1" BorderBrush="Gray">
+            <Image Width="450" Height="350">
+                <Image.Source>
+                    <BitmapImage DecodePixelWidth="450" DecodePixelHeight="350"  
+                    UriSource="../Images/logo2.png" />
+                </Image.Source>
+            </Image>
+        </Border>
         <Button VerticalAlignment="Bottom" Width="100" Content="Открыть файл" Click="OpenFileClick" HorizontalAlignment="Left" Margin="20,0,0,20"/>
         <Button VerticalAlignment="Bottom" Width="100" Content="Далее" Click="NextPageClick" HorizontalAlignment="Right" Margin="0,0,20,20"/>
     </Grid>

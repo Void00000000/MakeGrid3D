@@ -542,7 +542,7 @@ namespace MakeGrid3D
                 }
         }
 
-        private void MakeGrid1D(List<float> X_Y, float left, float right, int n, float qxy, ref int i0, ref int j)
+        public static void MakeGrid1D(List<float> X_Y, float left, float right, int n, float qxy, ref int i0, ref int j)
         {
             float h0;
             if (MathF.Abs(qxy - 1) < 1E-16)

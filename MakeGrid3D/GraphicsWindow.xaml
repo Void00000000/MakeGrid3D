@@ -170,7 +170,17 @@
                                 </Separator.RenderTransform>
                             </Separator>
                             <!-- Replicate cross section -->
-                            <Button Grid.Row="5" Click="ReplicateCrossSectionsClick" Content="Тиражировать сечение" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="10 10 10 0">
+                                <TextBlock Text="z0: " Margin="0,5,5,0" />
+                                <TextBox Name="Z0Block" Width="20" Height="20" Margin="0,0,5,0"/>
+                                <TextBlock Text="zn: " Margin="0,5,5,0" />
+                                <TextBox Name="ZnBlock" Width="20" Height="20" Margin="0,0,5,0"/>
+                                <TextBlock Text="nz: " Margin="0,5,5,0" />
+                                <TextBox Name="NZBlock" Width="20" Height="20" Margin="0,0,5,0"/>
+                                <TextBlock Text="qz: " Margin="0,5,5,0" />
+                                <TextBox Name="QZBlock" Width="20" Height="20" Margin="0,0,5,0"/>
+                                <Button Click="ReplicateCrossSectionsClick" Content="-> 3D" Width="65" Height="20" HorizontalAlignment="Right" Margin="10,3,0,0"/>
+                            </StackPanel>
                             <!-- Separator: Replication|CrossSections -->
                             <Separator Grid.Row="6" Margin="10 10 10 0" Background="Black">
                                 <Separator.RenderTransform>
@@ -330,6 +340,10 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0" Margin="10 10 10 0" HorizontalAlignment="Center">
                                 <Grid.ColumnDefinitions>
@@ -371,23 +385,35 @@
                             <Button Grid.Row="2" Click="DoClick" Background="Transparent" Margin="10 10 10 0" BorderThickness="1" Width="40" Height="40" HorizontalAlignment="Right">
                                 <Image Source="Images/do.png"></Image>
                             </Button>
-                            <TextBlock Name="CurrentUnstructedNodeBlock" Grid.Row="3" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <CheckBox Name="SmartMergeCheckBox" Content="Умное объединение" Grid.Row="4" Checked="SmartMergeChecked" Unchecked="SmartMergeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="5" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="6" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center" Margin="10 10 10 0"></xctk:ColorPicker>
-                            <Button Grid.Row="7" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
-                            <Grid Grid.Row="8" Margin="10 10 10 0" HorizontalAlignment="Center">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Button Content="Влево" Click="LeftDirClick" Grid.Column="0"/>
-                                <Button Content="Вправо" Click="RightDirClick" Grid.Column="1"/>
-                                <Button Content="Вниз" Click="BottomDirClick" Grid.Column="2"/>
-                                <Button Content="Вверх" Click="TopDirClick" Grid.Column="3"/>
-                            </Grid>
+                            <TextBlock Name="CurrentUnstructedNodeBlock1" Grid.Row="3" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <TextBlock Name="CurrentUnstructedNodeBlock2" Grid.Row="4" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <CheckBox Name="SmartMergeCheckBox" Content="Умное объединение" Grid.Row="5" Checked="SmartMergeChecked" Unchecked="SmartMergeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="6" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
+                            <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="7" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center" Margin="10 10 10 0"></xctk:ColorPicker>
+                            <ComboBox Grid.Row="8" Name="StartQuadDropDownMenu" SelectionChanged="StartQuadChanged" Width="180" HorizontalAlignment="Center" Margin="10,10,10,0">
+                                <ComboBoxItem Content="Левая-верхяя четверть"/>
+                                <ComboBoxItem Content="Правая-верхяя четверть"/>
+                                <ComboBoxItem Content="Левая-нижняя четверть"/>
+                                <ComboBoxItem Content="Правая-нижняя четверть"/>
+                            </ComboBox>
+                            <ComboBox Grid.Row="9" Name="LTQuadDirDropDownMenu" SelectionChanged="LTQuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
+                                <ComboBoxItem Content="Влево-вверх"/>
+                                <ComboBoxItem Content="Вверх-влево"/>
+                            </ComboBox>
+                            <ComboBox Grid.Row="9" Name="RTQuadDirDropDownMenu" SelectionChanged="RTQuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
+                                <ComboBoxItem Content="Вправо-вверх"/>
+                                <ComboBoxItem Content="Вверх-вправо"/>
+                            </ComboBox>
+                            <ComboBox Grid.Row="10" Name="LBQuadDirDropDownMenu" SelectionChanged="LBQuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
+                                <ComboBoxItem Content="Влево-вниз"/>
+                                <ComboBoxItem Content="Вниз-влево"/>
+                            </ComboBox>
+                            <ComboBox Grid.Row="10" Name="RBQuadDirDropDownMenu" SelectionChanged="RBQuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
+                                <ComboBoxItem Content="Вправо-вниз"/>
+                                <ComboBoxItem Content="Вниз-вправо"/>
+                            </ComboBox>
+                            <Button Grid.Row="11" Click="ResetIrregularSettingsClick" Content="Сбросить настройки" HorizontalAlignment="Center" Margin="10 10 10 0"/>
+                            <Button Grid.Row="12" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
                         </Grid>
                     </TabItem>
                 </TabControl>

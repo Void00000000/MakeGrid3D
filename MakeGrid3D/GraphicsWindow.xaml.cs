@@ -251,7 +251,7 @@ namespace MakeGrid3D
                     {
                         float x = grid2D.XY[node].X;
                         float y = grid2D.XY[node].Y;
-                        CurrentUnstructedNodeBlock.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", " + y.ToString("0.00");
+                        CurrentUnstructedNodeBlock1.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
                     }
                 }
                 // -----------------------------------3D------------------------------------ -
@@ -259,16 +259,27 @@ namespace MakeGrid3D
                 {
 
                 }
-                switch (irregularGridMaker.DirIndex)
+                switch (irregularGridMaker.Quadrants[irregularGridMaker.QuadIndex])
                 {
-                    case 0:
-                        CurrentUnstructedNodeBlock.Text += "| Влево"; break;
-                    case 1:
-                        CurrentUnstructedNodeBlock.Text += "| Вправо"; break;
-                    case 2:
-                        CurrentUnstructedNodeBlock.Text += "| Вниз"; break;
-                    case 3:
-                        CurrentUnstructedNodeBlock.Text += "| Вверх"; break;
+                    case Quadrant.LeftTop:
+                        CurrentUnstructedNodeBlock2.Text = "| Левая-верхняя четверть"; break;
+                    case Quadrant.RightTop:
+                        CurrentUnstructedNodeBlock2.Text = "| Правая-верхняя четверть"; break;
+                    case Quadrant.LeftBottom:
+                        CurrentUnstructedNodeBlock2.Text = "| Левая-нижняя четверть"; break;
+                    case Quadrant.RightBottom:
+                        CurrentUnstructedNodeBlock2.Text = "| Правая-нижняя четверть"; break;
+                }
+                switch (irregularGridMaker.Directions[irregularGridMaker.Quadrants[irregularGridMaker.QuadIndex]][irregularGridMaker.DirIndex])
+                {
+                    case Direction.Left:
+                        CurrentUnstructedNodeBlock2.Text += "| Обход влево"; break;
+                    case Direction.Right:
+                        CurrentUnstructedNodeBlock2.Text += "| Обход вправо"; break;
+                    case Direction.Top:
+                        CurrentUnstructedNodeBlock2.Text += "| Обход вверх"; break;
+                    case Direction.Bottom:
+                        CurrentUnstructedNodeBlock2.Text += "| Обход вниз"; break;
                 }
             }
         }
@@ -1367,26 +1378,32 @@ namespace MakeGrid3D
             currentUnstructedNodeColor = ColorByteToFloat((Color)e.NewValue);
         }
 
-        private void LeftDirClick(object sender, RoutedEventArgs e)
+        private void StartQuadChanged(object sender, SelectionChangedEventArgs e)
         {
-            irregularGridMaker.DirIndex = 0;
+
+        }
+        private void LTQuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+        private void RTQuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+        private void LBQuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+        private void RBQuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
         }
 
-        private void RightDirClick(object sender, RoutedEventArgs e)
+        private void ResetIrregularSettingsClick(object sender, RoutedEventArgs e)
         {
-            irregularGridMaker.DirIndex = 1;
+
         }
 
-        private void BottomDirClick(object sender, RoutedEventArgs e)
-        {
-            irregularGridMaker.DirIndex = 2;
-        }
-
-        private void TopDirClick(object sender, RoutedEventArgs e)
-        {
-            irregularGridMaker.DirIndex = 3;
-        }
-        
         private void KeyDownHandler(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Tab && !twoD)
@@ -1427,15 +1444,26 @@ namespace MakeGrid3D
         {
             if (twoD)
             {
-                twoD = false;
-                BlockCurrentMode.Text = "Режим: 3D";
-                List<float> z = new List<float>{ 1f, 2f, 3f };
-                regularGrid = new Grid3D((Grid2D)renderGrid.Grid, z);
-                crossSections = new CrossSections((Grid3D)regularGrid);
-                prevGrid3D = (Grid3D)regularGrid;
-                SetRenderGrid();
-                ResetPosition();
-                ResetSelectedElem();
+                float z0, zn, qz;
+                int nz;
+                if (float.TryParse(Z0Block.Text, out z0) && float.TryParse(ZnBlock.Text, out zn) &&
+                    int.TryParse(NZBlock.Text, out nz) && float.TryParse(QZBlock.Text, out qz) &&
+                    zn > z0 && nz > 0)
+                {
+                    twoD = false;
+                    BlockCurrentMode.Text = "Режим: 3D";
+                    List<float> Z = new List<float>(new float[nz + 1]);
+                    int i0 = 0, j0 = 0;
+                    Grid2D.MakeGrid1D(Z, z0, zn, nz, qz, ref i0, ref j0);
+                    Z[nz] = zn;
+                    regularGrid = new Grid3D((Grid2D)renderGrid.Grid, Z);
+                    crossSections = new CrossSections((Grid3D)regularGrid);
+                    prevGrid3D = (Grid3D)regularGrid;
+                    SetRenderGrid();
+                    ResetPosition();
+                    ResetSelectedElem();
+                }
+                else ErrorHandler.DataErrorMessage("Введены некорректные данные для тирожирования сечения", false);
             }
             else MessageBox.Show("Тиражирование сечения не доступно в режиме 3D");
         }

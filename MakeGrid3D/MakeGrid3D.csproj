@@ -15,6 +15,7 @@
     <None Remove="Images\do.png" />
     <None Remove="Images\double_arrow.png" />
     <None Remove="Images\light_purple_gradient.jpg" />
+    <None Remove="Images\logo2.png" />
     <None Remove="Images\purple_gradient.jpg" />
     <None Remove="Images\rotate_around_left.png" />
     <None Remove="Images\rotate_around_right.png" />
@@ -44,6 +45,7 @@
     <Resource Include="Images\do.png" />
     <Resource Include="Images\double_arrow.png" />
     <Resource Include="Images\light_purple_gradient.jpg" />
+    <Resource Include="Images\logo2.png" />
     <Resource Include="Images\purple_gradient.jpg" />
     <Resource Include="Images\rotate_around_left.png" />
     <Resource Include="Images\rotate_around_right.png" />
