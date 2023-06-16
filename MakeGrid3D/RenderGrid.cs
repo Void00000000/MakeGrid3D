@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Printing;
 using System.Windows.Controls;
 using System.Windows.Media.Media3D;
@@ -13,6 +14,8 @@ namespace MakeGrid3D
     {
         Mesh gridMesh;
         Mesh areaMesh;
+        public List<Mesh> GradientMeshes;
+        public List<Mesh> LinesMeshes;
 
         public readonly Shader shader;
         private float[] vertices;
@@ -29,9 +32,15 @@ namespace MakeGrid3D
         public float Indent { get; set; } = Default.indent;
         public float LinesSize { get; set; } = Default.linesSize;
         public float PointsSize { get; set; } = Default.pointsSize;
+        public List<Color4> GridColors { get; set; }
+        private float minGradValue;
+        private float maxGradValue;
         public Color4 LinesColor { get; set; } = Default.linesColor;
         public Color4 PointsColor { get; set; } = Default.pointsColor;
+        public Color4 MinColor { get; set; } = Default.MinColor;
+        public Color4 MaxColor { get; set; } = Default.MaxColor;
         public bool WireframeMode { get; set; } = Default.wireframeMode;
+        public bool ShowQGradient { get; set; } = false;
         public bool ShowGrid { get; set; } = Default.showGrid;
         public bool DrawRemovedLinesMode { get; set; } = Default.drawRemovedLinesMode;
 
@@ -185,6 +194,29 @@ namespace MakeGrid3D
                 }
                 areaMesh = new Mesh(vertices_area, indices_area);
             }
+            //------------------------------------------------
+            GradientMeshes = new List<Mesh>(Nelems);
+            LinesMeshes = new List<Mesh>(Nelems);
+            foreach (Elem2D elem in grid2D.Elems)
+            {
+                float xmin = grid2D.XY[elem.n1].X; float ymin = grid2D.XY[elem.n1].Y;
+                float xmax = grid2D.XY[elem.n4].X; float ymax = grid2D.XY[elem.n4].Y;
+                float[] verticesGradElem = { xmin, ymin, 0, 0, 0, // 0
+                                          xmax, ymin, 0, 1, 0, // 1
+                                          xmin, ymax, 0, 0, 1, // 2
+                                          xmax, ymax, 0, 1, 1}; // 3
+                float xt, yt;
+                if (elem.n5 < 0) { xt = xmin; yt = ymin; } else { xt = grid2D.XY[elem.n5].X; yt = grid2D.XY[elem.n5].Y; }
+                float[] verticesElem = {  xmin, ymin, 0, // 0
+                                          xmax, ymin, 0, // 1
+                                          xmin, ymax, 0, // 2
+                                          xmax, ymax, 0, // 3
+                                          xt,   yt,   0, };
+                uint[] indices_elem = {0, 1, 3, 0, 2, 3};
+                uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
+                GradientMeshes.Add(new Mesh(verticesGradElem, indices_elem, true));
+                LinesMeshes.Add(new Mesh(verticesElem, indices_lines));
+            }  
         }
 
         private void AssembleVertices3D(bool area)
@@ -278,6 +310,88 @@ namespace MakeGrid3D
                 }
                 areaMesh = new Mesh(vertices_area, indices_area);
             }
+            //------------------------------------------------
+            GradientMeshes = new List<Mesh>(Nelems * 6);
+            LinesMeshes = new List<Mesh>(Nelems);
+            foreach (Elem3D elem in grid3D.Elems)
+            {
+                float left = grid3D.XYZ[elem.n1].X;
+                float right = grid3D.XYZ[elem.n8].X;
+                float bottom = grid3D.XYZ[elem.n1].Y;
+                float top = grid3D.XYZ[elem.n8].Y;
+                float front = grid3D.XYZ[elem.n1].Z;
+                float back = grid3D.XYZ[elem.n8].Z;
+
+                float[] verticesElem =     {left,  bottom, front, // 0
+                                            right, bottom, front, // 1
+                                            left,  top,    front, // 2
+                                            right, top,    front, // 3
+                                            left,  bottom, back,  // 4
+                                            right, bottom, back,  // 5
+                                            left,  top,    back,  // 6
+                                            right, top,    back,  // 7
+                                            };
+                uint n1 = 0; uint n2 = 1; uint n3 = 2; uint n4 = 3; uint n5 = 4; uint n6 = 5; uint n7 = 6; uint n8 = 7;
+
+                // Для каждой грани
+                uint[] indicesFace = { 0, 2, 3, 0, 3, 1 };
+                float[] verticesFrontFace = {
+                    left,  bottom, front, 0, 0,  // 0|n1
+                    right, bottom, front, 0, 1,  // 1|n2
+                    left,  top,    front, 1, 0,  // 2|n3
+                    right, top,    front, 1, 1}; // 3|n4
+                Mesh meshFrontFace = new Mesh(verticesFrontFace, indicesFace, true);
+                GradientMeshes.Add(meshFrontFace);
+
+                float[] verticesRightFace = {
+                    right,  bottom, front, 0, 0,  // 0|n2
+                    right,  bottom, back,  0, 1,  // 1|n6
+                    right,  top,   front,  1, 0,  // 2|n4
+                    right,  top,   back,   1, 1}; // 3|n8
+                Mesh meshRightFace = new Mesh(verticesRightFace, indicesFace, true);
+                GradientMeshes.Add(meshRightFace);
+
+                float[] verticesBackFace = {
+                    right, bottom, back,  0, 0,  // 0|n6
+                    left,  bottom, back,  0, 1,  // 1|n5
+                    right, top,    back,  1, 0,  // 2|n8
+                    left,  top,    back,  1, 1}; // 3|n7
+                Mesh meshBackFace = new Mesh(verticesBackFace, indicesFace, true);
+                GradientMeshes.Add(meshBackFace);
+
+                float[] verticesLeftFace = {
+                    left, bottom, back,   0, 0,  // 0|n5
+                    left, bottom, front,  0, 1,  // 1|n1
+                    left, top,    back,   1, 0,  // 2|n7
+                    left, top,    front,  1, 1}; // 3|n3
+                Mesh meshLeftFace = new Mesh(verticesLeftFace, indicesFace, true);
+                GradientMeshes.Add(meshLeftFace);
+
+                float[] verticesTopFace = {
+                    left,  top,  front,  0, 0,  // 0|n3
+                    right, top,  front,  0, 1,  // 1|n4
+                    left,  top,  back,   1, 0,  // 2|n7
+                    right, top,  back,   1, 1}; // 3|n8
+                Mesh meshTopFace = new Mesh(verticesTopFace, indicesFace, true);
+                GradientMeshes.Add(meshTopFace);
+
+                float[] verticesBottomFace = {
+                    right, bottom, back,  0, 0,  // 0|n6
+                    right, bottom, front, 0, 1,  // 1|n2
+                    left,  bottom, back,  1, 0,  // 2|n5
+                    left,  bottom, front, 1, 1}; // 3|n1
+                Mesh meshBottomFace = new Mesh(verticesBottomFace, indicesFace, true);
+                GradientMeshes.Add(meshBottomFace);
+
+                uint[] indices_lines = new uint[24];
+                indices_lines[0] = n1; indices_lines[1] = n2; indices_lines[2] = n2; indices_lines[3] = n4;
+                indices_lines[4] = n3; indices_lines[5] = n4; indices_lines[6] = n1; indices_lines[7] = n3;
+                indices_lines[8] = n1; indices_lines[9] = n5; indices_lines[10] = n3; indices_lines[11] = n7;
+                indices_lines[12] = n7; indices_lines[13] = n8; indices_lines[14] = n7; indices_lines[15] = n5;
+                indices_lines[16] = n5; indices_lines[17] = n6; indices_lines[18] = n6; indices_lines[19] = n8;
+                indices_lines[20] = n2; indices_lines[21] = n6; indices_lines[22] = n4; indices_lines[23] = n8;
+                LinesMeshes.Add(new Mesh(verticesElem, indices_lines));
+            }
         }
 
         public void DrawLines(Mesh mesh, Color4 color4) {
@@ -288,8 +402,6 @@ namespace MakeGrid3D
         public void DrawNodes(Mesh mesh, Color4 color4)
         {
             shader.SetColor4("current_color", color4);
-            // 0.5f - это центр квадрата(точки)
-            shader.SetFloat("pointRadius", 0.5f);
             shader.SetInt("isPoint", 1);
             mesh.DrawVerices(PrimitiveType.Points);
             shader.SetInt("isPoint", 0);
@@ -347,6 +459,25 @@ namespace MakeGrid3D
                 else DrawArea3D();
                 GL.DepthMask(false);
             }
+
+            // TODO: Для 3D сильные лаги так как много вызовов
+            if (WireframeMode && ShowQGradient)
+            {
+                shader.SetInt("isGradient", 1);
+                int ci = 0;
+                foreach (Mesh elemMesh in GradientMeshes)
+                {
+                    shader.SetColor4("color1", GridColors[ci]);
+                    shader.SetColor4("color2", GridColors[ci + 1]);
+                    shader.SetColor4("color3", GridColors[ci + 2]);
+                    shader.SetColor4("color4", GridColors[ci + 3]);
+                    ci += 4;
+                    elemMesh.DrawElems(6, 0, PrimitiveType.Triangles);
+                }
+                GL.DepthMask(false);
+                shader.SetInt("isGradient", 0);
+            }
+
             if (ShowGrid)
             {
                 GL.DepthMask(true);
@@ -359,6 +490,86 @@ namespace MakeGrid3D
             }
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.DepthMask(true);
+        }
+
+        public void SetGridColors(List<float> q, bool changeMinMaxQ = true)
+        {
+            if (changeMinMaxQ)
+            {
+                minGradValue = q.Min();
+                maxGradValue = q.Max();
+            }
+            if (grid is Grid2D)
+            {
+                Grid2D grid2D = (Grid2D)grid;
+                GridColors = new List<Color4>(grid2D.Nelems * 4);
+                for (int i = 0; i < grid2D.Nelems; i++)
+                {
+                    int n1 = grid2D.Elems[i].n1;
+                    int n2 = grid2D.Elems[i].n2;
+                    int n3 = grid2D.Elems[i].n3;
+                    int n4 = grid2D.Elems[i].n4;
+                    GridColors.Add(CalcGradientColor(q[n1]));
+                    GridColors.Add(CalcGradientColor(q[n2]));
+                    GridColors.Add(CalcGradientColor(q[n3]));
+                    GridColors.Add(CalcGradientColor(q[n4]));
+                }
+            }
+            else
+            {
+                Grid3D grid3D = (Grid3D)grid;
+                GridColors = new List<Color4>(grid3D.Nelems * 6 * 4);
+                for (int i = 0; i < grid3D.Nelems; i++)
+                {
+                    int n1 = grid3D.Elems[i].n1;
+                    int n2 = grid3D.Elems[i].n2;
+                    int n3 = grid3D.Elems[i].n3;
+                    int n4 = grid3D.Elems[i].n4;
+                    int n5 = grid3D.Elems[i].n5;
+                    int n6 = grid3D.Elems[i].n6;
+                    int n7 = grid3D.Elems[i].n7;
+                    int n8 = grid3D.Elems[i].n8;
+                    // Front face
+                    GridColors.Add(CalcGradientColor(q[n1]));
+                    GridColors.Add(CalcGradientColor(q[n2]));
+                    GridColors.Add(CalcGradientColor(q[n3]));
+                    GridColors.Add(CalcGradientColor(q[n4]));
+                    // Right face
+                    GridColors.Add(CalcGradientColor(q[n2]));
+                    GridColors.Add(CalcGradientColor(q[n6]));
+                    GridColors.Add(CalcGradientColor(q[n4]));
+                    GridColors.Add(CalcGradientColor(q[n8]));
+                    // Back face
+                    GridColors.Add(CalcGradientColor(q[n6]));
+                    GridColors.Add(CalcGradientColor(q[n5]));
+                    GridColors.Add(CalcGradientColor(q[n8]));
+                    GridColors.Add(CalcGradientColor(q[n7]));
+                    // Left face
+                    GridColors.Add(CalcGradientColor(q[n5]));
+                    GridColors.Add(CalcGradientColor(q[n1]));
+                    GridColors.Add(CalcGradientColor(q[n7]));
+                    GridColors.Add(CalcGradientColor(q[n3]));
+                    // Top face
+                    GridColors.Add(CalcGradientColor(q[n3]));
+                    GridColors.Add(CalcGradientColor(q[n4]));
+                    GridColors.Add(CalcGradientColor(q[n7]));
+                    GridColors.Add(CalcGradientColor(q[n8]));
+                    // Bottom face
+                    GridColors.Add(CalcGradientColor(q[n6]));
+                    GridColors.Add(CalcGradientColor(q[n2]));
+                    GridColors.Add(CalcGradientColor(q[n5]));
+                    GridColors.Add(CalcGradientColor(q[n1]));
+                }
+            }
+        }
+
+        private Color4 CalcGradientColor(float qi)
+        {
+            float h = maxGradValue - minGradValue;
+            float r = MinColor.R * (maxGradValue - qi) / h + MaxColor.R * (qi - minGradValue) / h;
+            float g = MinColor.G * (maxGradValue - qi) / h + MaxColor.G * (qi - minGradValue) / h;
+            float b = MinColor.B * (maxGradValue - qi) / h + MaxColor.B * (qi - minGradValue) / h;
+            return new Color4(r, g, b, 1);
         }
 
         // When application exists OS and GPU drives handle cleaning up but closing the GraphicsWindow

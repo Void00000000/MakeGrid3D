@@ -111,7 +111,7 @@ namespace MakeGrid3D
             GL.BindVertexArray(0);
         }
 
-        public Mesh(float[] vertices, uint[] indices)
+        public Mesh(float[] vertices, uint[] indices, bool IsTexture = false)
         {
             Vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, Vbo);
@@ -123,8 +123,19 @@ namespace MakeGrid3D
             GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
             VLen = vertices.Length;
             ILen = indices.Length;
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-            GL.EnableVertexAttribArray(0);
+            if (!IsTexture)
+            {
+                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+                GL.EnableVertexAttribArray(0);
+            }
+            else
+            {
+                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+                GL.EnableVertexAttribArray(0);
+
+                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+                GL.EnableVertexAttribArray(1);
+            }
             GL.BindVertexArray(0);
         }
 

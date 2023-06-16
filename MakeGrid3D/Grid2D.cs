@@ -418,7 +418,7 @@ namespace MakeGrid3D
         }
 
         // Сечение
-        public Grid2D(Grid3D grid3D, Plane plane, int index, float value)
+        public Grid2D(Grid3D grid3D, Plane plane, int index, float value, bool isQ, List<float> q, out List<float> q_new)
         {
             Area = new Area2D(grid3D.Area, plane, value);
             Nmats = Area.Nmats;
@@ -456,6 +456,7 @@ namespace MakeGrid3D
                         removedNodes.Add(j * Nx + i);
                 }
             // СБОРКА МАССИВА УЗЛОВ
+            q_new = new List<float>();
             Nnodes = 0;
             XY = new List<Vector2>();
             for (int j = 0; j < Ny; j++)
@@ -467,13 +468,16 @@ namespace MakeGrid3D
                         {
                             case Plane.XY:
                                 int nxy = grid3D.global_num(i, j, index);
-                                XY.Add(new Vector2(grid3D.XYZ[nxy].X, grid3D.XYZ[nxy].Y)); break;
+                                XY.Add(new Vector2(grid3D.XYZ[nxy].X, grid3D.XYZ[nxy].Y));
+                                if (isQ) q_new.Add(q[nxy]); break;
                             case Plane.XZ:
                                 int nxz = grid3D.global_num(i, index, j);
-                                XY.Add(new Vector2(grid3D.XYZ[nxz].X, grid3D.XYZ[nxz].Z)); break;
+                                XY.Add(new Vector2(grid3D.XYZ[nxz].X, grid3D.XYZ[nxz].Z));
+                                if (isQ) q_new.Add(q[nxz]); break;
                             case Plane.YZ:
                                 int nyz = grid3D.global_num(index, j, i);
-                                XY.Add(new Vector2(grid3D.XYZ[nyz].Z, grid3D.XYZ[nyz].Y)); break;
+                                XY.Add(new Vector2(grid3D.XYZ[nyz].Z, grid3D.XYZ[nyz].Y));
+                                if (isQ) q_new.Add(q[nyz]); break;
                         }
                         Nnodes++;
                     }

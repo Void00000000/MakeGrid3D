@@ -38,5 +38,8 @@ namespace MakeGrid3D
         static public Color4 currentUnstructedNodeColor = new Color4(1f, 0, 0, 1f);
 
         static public Plane plane = Plane.XY;
+
+        static public Color4 MinColor = Color4.Red;
+        static public Color4 MaxColor = Color4.Blue;
     }
 }

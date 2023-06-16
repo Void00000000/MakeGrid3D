@@ -29,8 +29,7 @@ namespace MakeGrid3D
         GridParams gridParams;
 
         Mesh axis;
-        Mesh? selectedElemMesh = null;
-        Mesh? selectedElemLines = null;
+        bool isElemSelected = false;
         Mesh currentNodeMesh;
         Mesh currentPosMesh;
 
@@ -62,6 +61,9 @@ namespace MakeGrid3D
         int currentElemIndex = -1;
         bool showCurrentUnstructedNode = Default.showCurrentUnstructedNode;
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
+
+        bool isQFileLoaded = false;
+        List<float> q;
 
         Vector2 lastMousePos;
         bool firstMove = true;
@@ -103,7 +105,7 @@ namespace MakeGrid3D
             ResetUI();
         }
 
-        private void SetRenderGrid()
+        private void SetRenderGrid(bool removeQ = true)
         {
             if (renderGrid == null)
                 renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
@@ -111,13 +113,15 @@ namespace MakeGrid3D
                 renderGrid.Grid = regularGrid;
             irregularGridMaker = new IrregularGridMaker(regularGrid);
             gridList = new LinkedList<GridState>();
-            SetCurrentNodeMesh();
+            SetCurrentNodeMesh(removeQ);
             gridList.AddLast(new GridState(regularGrid));
             currentNode = gridList.Last;
             // Множители скорости = 1 процент от ширины(высоты) мира
             speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
             SetAxis();
+            if (removeQ)
+                RemoveQFile();
         }
 
         private void InitRegularGrid()
@@ -221,14 +225,98 @@ namespace MakeGrid3D
             if (crossSections != null)
                 crossSections.DrawPlane(renderGrid.shader);
 
-            if (selectedElemMesh != null)
+            if (isElemSelected)
             {
-                if (!renderGrid.WireframeMode)
-                    renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                if (twoD)
+                {
+                    if (!renderGrid.WireframeMode)
+                        renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                    else if (renderGrid.WireframeMode && isQFileLoaded)
+                    {
+                        renderGrid.shader.SetInt("isGradient", 1);
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 4]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 4 + 1]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 4 + 2]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 4 + 3]);
+                        renderGrid.shader.SetInt("isGradient", 0);
+                    }
+                    else
+                        renderGrid.shader.SetColor4("current_color", Color4.Red);
+                    if (renderGrid.WireframeMode && isQFileLoaded) renderGrid.shader.SetInt("isGradient", 1);
+                    renderGrid.GradientMeshes[currentElemIndex].DrawElems(6, 0, PrimitiveType.Triangles);
+                    renderGrid.shader.SetInt("isGradient", 0);
+                }
+                // ------------------------------------ 3D --------------------------------------------
                 else
-                    renderGrid.shader.SetColor4("current_color", Color4.Red);
-                int count = twoD ? 6 : 36;
-                selectedElemMesh.DrawElems(count, 0, PrimitiveType.Triangles);
+                {
+                    if (renderGrid.WireframeMode && isQFileLoaded) renderGrid.shader.SetInt("isGradient", 1);
+                    // 1 face
+                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    {
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 1]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 24 + 2]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 24 + 3]);
+                    } else if (!renderGrid.WireframeMode) renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                    else renderGrid.shader.SetColor4("current_color", Color4.Red);
+                    renderGrid.GradientMeshes[currentElemIndex * 6].DrawElems(6, 0, PrimitiveType.Triangles);
+                    // 2 face
+                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    {
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 4]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 5]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 24 + 6]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 24 + 7]);
+                    }
+                    else if (!renderGrid.WireframeMode) renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                    else renderGrid.shader.SetColor4("current_color", Color4.Red);
+                    renderGrid.GradientMeshes[currentElemIndex * 6 + 1].DrawElems(6, 0, PrimitiveType.Triangles);
+                    // 3 face
+                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    {
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 8]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 9]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 24 + 10]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 24 + 11]);
+                    }
+                    else if (!renderGrid.WireframeMode) renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                    else renderGrid.shader.SetColor4("current_color", Color4.Red);
+                    renderGrid.GradientMeshes[currentElemIndex * 6 + 2].DrawElems(6, 0, PrimitiveType.Triangles);
+                    // 4 face
+                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    {
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 12]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 13]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 24 + 14]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 24 + 15]);
+                    }
+                    else if (!renderGrid.WireframeMode) renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                    else renderGrid.shader.SetColor4("current_color", Color4.Red);
+                    renderGrid.GradientMeshes[currentElemIndex * 6 + 3].DrawElems(6, 0, PrimitiveType.Triangles);
+                    // 5 face
+                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    {
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 16]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 17]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 24 + 18]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 24 + 19]);
+                    }
+                    else if (!renderGrid.WireframeMode) renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                    else renderGrid.shader.SetColor4("current_color", Color4.Red);
+                    renderGrid.GradientMeshes[currentElemIndex * 6 + 4].DrawElems(6, 0, PrimitiveType.Triangles);
+                    // 6 face
+                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    {
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 20]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 21]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 24 + 22]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 24 + 23]);
+                    }
+                    else if (!renderGrid.WireframeMode) renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
+                    else renderGrid.shader.SetColor4("current_color", Color4.Red);
+                    renderGrid.GradientMeshes[currentElemIndex * 6 + 5].DrawElems(6, 0, PrimitiveType.Triangles);
+                    renderGrid.shader.SetInt("isGradient", 0);
+                }
             }
 
             if (showCurrentUnstructedNode)
@@ -428,7 +516,7 @@ namespace MakeGrid3D
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
 
-            if (selectedElemMesh != null && selectedElemLines != null)
+            if (isElemSelected)
             {
                 renderGrid.shader.Use();
                 renderGrid.shader.SetMatrix4("projection", ref projectionSelectedElem);
@@ -436,28 +524,39 @@ namespace MakeGrid3D
                 renderGrid.shader.SetMatrix4("model", ref model);
                 if (!renderGrid.WireframeMode)
                 {
-                    int count;
                     if (twoD)
                     {
                         Grid2D grid2D = (Grid2D)renderGrid.Grid;
                         Elem2D selectedElem2D = grid2D.Elems[currentElemIndex];
                         renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem2D.wi]);
-                        count = 6;
+                        renderGrid.GradientMeshes[currentElemIndex].DrawElems(6, 0, PrimitiveType.Triangles);
                     }
                     else
                     {
-                        Grid3D grid3D = (Grid3D)renderGrid.Grid;
-                        Elem3D selectedElem3D = grid3D.Elems[currentElemIndex];
-                        renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem3D.wi]);
-                        count = 36;
+                        //Grid3D grid3D = (Grid3D)renderGrid.Grid;
+                        //Elem3D selectedElem3D = grid3D.Elems[currentElemIndex];
+                        //renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem3D.wi]);
+                        //count = 36;
                     }
-                    selectedElemMesh.DrawElems(count, 0, PrimitiveType.Triangles);
                 }
-                Matrix4 view = Matrix4.Identity;
-                renderGrid.shader.SetMatrix4("view", ref view);
+                else if (renderGrid.WireframeMode && renderGrid.ShowQGradient)
+                {
+                    if (twoD)
+                    {
+                        renderGrid.shader.SetInt("isGradient", 1);
+                        renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 4]);
+                        renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 4 + 1]);
+                        renderGrid.shader.SetColor4("color3", renderGrid.GridColors[currentElemIndex * 4 + 2]);
+                        renderGrid.shader.SetColor4("color4", renderGrid.GridColors[currentElemIndex * 4 + 3]);
+                        renderGrid.GradientMeshes[currentElemIndex].DrawElems(6, 0, PrimitiveType.Triangles);
+                        renderGrid.shader.SetInt("isGradient", 0);
+                    }
+                }
+                //Matrix4 view = Matrix4.Identity;
+                //renderGrid.shader.SetMatrix4("view", ref view);
                 GL.LineWidth(renderGrid.LinesSize);
-                renderGrid.DrawLines(selectedElemLines, renderGrid.LinesColor);
-                renderGrid.DrawNodes(selectedElemLines, renderGrid.PointsColor);
+                renderGrid.DrawLines(renderGrid.LinesMeshes[currentElemIndex], renderGrid.LinesColor);
+                renderGrid.DrawNodes(renderGrid.LinesMeshes[currentElemIndex], renderGrid.PointsColor); ;
             }
         }
 
@@ -515,141 +614,127 @@ namespace MakeGrid3D
 
         private void SelectedElemOpenTkControl_Resize(object sender, SizeChangedEventArgs e)
         {
-            if (selectedElemMesh != null && selectedElemLines!= null)
+            if (isElemSelected)
                 SetSelectedElemWindowSize();
         }
 
-        private void SetSelectedElem2DMeshes()
+        private void SetSelected2DElemInfo()
         {
-            SetSelectedElemWindowSize();
+            isElemSelected = true;
             Grid2D grid2D = (Grid2D)renderGrid.Grid;
             Elem2D selectedElem2D = grid2D.Elems[currentElemIndex];
-            float left = grid2D.XY[selectedElem2D.n1].X;
-            float right = grid2D.XY[selectedElem2D.n4].X;
-            float bottom = grid2D.XY[selectedElem2D.n1].Y;
-            float top = grid2D.XY[selectedElem2D.n4].Y;
-            float xt, yt;
-            if (selectedElem2D.n5 >= 0)
-            {
-                xt = grid2D.XY[selectedElem2D.n5].X;
-                yt = grid2D.XY[selectedElem2D.n5].Y;
-            }
-            else
-            {
-                xt = left;
-                yt = bottom;
-            }
-            float[] vertices = { left,  bottom, 0,  // 0
-                                     right, bottom, 0,  // 1
-                                     left,  top,    0,  // 2
-                                     right, top,    0,  // 3
-                                     xt,    yt,     0};
-            uint[] indices = { 0, 1, 3, 0, 2, 3 };
-            uint[] indices_lines = { 0, 1, 1, 3, 2, 3, 0, 2 };
-
-            selectedElemMesh = new Mesh(vertices, indices);
-            selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
-
             ElemNumBlock.Text = $"№ элемента: {currentElemIndex} |";
             BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem2D.wi + 1).ToString();
             BlockNodesNum1.Text = "Л.Н. №: " + selectedElem2D.n1;
-            BlockNodesCoords1.Text = "x: " + grid2D.XY[selectedElem2D.n1].X.ToString("0.00")
-                                   + " y: " + grid2D.XY[selectedElem2D.n1].Y.ToString("0.00");
+            BlockNodesCoords1.Text = "\tx: " + grid2D.XY[selectedElem2D.n1].X.ToString("0.00")
+                                   + "\ty: " + grid2D.XY[selectedElem2D.n1].Y.ToString("0.00");
             BlockNodesNum2.Text = "П.Н. №: " + selectedElem2D.n2;
-            BlockNodesCoords2.Text = "x: " + grid2D.XY[selectedElem2D.n2].X.ToString("0.00")
-                                   + " y: " + grid2D.XY[selectedElem2D.n2].Y.ToString("0.00");
+            BlockNodesCoords2.Text = "\tx: " + grid2D.XY[selectedElem2D.n2].X.ToString("0.00")
+                                   + "\ty: " + grid2D.XY[selectedElem2D.n2].Y.ToString("0.00");
             BlockNodesNum3.Text = "Л.В. №: " + selectedElem2D.n3;
-            BlockNodesCoords3.Text = "x: " + grid2D.XY[selectedElem2D.n3].X.ToString("0.00")
-                                   + " y: " + grid2D.XY[selectedElem2D.n3].Y.ToString("0.00");
+            BlockNodesCoords3.Text = "\tx: " + grid2D.XY[selectedElem2D.n3].X.ToString("0.00")
+                                   + "\ty: " + grid2D.XY[selectedElem2D.n3].Y.ToString("0.00");
             BlockNodesNum4.Text = "П.В. №: " + selectedElem2D.n4;
-            BlockNodesCoords4.Text = "x: " + grid2D.XY[selectedElem2D.n4].X.ToString("0.00")
-                                   + " y: " + grid2D.XY[selectedElem2D.n4].Y.ToString("0.00");
+            BlockNodesCoords4.Text = "\tx: " + grid2D.XY[selectedElem2D.n4].X.ToString("0.00")
+                                   + "\ty: " + grid2D.XY[selectedElem2D.n4].Y.ToString("0.00");
+            if (isQFileLoaded)
+            {
+                BlockNodesCoords1.Text += "\tq: " + q[selectedElem2D.n1].ToString("0.00");
+                BlockNodesCoords2.Text += "\tq: " + q[selectedElem2D.n2].ToString("0.00");
+                BlockNodesCoords3.Text += "\tq: " + q[selectedElem2D.n3].ToString("0.00");
+                BlockNodesCoords4.Text += "\tq: " + q[selectedElem2D.n4].ToString("0.00");
+            }
             if (selectedElem2D.n5 >= 0)
             {
                 BlockNodesNum5.Text = "ДОП. №: " + selectedElem2D.n5;
-                BlockNodesCoords5.Text = "x: " + grid2D.XY[selectedElem2D.n5].X.ToString("0.00")
-                                       + " y: " + grid2D.XY[selectedElem2D.n5].Y.ToString("0.00");
+                BlockNodesCoords5.Text = "\tx: " + grid2D.XY[selectedElem2D.n5].X.ToString("0.00")
+                                       + "\ty: " + grid2D.XY[selectedElem2D.n5].Y.ToString("0.00");
+                if (isQFileLoaded)
+                    BlockNodesCoords5.Text += "\tq: " + q[selectedElem2D.n5].ToString("0.00");
             }
             else
             {
                 BlockNodesNum5.Text = "";
                 BlockNodesCoords5.Text = "";
             }
+            BlockNodesCoords6.Text = ""; BlockNodesCoords6.Text = "";
+            BlockNodesCoords7.Text = ""; BlockNodesCoords7.Text = "";
+            BlockNodesCoords8.Text = ""; BlockNodesCoords8.Text = "";
+            BlockNodesCoords9.Text = ""; BlockNodesCoords9.Text = "";
+            BlockNodesCoords10.Text = ""; BlockNodesCoords10.Text = "";
         }
 
-        private void SetSelectedElem3DMeshes()
+        private void SetSelected3DElemInfo()
         {
-            SetSelectedElemWindowSize();
+            isElemSelected = true;
             Grid3D grid3D = (Grid3D)renderGrid.Grid;
             Elem3D selectedElem3D = grid3D.Elems[currentElemIndex];
-            float left = grid3D.XYZ[selectedElem3D.n1].X;
-            float right = grid3D.XYZ[selectedElem3D.n8].X;
-            float bottom = grid3D.XYZ[selectedElem3D.n1].Y;
-            float top = grid3D.XYZ[selectedElem3D.n8].Y;
-            float front = grid3D.XYZ[selectedElem3D.n1].Z;
-            float back = grid3D.XYZ[selectedElem3D.n8].Z;
-
-            float[] vertices = {     left,  bottom, front,  // 0
-                                     right, bottom, front,  // 1
-                                     left,  top,    front,  // 2
-                                     right, top,    front,  // 3
-                                     left,  bottom, back,   // 4
-                                     right, bottom, back,   // 5
-                                     left,  top,    back,   // 6
-                                     right, top,    back,   // 7
-                               };
-            uint n1 = 0; uint n2 = 1; uint n3 = 2; uint n4 = 3; uint n5 = 4; uint n6 = 5; uint n7 = 6; uint n8 = 7;
-            
-            uint[] indices = new uint[36];
-            // Front face
-            indices[0] = n1; indices[1] = n3; indices[2] = n4;
-            indices[3] = n1; indices[4] = n4; indices[5] = n2;
-            // Right face
-            indices[6] = n2; indices[7] = n4; indices[8] = n8;
-            indices[9] = n2; indices[10] = n8; indices[11] = n6;
-            // Back face
-            indices[12] = n6; indices[13] = n8; indices[14] = n7;
-            indices[15] = n6; indices[16] = n7; indices[17] = n5;
-            // Left face
-            indices[18] = n5; indices[19] = n7; indices[20] = n3;
-            indices[21] = n5; indices[22] = n3; indices[23] = n1;
-            // Top face
-            indices[24] = n3; indices[25] = n7; indices[26] = n8;
-            indices[27] = n3; indices[28] = n8; indices[29] = n4;
-            // Bottom face
-            indices[30] = n6; indices[31] = n5; indices[32] = n1;
-            indices[33] = n6; indices[34] = n1; indices[35] = n2;
-
-            uint[] indices_lines = new uint[24];
-            indices_lines[0] = n1; indices_lines[1] = n2; indices_lines[2] = n2; indices_lines[3] = n4;
-            indices_lines[4] = n3; indices_lines[5] = n4; indices_lines[6] = n1; indices_lines[7] = n3;
-            indices_lines[8] = n1; indices_lines[9] = n5; indices_lines[10] = n3; indices_lines[11] = n7;
-            indices_lines[12] = n7; indices_lines[13] = n8; indices_lines[14] = n7; indices_lines[15] = n5;
-            indices_lines[16] = n5; indices_lines[17] = n6; indices_lines[18] = n6; indices_lines[19] = n8;
-            indices_lines[20] = n2; indices_lines[21] = n6; indices_lines[22] = n4; indices_lines[23] = n8;
-
-            selectedElemMesh = new Mesh(vertices, indices);
-            selectedElemLines = new Mesh(selectedElemMesh.Vbo, indices_lines, vertices.Length);
-
             ElemNumBlock.Text = $"№ элемента: {currentElemIndex} |";
             BlockSubAreaNum.Text = "Номер подобласти: " + (selectedElem3D.wi + 1).ToString();
-            BlockNodesNum1.Text = "Л.Н. №: " + selectedElem3D.n1;
-            BlockNodesCoords1.Text = "x: " + grid3D.XYZ[selectedElem3D.n1].X.ToString("0.00")
-                                   + " y: " + grid3D.XYZ[selectedElem3D.n1].Y.ToString("0.00");
-            BlockNodesNum2.Text = "П.Н. №: " + selectedElem3D.n2;
-            BlockNodesCoords2.Text = "x: " + grid3D.XYZ[selectedElem3D.n2].X.ToString("0.00")
-                                   + " y: " + grid3D.XYZ[selectedElem3D.n2].Y.ToString("0.00");
-            BlockNodesNum3.Text = "Л.В. №: " + selectedElem3D.n3;
-            BlockNodesCoords3.Text = "x: " + grid3D.XYZ[selectedElem3D.n3].X.ToString("0.00")
-                                   + " y: " + grid3D.XYZ[selectedElem3D.n3].Y.ToString("0.00");
-            BlockNodesNum4.Text = "П.В. №: " + selectedElem3D.n4;
-            BlockNodesCoords4.Text = "x: " + grid3D.XYZ[selectedElem3D.n4].X.ToString("0.00")
-                                   + " y: " + grid3D.XYZ[selectedElem3D.n4].Y.ToString("0.00");
+            BlockNodesNum1.Text = "Л.Н.Б. №: " + selectedElem3D.n1;
+            BlockNodesCoords1.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n1].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n1].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n1].Z.ToString("0.00");
+            BlockNodesNum2.Text = "П.Н.Б. №: " + selectedElem3D.n2;
+            BlockNodesCoords2.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n2].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n2].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n2].Z.ToString("0.00");
+            BlockNodesNum3.Text = "Л.В.Б. №: " + selectedElem3D.n3;
+            BlockNodesCoords3.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n3].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n3].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n3].Z.ToString("0.00");
+            BlockNodesNum4.Text = "П.В.Б. №: " + selectedElem3D.n4;
+            BlockNodesCoords4.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n4].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n4].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n4].Z.ToString("0.00");
+            BlockNodesNum5.Text = "Л.Н.Д. №: " + selectedElem3D.n5;
+            BlockNodesCoords5.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n5].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n5].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n5].Z.ToString("0.00");
+            BlockNodesNum6.Text = "П.Н.Д. №: " + selectedElem3D.n6;
+            BlockNodesCoords6.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n6].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n6].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n6].Z.ToString("0.00");
+            BlockNodesNum7.Text = "Л.В.Д. №: " + selectedElem3D.n7;
+            BlockNodesCoords7.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n7].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n7].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n7].Z.ToString("0.00");
+            BlockNodesNum8.Text = "П.В.Д. №: " + selectedElem3D.n8;
+            BlockNodesCoords8.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n8].X.ToString("0.00")
+                                   + "\ty: " + grid3D.XYZ[selectedElem3D.n8].Y.ToString("0.00") +
+                                   "\tz: " + grid3D.XYZ[selectedElem3D.n8].Z.ToString("0.00");
+            if (isQFileLoaded)
+            {
+                BlockNodesCoords1.Text += "\tq: " + q[selectedElem3D.n1].ToString("0.00");
+                BlockNodesCoords2.Text += "\tq: " + q[selectedElem3D.n2].ToString("0.00");
+                BlockNodesCoords3.Text += "\tq: " + q[selectedElem3D.n3].ToString("0.00");
+                BlockNodesCoords4.Text += "\tq: " + q[selectedElem3D.n4].ToString("0.00");
+                BlockNodesCoords5.Text += "\tq: " + q[selectedElem3D.n5].ToString("0.00");
+                BlockNodesCoords6.Text += "\tq: " + q[selectedElem3D.n6].ToString("0.00");
+                BlockNodesCoords7.Text += "\tq: " + q[selectedElem3D.n7].ToString("0.00");
+                BlockNodesCoords8.Text += "\tq: " + q[selectedElem3D.n8].ToString("0.00");
+            }
+            if (selectedElem3D.n9 > 0 && selectedElem3D.n10 > 0)
+            {
+                BlockNodesNum9.Text = "ДОП1. №: " + selectedElem3D.n9;
+                BlockNodesCoords9.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n9].X.ToString("0.00")
+                                       + "\ty: " + grid3D.XYZ[selectedElem3D.n9].Y.ToString("0.00") +
+                                       "\tz: " + grid3D.XYZ[selectedElem3D.n9].Z.ToString("0.00");
+                BlockNodesNum10.Text = "ДОП2. №: " + selectedElem3D.n10;
+                BlockNodesCoords10.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n10].X.ToString("0.00")
+                                       + "\ty: " + grid3D.XYZ[selectedElem3D.n10].Y.ToString("0.00") +
+                                       "\tz: " + grid3D.XYZ[selectedElem3D.n10].Z.ToString("0.00");
+                if (isQFileLoaded)
+                {
+                    BlockNodesCoords9.Text += "\tq: " + q[selectedElem3D.n9].ToString("0.00");
+                    BlockNodesCoords10.Text += "\tq: " + q[selectedElem3D.n10].ToString("0.00");
+                }
+            }
         }
 
-        private void SetSelectedElemMeshes()
+        private void SetSelectedElemInfo()
         {
-            if (twoD) SetSelectedElem2DMeshes(); else SetSelectedElem3DMeshes();
+            if (twoD) SetSelected2DElemInfo(); else SetSelected3DElemInfo();
         }
 
 
@@ -668,18 +753,14 @@ namespace MakeGrid3D
                 if (grid2D.FindElem(x, y, ref currentElemIndex))
                 {
                     SetSelectedElemWindowSize();
-                    SetSelectedElem2DMeshes();
+                    SetSelected2DElemInfo();
                 }
                 else
                     ResetSelectedElem();
             }
-            else
-            {
-                // ----------------------------------------- 3D -----------------------------------------
-            }
         }
 
-        private void SetCurrentNodeMesh()
+        private void SetCurrentNodeMesh(bool removeQ = true)
         {
             if (twoD)
             {
@@ -706,6 +787,8 @@ namespace MakeGrid3D
 
             }
             ResetSelectedElem();
+            if (removeQ)
+                RemoveQFile();
         }
 
         private void OpenTkControl_MouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -951,8 +1034,11 @@ namespace MakeGrid3D
             PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
             LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
             BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
+            MinColorPicker.SelectedColor = ColorFloatToByte(Default.MinColor);
+            MaxColorPicker.SelectedColor = ColorFloatToByte(Default.MaxColor);
             WiremodeCheckBox.IsChecked = Default.wireframeMode;
             ShowGridCheckBox.IsChecked = Default.showGrid;
+            ShowQGradientCheckbox.IsChecked = false;
             SmartMergeCheckBox.IsChecked = Default.smartMerge;
 
             DrawRemovedLinesCheckBox.IsChecked = Default.drawRemovedLinesMode;
@@ -969,16 +1055,7 @@ namespace MakeGrid3D
 
         private void ResetSelectedElem()
         {
-            if (selectedElemMesh != null)
-            {
-                selectedElemMesh.Dispose();
-                selectedElemMesh = null;
-            }
-            if (selectedElemLines != null)
-            {
-                selectedElemLines.Dispose();
-                selectedElemLines = null;
-            }
+            isElemSelected = false;
             currentElemIndex = -1;
             ElemNumBlock.Text = "№ элемента: |";
             BlockSubAreaNum.Text = "";
@@ -1537,14 +1614,18 @@ namespace MakeGrid3D
                 Plane plane = crossSections.CurrentPlane;
                 int index = crossSections.CurrentPlaneSec;
                 float value = crossSections.CurrentValue;
-                regularGrid = new Grid2D(grid3D, plane, index, value);
+                List<float> q_new;
+                if (isQFileLoaded) regularGrid = new Grid2D(grid3D, plane, index, value, true, q, out q_new);
+                else regularGrid = new Grid2D(grid3D, plane, index, value, false, q, out q_new);
+                q = q_new;
                 twoD = true;
                 BlockCurrentMode.Text = twoD ? "Режим: 2D" : "Режим: 3D";
-                SetRenderGrid();
+                SetRenderGrid(false);
                 ResetPosition();
                 ResetSelectedElem();
                 crossSections.Active = false;
                 currentPlane = plane;
+                if (isQFileLoaded) renderGrid.SetGridColors(q, false);
             }
         }
 
@@ -1578,7 +1659,8 @@ namespace MakeGrid3D
                 currentElemIndex -= step;
                 if (currentElemIndex < 0)
                     currentElemIndex = 0;
-                SetSelectedElemMeshes();
+                SetSelectedElemWindowSize();
+                SetSelectedElemInfo();
             }
             else ErrorHandler.DataErrorMessage("Некорректный шаг", false);
         }
@@ -1591,7 +1673,8 @@ namespace MakeGrid3D
                 currentElemIndex += step;
                 if (currentElemIndex >= renderGrid.Grid.Nelems)
                     currentElemIndex = renderGrid.Grid.Nelems - 1;
-                SetSelectedElemMeshes();
+                SetSelectedElemWindowSize();
+                SetSelectedElemInfo();
             }
             else ErrorHandler.DataErrorMessage("Некорректный шаг", false);
         }
@@ -1600,6 +1683,96 @@ namespace MakeGrid3D
         {
             currentElemIndex = 0;
             ResetSelectedElem();
+        }
+
+        private void UploadQFileClick(object sender, RoutedEventArgs e)
+        {
+            // Configure open file dialog box
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.DefaultExt = ".txt"; // Default file extension
+            dialog.Filter = "Text format (.txt)|*.txt"; // Filter files by extension
+
+            // Show open file dialog box
+            bool? result = dialog.ShowDialog();
+
+            // Process open file dialog box results
+            if (result == true)
+            { 
+                string qfileName = dialog.FileName;
+                List<float> q_temp;
+                try
+                {
+                    using (TextReader reader = File.OpenText(qfileName))
+                    {
+                        q_temp = new List<float>(renderGrid.Grid.Nnodes);
+                        for (int i = 0; i < q_temp.Capacity; i++)
+                        {
+                            float qi =  float.Parse(reader.ReadLine());
+                            q_temp.Add(qi);
+                        }
+                    }
+                    q = q_temp;
+                    renderGrid.SetGridColors(q);
+                    QFileNameBlock.Text = "Файл: " + Path.GetFileName(qfileName);
+                    isQFileLoaded = true;
+                }
+                catch (Exception ex)
+                {
+                    if (ex is DirectoryNotFoundException || ex is FileNotFoundException)
+                        ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой", false);
+                    else if (ex is FormatException)
+                        ErrorHandler.FileReadingErrorMessage("Некорректный формат файла", false);
+                    else
+                        ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл", false);
+                }
+            }
+        }
+
+        private void RemoveQFile()
+        {
+            isQFileLoaded = false;
+            QFileNameBlock.Text = "Файл не загружен";
+            renderGrid.ShowQGradient = false;
+            ShowQGradientCheckbox.IsChecked = false;
+        }
+
+        private void RemoveQFileClick(object sender, RoutedEventArgs e)
+        {
+            RemoveQFile();
+        }
+
+        private void ShowQGradientChecked(object sender, RoutedEventArgs e)
+        {
+            if (isQFileLoaded)
+            {
+                renderGrid.ShowQGradient = true;
+            }
+            else 
+            { 
+                MessageBox.Show("Файл с решением не загружен", "Не удалось выполнить действие");
+                ShowQGradientCheckbox.IsChecked = false;
+            }
+        }
+
+        private void ShowQGradientUnChecked(object sender, RoutedEventArgs e)
+        {
+            renderGrid.ShowQGradient = false;
+        }
+
+        private void MinColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.MinColor = ColorByteToFloat((Color)e.NewValue);
+            if (isQFileLoaded)
+                renderGrid.SetGridColors(q);
+        }
+
+        private void MaxColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            if (renderGrid == null) return;
+            renderGrid.MaxColor = ColorByteToFloat((Color)e.NewValue);
+            if (isQFileLoaded)
+                renderGrid.SetGridColors(q);
         }
 
         private void CreateNewGridClick(object sender, RoutedEventArgs e)
