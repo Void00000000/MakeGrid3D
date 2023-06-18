@@ -778,5 +778,33 @@ namespace MakeGrid3D
             else
                 return MakeUnStructedGrid3D();
         }
+
+        public string PrintInfo()
+        {
+            string info = "";
+            switch (Quadrants[QuadIndex])
+            {
+                case Quadrant.LeftTop:
+                    info = "| Левая-верхняя четверть"; break;
+                case Quadrant.RightTop:
+                    info = "| Правая-верхняя четверть"; break;
+                case Quadrant.LeftBottom:
+                    info = "| Левая-нижняя четверть"; break;
+                case Quadrant.RightBottom:
+                    info = "| Правая-нижняя четверть"; break;
+            }
+            switch (Directions[Quadrants[QuadIndex]][DirIndex])
+            {
+                case Direction.Left:
+                    info += "| Обход влево"; break;
+                case Direction.Right:
+                    info += "| Обход вправо"; break;
+                case Direction.Top:
+                    info += "| Обход вверх"; break;
+                case Direction.Bottom:
+                    info += "| Обход вниз"; break;
+            }
+            return info;
+        }
     }
 }

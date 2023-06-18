@@ -35,6 +35,7 @@ namespace MakeGrid3D
         public List<Color4> GridColors { get; set; }
         private float minGradValue;
         private float maxGradValue;
+        public List<Color4> AreaColors { get; set; }
         public Color4 LinesColor { get; set; } = Default.linesColor;
         public Color4 PointsColor { get; set; } = Default.pointsColor;
         public Color4 MinColor { get; set; } = Default.MinColor;
@@ -75,6 +76,7 @@ namespace MakeGrid3D
             if (grid is Grid2D) { AssembleVertices2D(true); Camera = new Camera(); } 
             else AssembleVertices3D(true);
             SetSize();
+            AreaColors = new List<Color4>(Default.areaColors);
         }
 
         private void SetSize2D()
@@ -413,7 +415,7 @@ namespace MakeGrid3D
             int s = 0;
             foreach (SubArea2D subArea in grid2D.Area.Mw)
             {
-                shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
+                shader.SetColor4("current_color", AreaColors[subArea.wi]);
                 areaMesh.DrawElems(6, s, PrimitiveType.Triangles);
                 s += 6;
             }
@@ -425,7 +427,7 @@ namespace MakeGrid3D
             int s = 0;
             foreach (SubArea3D subArea in grid3D.Area.Mw)
             {
-                shader.SetColor4("current_color", Default.areaColors[subArea.wi]);
+                shader.SetColor4("current_color", AreaColors[subArea.wi]);
                 areaMesh.DrawElems(12 * 3, s, PrimitiveType.Triangles);
                 s += 12 * 3;
             }

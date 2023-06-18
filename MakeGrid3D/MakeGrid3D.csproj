@@ -15,6 +15,7 @@
     <None Remove="Images\cancel.png" />
     <None Remove="Images\do.png" />
     <None Remove="Images\double_arrow.png" />
+    <None Remove="Images\icon.ico" />
     <None Remove="Images\light_purple_gradient.jpg" />
     <None Remove="Images\logo2.png" />
     <None Remove="Images\purple_gradient.jpg" />
@@ -47,6 +48,7 @@
     <Resource Include="Images\cancel.png" />
     <Resource Include="Images\do.png" />
     <Resource Include="Images\double_arrow.png" />
+    <Resource Include="Images\icon.ico" />
     <Resource Include="Images\light_purple_gradient.jpg" />
     <Resource Include="Images\logo2.png" />
     <Resource Include="Images\purple_gradient.jpg" />

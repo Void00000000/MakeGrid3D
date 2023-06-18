@@ -154,8 +154,8 @@ namespace MakeGrid3D
         public int Nnodes { get; }
         public int Nelems { get; }
         public int Nmats { get; }
-        public float MeanAR { get; set; } = 0;
-        public float WorstAR { get; set; } = 0;
+        public float MeanAR { get; set; } = 1;
+        public float WorstAR { get; set; } = 1;
         public int Nx { get; private set; }
         public int Ny { get; private set; }
         public int Nz { get; private set; }

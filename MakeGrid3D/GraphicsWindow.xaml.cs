@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.IO;
 using OpenTK.Windowing.Common;
 using System.Windows.Controls;
+using Xceed.Wpf.AvalonDock.Themes;
 
 namespace MakeGrid3D
 {
@@ -110,7 +111,10 @@ namespace MakeGrid3D
             if (renderGrid == null)
                 renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
             else
+            {
                 renderGrid.Grid = regularGrid;
+                renderGrid.AreaColors = new List<Color4>(Default.areaColors);
+            }
             irregularGridMaker = new IrregularGridMaker(regularGrid);
             gridList = new LinkedList<GridState>();
             SetCurrentNodeMesh(removeQ);
@@ -120,6 +124,11 @@ namespace MakeGrid3D
             speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
             speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
             SetAxis();
+            SubAreaNumDownMenu.Items.Clear();
+            for (int i = 0; i < renderGrid.Grid.Nmats; i++)
+            {
+                SubAreaNumDownMenu.Items.Add($"{i + 1}");
+            }
             if (removeQ)
                 RemoveQFile();
         }
@@ -345,30 +354,8 @@ namespace MakeGrid3D
                 // -----------------------------------3D------------------------------------ -
                 else
                 {
-
                 }
-                switch (irregularGridMaker.Quadrants[irregularGridMaker.QuadIndex])
-                {
-                    case Quadrant.LeftTop:
-                        CurrentUnstructedNodeBlock2.Text = "| Левая-верхняя четверть"; break;
-                    case Quadrant.RightTop:
-                        CurrentUnstructedNodeBlock2.Text = "| Правая-верхняя четверть"; break;
-                    case Quadrant.LeftBottom:
-                        CurrentUnstructedNodeBlock2.Text = "| Левая-нижняя четверть"; break;
-                    case Quadrant.RightBottom:
-                        CurrentUnstructedNodeBlock2.Text = "| Правая-нижняя четверть"; break;
-                }
-                switch (irregularGridMaker.Directions[irregularGridMaker.Quadrants[irregularGridMaker.QuadIndex]][irregularGridMaker.DirIndex])
-                {
-                    case Direction.Left:
-                        CurrentUnstructedNodeBlock2.Text += "| Обход влево"; break;
-                    case Direction.Right:
-                        CurrentUnstructedNodeBlock2.Text += "| Обход вправо"; break;
-                    case Direction.Top:
-                        CurrentUnstructedNodeBlock2.Text += "| Обход вверх"; break;
-                    case Direction.Bottom:
-                        CurrentUnstructedNodeBlock2.Text += "| Обход вниз"; break;
-                }
+                CurrentUnstructedNodeBlock2.Text = irregularGridMaker.PrintInfo();
             }
         }
 
@@ -528,7 +515,7 @@ namespace MakeGrid3D
                     {
                         Grid2D grid2D = (Grid2D)renderGrid.Grid;
                         Elem2D selectedElem2D = grid2D.Elems[currentElemIndex];
-                        renderGrid.shader.SetColor4("current_color", Default.areaColors[selectedElem2D.wi]);
+                        renderGrid.shader.SetColor4("current_color", renderGrid.AreaColors[selectedElem2D.wi]);
                         renderGrid.GradientMeshes[currentElemIndex].DrawElems(6, 0, PrimitiveType.Triangles);
                     }
                     else
@@ -1036,6 +1023,13 @@ namespace MakeGrid3D
             BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
             MinColorPicker.SelectedColor = ColorFloatToByte(Default.MinColor);
             MaxColorPicker.SelectedColor = ColorFloatToByte(Default.MaxColor);
+
+            if (renderGrid != null)
+            {
+                for (int i = 0; i < renderGrid.Grid.Nmats; i++)
+                    renderGrid.AreaColors[i] = Default.areaColors[i];
+            }
+
             WiremodeCheckBox.IsChecked = Default.wireframeMode;
             ShowGridCheckBox.IsChecked = Default.showGrid;
             ShowQGradientCheckbox.IsChecked = false;
@@ -1455,28 +1449,42 @@ namespace MakeGrid3D
             currentUnstructedNodeColor = ColorByteToFloat((Color)e.NewValue);
         }
 
-        private void StartQuadChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-        private void LTQuadDirChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-        private void RTQuadDirChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-        private void LBQuadDirChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-        private void RBQuadDirChanged(object sender, SelectionChangedEventArgs e)
+        private void LT1QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
 
         }
 
-        private void ResetIrregularSettingsClick(object sender, RoutedEventArgs e)
+        private void LT2QuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void RT1QuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void RT2QuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void LB1QuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void LB2QuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void RB1QuadDirChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void RB2QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
 
         }
@@ -1825,6 +1833,81 @@ namespace MakeGrid3D
             {
                 File.WriteAllText(dlg.FileName, renderGrid.Grid.PrintInfo());
             }
+        }
+
+        private void SubAreaNumChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox comboBox = (ComboBox)sender;
+            string subAreaNum_txt = "";
+            if (comboBox != null && comboBox.SelectedItem != null)
+                subAreaNum_txt = comboBox.SelectedItem.ToString();
+            int subAreaNum;
+            if (int.TryParse(subAreaNum_txt, out subAreaNum))
+            {
+                SubAreaColorPicker.SelectedColor = ColorFloatToByte(renderGrid.AreaColors[subAreaNum - 1]);
+            }
+        }
+        private void SubAreaColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            if (renderGrid == null) return;
+            string subAreaNum_txt = "";
+            if (SubAreaNumDownMenu != null && SubAreaNumDownMenu.SelectedItem != null)
+                subAreaNum_txt = SubAreaNumDownMenu.SelectedItem.ToString();
+            int subAreaNum;
+            if (int.TryParse(subAreaNum_txt, out subAreaNum))
+            {
+                renderGrid.AreaColors[subAreaNum - 1] = ColorByteToFloat((Color)e.NewValue);
+            }
+        }
+
+        private void DoubleOrHalfGrid(bool half)
+        {
+            if (gridParams != null && SubAreaAxisDownMenu != null && SubAreaAxisDownMenu.SelectedItem != null)
+            {
+                string raw_txt = SubAreaAxisDownMenu.SelectedItem.ToString();
+                string axis_txt = raw_txt.Substring(raw_txt.Length - 1);
+                switch (axis_txt)
+                {
+                    case "X":
+                        for (int i = 0; i < gridParams.NX.Count; i++)
+                        {
+                            if (!half) gridParams.NX[i] *= 2;
+                            else if (gridParams.NX[i] / 2 >= 1)
+                                gridParams.NX[i] /= 2;
+                        }
+                        break;
+                    case "Y":
+                        for (int i = 0; i < gridParams.NY.Count; i++)
+                        {
+                            if (!half) gridParams.NY[i] *= 2;
+                            else if (gridParams.NY[i] / 2 >= 1)
+                                gridParams.NY[i] /= 2;
+                        }
+                        break;
+                    case "Z":
+                        if (twoD) return;
+                        for (int i = 0; i < gridParams.NZ.Count; i++)
+                        {
+                            if (!half) gridParams.NZ[i] *= 2;
+                            else if (gridParams.NZ[i] / 2 >= 1)
+                                gridParams.NZ[i] /= 2;
+                        }
+                        break;
+                }
+                regularGrid = (twoD) ? new Grid2D(gridParams) : new Grid3D(gridParams);
+            SetRenderGrid();
+            ResetSelectedElem();
+            }
+        }
+
+        private void DoubleGridClick(object sender, RoutedEventArgs e)
+        {
+            DoubleOrHalfGrid(false);
+        }
+
+        private void HalfGridClick(object sender, RoutedEventArgs e)
+        {
+            DoubleOrHalfGrid(true);
         }
     }
 }

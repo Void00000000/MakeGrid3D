@@ -7,6 +7,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:glWpfControl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
         mc:Ignorable="d"
+        Icon="Images/icon.ico"
         Title="MakeGrid3D" Height="720" Width="1280"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
@@ -50,7 +51,7 @@
 
                 <!-- Instrument Panel -->
                 <TabControl Grid.RowSpan="4" Name="Panel" Grid.Column="3" Background="WhiteSmoke">
-                    <TabItem Header="Движение">
+                    <TabItem Header="Просмотр">
                         <Grid Margin="10 10 10 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -184,7 +185,7 @@
                             <!-- Separator: Replication|CrossSections -->
                             <Separator Grid.Row="6" Margin="10 10 10 0" Background="Black">
                                 <Separator.RenderTransform>
-                                    <ScaleTransform ScaleY="2" />
+                                    <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
                             <!-- Cross section -->
@@ -217,7 +218,7 @@
                             <!-- Separator: CrossSection|Elem Selector -->
                             <Separator Grid.Row="9" Margin="10 10 10 0" Background="Black">
                                 <Separator.RenderTransform>
-                                    <ScaleTransform ScaleY="2" />
+                                    <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
                             <!-- Elem Selector -->
@@ -244,7 +245,7 @@
                             <!-- Separator: Elem Selector|Reset -->
                             <Separator Grid.Row="11" Margin="10 10 10 0" Background="Black">
                                 <Separator.RenderTransform>
-                                    <ScaleTransform ScaleY="3" />
+                                    <ScaleTransform ScaleY="2" />
                                 </Separator.RenderTransform>
                             </Separator>
                             <!-- Reset -->
@@ -259,6 +260,10 @@
                     <TabItem Header="Настройки">
                         <Grid Margin="10 10 10 0">
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -326,8 +331,46 @@
                                 <CheckBox Name="ShowGridCheckBox" Grid.Column="3" Checked="ShowGridChecked" Unchecked="ShowGridUnChecked"/>
                             </Grid>
 
+                            <!-- Separator: Settings|Change SubAreas -->
+                            <Separator Grid.Row="5" Margin="10 10 10 0" Background="Black">
+                                <Separator.RenderTransform>
+                                    <ScaleTransform ScaleY="2.5" />
+                                </Separator.RenderTransform>
+                            </Separator>
+
+                            <!-- Change SubAreas -->
+                            <Grid Grid.Row="6" Margin="10 10 10 0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Margin="0 0 0 10" Orientation="Horizontal">
+                                    <TextBlock Text="№ подобласти: "/>
+                                    <ComboBox Name="SubAreaNumDownMenu" SelectionChanged="SubAreaNumChanged" Margin="0 0 25 0"/>
+                                    <TextBlock Text="Ось: "/>
+                                    <ComboBox Name="SubAreaAxisDownMenu" Margin="0,0,10,0">
+                                        <ComboBoxItem Content="X"/>
+                                        <ComboBoxItem Content="Y"/>
+                                        <ComboBoxItem Content="Z"/>
+                                    </ComboBox>
+                                    <Button Content="x2" Click="DoubleGridClick" Width="25" Margin="0 0 10 0"/>
+                                    <Button Content="/2" Click="HalfGridClick" Width="25"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                    <TextBlock Text="Цвет подобласти: "/>
+                                    <xctk:ColorPicker Name="SubAreaColorPicker" SelectedColorChanged="SubAreaColorChanged" Width="50"></xctk:ColorPicker>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Separator: Change SubAreas|Uploading q vector -->
+                            <Separator Grid.Row="7" Margin="10 10 10 0" Background="Black">
+                                <Separator.RenderTransform>
+                                    <ScaleTransform ScaleY="2.5" />
+                                </Separator.RenderTransform>
+                            </Separator>
+
                             <!-- Uploading q vector -->
-                            <Grid Grid.Row="5" Margin="10 10 10 0">
+                            <Grid Grid.Row="8" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -344,8 +387,8 @@
                                     <Image Source="Images/cancel.png"></Image>
                                 </Button>
                             </Grid>
-                            <CheckBox Grid.Row="6" Name="ShowQGradientCheckbox" Content="Визуализировать вектор q" Checked="ShowQGradientChecked" Unchecked="ShowQGradientUnChecked" Margin="10 10 10 0"/>
-                            <Grid Grid.Row="7" Margin="10 10 10 0">
+                            <CheckBox Grid.Row="9" Name="ShowQGradientCheckbox" Content="Визуализировать вектор q" Checked="ShowQGradientChecked" Unchecked="ShowQGradientUnChecked" Margin="10 10 10 0"/>
+                            <Grid Grid.Row="10" Margin="10 10 10 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -357,13 +400,22 @@
                                 <TextBlock Grid.Column="2" Text="Цвет 2: " Foreground="Black" FontSize="14" Margin="10 0 0 0"/>
                                 <xctk:ColorPicker Name="MaxColorPicker" Grid.Column="3" Width="50" SelectedColorChanged="MaxColorChanged"></xctk:ColorPicker>
                             </Grid>
+
+                            <!-- Separator: Uploading q vector|Reset Settings -->
+                            <Separator Grid.Row="11" Margin="10 10 10 0" Background="Black">
+                                <Separator.RenderTransform>
+                                    <ScaleTransform ScaleY="2.5" />
+                                </Separator.RenderTransform>
+                            </Separator>
+
                             <!-- Reset Settings -->
-                            <Button Grid.Row="8" Click="ResetSettingsClick" Content="Сбросить настройки по умолчанию" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <Button Grid.Row="12" Click="ResetSettingsClick" Content="Сбросить настройки по умолчанию" HorizontalAlignment="Center" Margin="0 10 0 0"/>
                         </Grid>
                     </TabItem>
 
                     <!--Unstructed grid-->
                     <TabItem Header="Нерегулярная сетка">
+                        <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Visible">
                         <Grid Margin="10 10 10 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -425,31 +477,49 @@
                             <CheckBox Name="SmartMergeCheckBox" Content="Умное объединение" Grid.Row="5" Checked="SmartMergeChecked" Unchecked="SmartMergeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
                             <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="6" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
                             <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="7" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center" Margin="10 10 10 0"></xctk:ColorPicker>
-                            <ComboBox Grid.Row="8" Name="StartQuadDropDownMenu" SelectionChanged="StartQuadChanged" Width="180" HorizontalAlignment="Center" Margin="10,10,10,0">
-                                <ComboBoxItem Content="Левая-верхяя четверть"/>
-                                <ComboBoxItem Content="Правая-верхяя четверть"/>
-                                <ComboBoxItem Content="Левая-нижняя четверть"/>
-                                <ComboBoxItem Content="Правая-нижняя четверть"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="9" Name="LTQuadDirDropDownMenu" SelectionChanged="LTQuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
+                            <ComboBox Grid.Row="8" Name="LT1QuadDirDropDownMenu" SelectionChanged="LT1QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
                                 <ComboBoxItem Content="Влево-вверх"/>
                                 <ComboBoxItem Content="Вверх-влево"/>
+                                <ComboBoxItem Content="X"/>
                             </ComboBox>
-                            <ComboBox Grid.Row="9" Name="RTQuadDirDropDownMenu" SelectionChanged="RTQuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
+                            <ComboBox Grid.Row="9" Name="LT2QuadDirDropDownMenu" SelectionChanged="LT2QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,10">
+                                <ComboBoxItem Content="Влево-вверх"/>
+                                <ComboBoxItem Content="Вверх-влево"/>
+                                <ComboBoxItem Content="X"/>
+                            </ComboBox>
+                            <ComboBox Grid.Row="8" Name="RT1QuadDirDropDownMenu" SelectionChanged="RT1QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
                                 <ComboBoxItem Content="Вправо-вверх"/>
                                 <ComboBoxItem Content="Вверх-вправо"/>
+                                <ComboBoxItem Content="X"/>
                             </ComboBox>
-                            <ComboBox Grid.Row="10" Name="LBQuadDirDropDownMenu" SelectionChanged="LBQuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
+                            <ComboBox Grid.Row="9" Name="RT2QuadDirDropDownMenu" SelectionChanged="RT2QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,10">
+                                <ComboBoxItem Content="Вправо-вверх"/>
+                                <ComboBoxItem Content="Вверх-вправо"/>
+                                <ComboBoxItem Content="X"/>
+                            </ComboBox>
+                            <ComboBox Grid.Row="10" Name="LB1QuadDirDropDownMenu" SelectionChanged="LB1QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
                                 <ComboBoxItem Content="Влево-вниз"/>
                                 <ComboBoxItem Content="Вниз-влево"/>
+                                <ComboBoxItem Content="X"/>
                             </ComboBox>
-                            <ComboBox Grid.Row="10" Name="RBQuadDirDropDownMenu" SelectionChanged="RBQuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
+                            <ComboBox Grid.Row="11" Name="LB2QuadDirDropDownMenu" SelectionChanged="LB2QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,10">
+                                <ComboBoxItem Content="Влево-вниз"/>
+                                <ComboBoxItem Content="Вниз-влево"/>
+                                <ComboBoxItem Content="X"/>
+                            </ComboBox>
+                            <ComboBox Grid.Row="10" Name="RB1QuadDirDropDownMenu" SelectionChanged="RB1QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
                                 <ComboBoxItem Content="Вправо-вниз"/>
                                 <ComboBoxItem Content="Вниз-вправо"/>
+                                <ComboBoxItem Content="X"/>
                             </ComboBox>
-                            <Button Grid.Row="11" Click="ResetIrregularSettingsClick" Content="Сбросить настройки" HorizontalAlignment="Center" Margin="10 10 10 0"/>
+                            <ComboBox Grid.Row="11" Name="RB2QuadDirDropDownMenu" SelectionChanged="RB2QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,10">
+                                <ComboBoxItem Content="Вправо-вниз"/>
+                                <ComboBoxItem Content="Вниз-вправо"/>
+                                <ComboBoxItem Content="X"/>
+                            </ComboBox>
                             <Button Grid.Row="12" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
                         </Grid>
+                        </ScrollViewer>
                     </TabItem>
                 </TabControl>
                 <!--Instrument Panel End-->
