@@ -697,6 +697,37 @@ namespace MakeGrid3D
             {
                 infoText += $"{removedNodes[i]}|";
             }
+
+            // КРАЕВЫЕ ДЛЯ МКЭ --------------------------
+            infoText += "\n";
+            infoText += "*** BOTTOM LINE ***\n";
+            for (int i = 0; i < Nx; i++)
+            {
+                if (global_num(i, 0) < 0) continue;
+                infoText += $"{global_num(i, 0)}|";
+            }
+            infoText += "\n";
+            infoText += "*** RIGHT LINE ***\n";
+            for (int j = 1; j < Ny; j++)
+            {
+                if (global_num(Nx - 1, j) < 0) continue;
+                infoText += $"{global_num(Nx - 1, j)}|";
+            }
+            infoText += "\n";
+            infoText += "*** TOP LINE ***\n";
+            for (int i = 0; i < Nx - 1; i++)
+            {
+                if (global_num(i, Ny - 1) < 0) continue;
+                infoText += $"{global_num(i, Ny - 1)}|";
+            }
+            infoText += "\n";
+            infoText += "*** LEFT LINE ***\n";
+            for (int j = 1; j < Ny - 1; j++)
+            {
+                if (global_num(0, j) < 0) continue;
+                infoText += $"{global_num(0, j)}|";
+            }
+            // --------------------------------------------------
             return infoText;
         }
     }

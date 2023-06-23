@@ -29,10 +29,15 @@ namespace MakeGrid3D
 
         static public float indent = 0.2f;
 
-        static public Direction dir1 = Direction.Left;
-        static public Direction dir2 = Direction.Right;
-        static public Direction dir3 = Direction.Bottom;
-        static public Direction dir4 = Direction.Top;
+        // Указано направление обхода по узлам
+        static public Dictionary<Quadrant, Direction[]> Directions = new Dictionary<Quadrant, Direction[]>()
+        {
+            { Quadrant.RightTop, new Direction[]{Direction.Right, Direction.Top} },
+            { Quadrant.LeftTop, new Direction[]{Direction.Left, Direction.Top} },
+            { Quadrant.LeftBottom, new Direction[]{Direction.Left, Direction.Bottom} },
+            { Quadrant.RightBottom, new Direction[]{Direction.Right, Direction.Bottom} }
+        };
+
         static public bool smartMerge = false;
         static public bool showCurrentUnstructedNode = false;
         static public Color4 currentUnstructedNodeColor = new Color4(1f, 0, 0, 1f);

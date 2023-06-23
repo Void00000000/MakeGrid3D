@@ -24,6 +24,7 @@ namespace MakeGrid3D
         Right,
         Top,
         Bottom,
+        None
     }
 
     enum Quadrant
@@ -65,6 +66,10 @@ namespace MakeGrid3D
         public int QuadIndex { get; } = 0;
         public int DirIndex { get; } = 0;
         public bool End { get; } = false;
+        public List<Tuple<float, int>> aspect_ratios = new List<Tuple<float, int>>();
+        public bool calcAROnly = Default.smartMerge;
+        public bool smartMerge = Default.smartMerge;
+
         public GridState(IGrid grid, IrregularGridMaker irregularGridMaker)
         {
             Grid = grid;
@@ -80,7 +85,10 @@ namespace MakeGrid3D
             QuadIndex = irregularGridMaker.QuadIndex;
             DirIndex = irregularGridMaker.DirIndex;
             End = irregularGridMaker.End;
-        }
+            aspect_ratios = new List<Tuple<float, int>>(irregularGridMaker.aspect_ratios);
+            calcAROnly = irregularGridMaker.calcAROnly;
+            smartMerge = irregularGridMaker.SmartMerge;
+    }
         public GridState(IGrid grid)
         {
             Grid = grid;
@@ -215,5 +223,18 @@ namespace MakeGrid3D
             QZ = qz;
             Mats = mats;
         }
+    }
+
+    static class StringConstants
+    {
+        public const string right_top = "Вправо-вверх";
+        public const string top_right = "Вверх-вправо";
+        public const string left_top = "Влево-вверх";
+        public const string top_left = "Вверх-влево";
+        public const string left_bottom = "Влево-вниз";
+        public const string bottom_left = "Вниз-влево";
+        public const string right_bottom = "Вправо-вниз";
+        public const string bottom_right = "Вниз-вправо";
+        public const string skip = "X";
     }
 }

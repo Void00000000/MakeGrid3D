@@ -462,9 +462,9 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Button Grid.Column="0" Click="RemoveElemsClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
+                                <RepeatButton Grid.Column="0" Click="RemoveElemsClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
                                     <Image Source="Images/single_arrow.png"></Image>
-                                </Button>
+                                </RepeatButton>
                                 <Button Grid.Column="1" Click="RemoveAllElemsClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
                                     <Image Source="Images/double_arrow.png"></Image>
                                 </Button>
@@ -477,47 +477,15 @@
                             <CheckBox Name="SmartMergeCheckBox" Content="Умное объединение" Grid.Row="5" Checked="SmartMergeChecked" Unchecked="SmartMergeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
                             <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="6" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
                             <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="7" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center" Margin="10 10 10 0"></xctk:ColorPicker>
-                            <ComboBox Grid.Row="8" Name="LT1QuadDirDropDownMenu" SelectionChanged="LT1QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
-                                <ComboBoxItem Content="Влево-вверх"/>
-                                <ComboBoxItem Content="Вверх-влево"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="9" Name="LT2QuadDirDropDownMenu" SelectionChanged="LT2QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,10">
-                                <ComboBoxItem Content="Влево-вверх"/>
-                                <ComboBoxItem Content="Вверх-влево"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="8" Name="RT1QuadDirDropDownMenu" SelectionChanged="RT1QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
-                                <ComboBoxItem Content="Вправо-вверх"/>
-                                <ComboBoxItem Content="Вверх-вправо"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="9" Name="RT2QuadDirDropDownMenu" SelectionChanged="RT2QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,10">
-                                <ComboBoxItem Content="Вправо-вверх"/>
-                                <ComboBoxItem Content="Вверх-вправо"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="10" Name="LB1QuadDirDropDownMenu" SelectionChanged="LB1QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,0">
-                                <ComboBoxItem Content="Влево-вниз"/>
-                                <ComboBoxItem Content="Вниз-влево"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="11" Name="LB2QuadDirDropDownMenu" SelectionChanged="LB2QuadDirChanged" Width="120" HorizontalAlignment="Left" Margin="10,10,10,10">
-                                <ComboBoxItem Content="Влево-вниз"/>
-                                <ComboBoxItem Content="Вниз-влево"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="10" Name="RB1QuadDirDropDownMenu" SelectionChanged="RB1QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,0">
-                                <ComboBoxItem Content="Вправо-вниз"/>
-                                <ComboBoxItem Content="Вниз-вправо"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <ComboBox Grid.Row="11" Name="RB2QuadDirDropDownMenu" SelectionChanged="RB2QuadDirChanged" Width="120" HorizontalAlignment="Right" Margin="10,10,10,10">
-                                <ComboBoxItem Content="Вправо-вниз"/>
-                                <ComboBoxItem Content="Вниз-вправо"/>
-                                <ComboBoxItem Content="X"/>
-                            </ComboBox>
-                            <Button Grid.Row="12" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
+                                <ComboBox Grid.Row="8" Name="LT1QuadDirDropDownMenu" SelectionChanged="LT1QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,0"/>
+                                <ComboBox Grid.Row="9" Name="LT2QuadDirDropDownMenu" SelectionChanged="LT2QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,10"/>
+                                <ComboBox Grid.Row="8" Name="RT1QuadDirDropDownMenu" SelectionChanged="RT1QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,0"/>
+                                <ComboBox Grid.Row="9" Name="RT2QuadDirDropDownMenu" SelectionChanged="RT2QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,10"/>
+                                <ComboBox Grid.Row="10" Name="LB1QuadDirDropDownMenu" SelectionChanged="LB1QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,0"/>
+                                <ComboBox Grid.Row="11" Name="LB2QuadDirDropDownMenu" SelectionChanged="LB2QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,10"/>
+                                <ComboBox Grid.Row="10" Name="RB1QuadDirDropDownMenu" SelectionChanged="RB1QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,0"/>
+                                <ComboBox Grid.Row="11" Name="RB2QuadDirDropDownMenu" SelectionChanged="RB2QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,10"/>
+                                <Button Grid.Row="12" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
                         </Grid>
                         </ScrollViewer>
                     </TabItem>

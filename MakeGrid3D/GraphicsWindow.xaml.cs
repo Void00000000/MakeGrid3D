@@ -12,6 +12,7 @@ using System.IO;
 using OpenTK.Windowing.Common;
 using System.Windows.Controls;
 using Xceed.Wpf.AvalonDock.Themes;
+using System.Xml.Serialization;
 
 namespace MakeGrid3D
 {
@@ -87,6 +88,7 @@ namespace MakeGrid3D
             OpenTkControl.Start(settings);
             AxisOpenTkControl.Start(settings);
             SelectedElemOpenTkControl.Start(settings);
+            FillComboBoxes();
             ResetUI();
         }
 
@@ -103,6 +105,7 @@ namespace MakeGrid3D
             OpenTkControl.Start(settings);
             AxisOpenTkControl.Start(settings);
             SelectedElemOpenTkControl.Start(settings);
+            FillComboBoxes();
             ResetUI();
         }
 
@@ -116,6 +119,7 @@ namespace MakeGrid3D
                 renderGrid.AreaColors = new List<Color4>(Default.areaColors);
             }
             irregularGridMaker = new IrregularGridMaker(regularGrid);
+            ResetComboBoxes();
             gridList = new LinkedList<GridState>();
             SetCurrentNodeMesh(removeQ);
             gridList.AddLast(new GridState(regularGrid));
@@ -1047,6 +1051,49 @@ namespace MakeGrid3D
             CurrentUnstructedNodeColorPicker.SelectedColor = ColorFloatToByte(Default.currentUnstructedNodeColor);
         }
 
+        void FillComboBoxes()
+        {
+            RT1QuadDirDropDownMenu.Items.Add(StringConstants.right_top);
+            RT1QuadDirDropDownMenu.Items.Add(StringConstants.top_right);
+            RT1QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+            RT2QuadDirDropDownMenu.Items.Add(StringConstants.right_top);
+            RT2QuadDirDropDownMenu.Items.Add(StringConstants.top_right);
+            RT2QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+
+            LT1QuadDirDropDownMenu.Items.Add(StringConstants.left_top);
+            LT1QuadDirDropDownMenu.Items.Add(StringConstants.top_left);
+            LT1QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+            LT2QuadDirDropDownMenu.Items.Add(StringConstants.left_top);
+            LT2QuadDirDropDownMenu.Items.Add(StringConstants.top_left);
+            LT2QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+
+            LB1QuadDirDropDownMenu.Items.Add(StringConstants.left_bottom);
+            LB1QuadDirDropDownMenu.Items.Add(StringConstants.bottom_left);
+            LB1QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+            LB2QuadDirDropDownMenu.Items.Add(StringConstants.left_bottom);
+            LB2QuadDirDropDownMenu.Items.Add(StringConstants.bottom_left);
+            LB2QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+
+            RB1QuadDirDropDownMenu.Items.Add(StringConstants.right_bottom);
+            RB1QuadDirDropDownMenu.Items.Add(StringConstants.bottom_right);
+            RB1QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+            RB2QuadDirDropDownMenu.Items.Add(StringConstants.right_bottom);
+            RB2QuadDirDropDownMenu.Items.Add(StringConstants.bottom_right);
+            RB2QuadDirDropDownMenu.Items.Add(StringConstants.skip);
+        }
+
+        private void ResetComboBoxes()
+        {
+            RT1QuadDirDropDownMenu.SelectedItem = StringConstants.right_top;
+            RT2QuadDirDropDownMenu.SelectedItem = StringConstants.top_right;
+            LT1QuadDirDropDownMenu.SelectedItem = StringConstants.left_top;
+            LT2QuadDirDropDownMenu.SelectedItem = StringConstants.top_left;
+            LB1QuadDirDropDownMenu.SelectedItem = StringConstants.left_bottom;
+            LB2QuadDirDropDownMenu.SelectedItem = StringConstants.bottom_left;
+            RB1QuadDirDropDownMenu.SelectedItem = StringConstants.right_bottom;
+            RB2QuadDirDropDownMenu.SelectedItem = StringConstants.bottom_right;
+        }
+
         private void ResetSelectedElem()
         {
             isElemSelected = false;
@@ -1360,6 +1407,7 @@ namespace MakeGrid3D
                 renderGrid.Grid = currentNode.ValueRef.Grid;
                 irregularGridMaker.Set(currentNode.ValueRef);
                 SetCurrentNodeMesh();
+                SmartMergeCheckBox.IsChecked = irregularGridMaker.SmartMerge;
             }
         }
 
@@ -1371,6 +1419,7 @@ namespace MakeGrid3D
                 renderGrid.Grid = currentNode.ValueRef.Grid;
                 irregularGridMaker.Set(currentNode.ValueRef);
                 SetCurrentNodeMesh();
+                SmartMergeCheckBox.IsChecked = irregularGridMaker.SmartMerge;
             }
         }
 
@@ -1422,6 +1471,7 @@ namespace MakeGrid3D
             SetCurrentNodeMesh();
             gridList.AddLast(new GridState(regularGrid));
             currentNode = gridList.Last;
+            ResetComboBoxes();
         }
 
         private void SmartMergeChecked(object sender, RoutedEventArgs e)
@@ -1449,44 +1499,104 @@ namespace MakeGrid3D
             currentUnstructedNodeColor = ColorByteToFloat((Color)e.NewValue);
         }
 
+        private void SetLTQuadDir(string dir_txt, int index)
+        {
+            switch (dir_txt)
+            {
+                case StringConstants.left_top:
+                    irregularGridMaker.Directions[Quadrant.LeftTop][index] = Direction.Left; break;
+                case StringConstants.top_left:
+                    irregularGridMaker.Directions[Quadrant.LeftTop][index] = Direction.Top; break;
+                case StringConstants.skip:
+                    irregularGridMaker.Directions[Quadrant.LeftTop][index] = Direction.None; break;
+            }
+        }
+
+        private void SetRTQuadDir(string dir_txt, int index)
+        {
+            switch (dir_txt)
+            {
+                case StringConstants.right_top:
+                    irregularGridMaker.Directions[Quadrant.RightTop][index] = Direction.Right; break;
+                case StringConstants.top_right:
+                    irregularGridMaker.Directions[Quadrant.RightTop][index] = Direction.Top; break;
+                case StringConstants.skip:
+                    irregularGridMaker.Directions[Quadrant.RightTop][index] = Direction.None; break;
+            }
+        }
+
+        private void SetLBQuadDir(string dir_txt, int index)
+        {
+            switch (dir_txt)
+            {
+                case StringConstants.left_bottom:
+                    irregularGridMaker.Directions[Quadrant.LeftBottom][index] = Direction.Left; break;
+                case StringConstants.bottom_left:
+                    irregularGridMaker.Directions[Quadrant.LeftBottom][index] = Direction.Bottom; break;
+                case StringConstants.skip:
+                    irregularGridMaker.Directions[Quadrant.LeftBottom][index] = Direction.None; break;
+            }
+        }
+
+        private void SetRBQuadDir(string dir_txt, int index)
+        {
+            switch (dir_txt)
+            {
+                case StringConstants.right_bottom:
+                    irregularGridMaker.Directions[Quadrant.RightBottom][index] = Direction.Right; break;
+                case StringConstants.bottom_right:
+                    irregularGridMaker.Directions[Quadrant.RightBottom][index] = Direction.Bottom; break;
+                case StringConstants.skip:
+                    irregularGridMaker.Directions[Quadrant.RightBottom][index] = Direction.None; break;
+            }
+        }
+
         private void LT1QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = LT1QuadDirDropDownMenu.SelectedItem.ToString();
+            SetLTQuadDir(dir_txt, 0);
         }
 
         private void LT2QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = LT2QuadDirDropDownMenu.SelectedItem.ToString();
+            SetLTQuadDir(dir_txt, 1);
         }
 
         private void RT1QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = RT1QuadDirDropDownMenu.SelectedItem.ToString();
+            SetRTQuadDir(dir_txt, 0);
         }
 
         private void RT2QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = RT2QuadDirDropDownMenu.SelectedItem.ToString();
+            SetRTQuadDir(dir_txt, 1);
         }
 
         private void LB1QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = LB1QuadDirDropDownMenu.SelectedItem.ToString();
+            SetLBQuadDir(dir_txt, 0);
         }
 
         private void LB2QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = LB2QuadDirDropDownMenu.SelectedItem.ToString();
+            SetLBQuadDir(dir_txt, 1);
         }
 
         private void RB1QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = RB1QuadDirDropDownMenu.SelectedItem.ToString();
+            SetRBQuadDir(dir_txt, 0);
         }
 
         private void RB2QuadDirChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            string dir_txt = RB2QuadDirDropDownMenu.SelectedItem.ToString();
+            SetRBQuadDir(dir_txt, 1);
         }
 
         private void KeyDownHandler(object sender, KeyEventArgs e)

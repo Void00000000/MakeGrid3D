@@ -55,8 +55,8 @@ namespace MakeGrid3D
             }
         }
 
-        private List<Tuple<float, int>> aspect_ratios = new List<Tuple<float, int>>();
-        private bool calcAROnly = Default.smartMerge;
+        public List<Tuple<float, int>> aspect_ratios = new List<Tuple<float, int>>();
+        public bool calcAROnly = Default.smartMerge;
 
         public int NodeI { get; set; } = 1;
         public int NodeJ { get; set; } = 1;
@@ -74,13 +74,7 @@ namespace MakeGrid3D
 
         // По приоритету (от высшего к низшему ^ слева направо)
         public Quadrant[] Quadrants = { Quadrant.RightTop, Quadrant.LeftTop, Quadrant.LeftBottom, Quadrant.RightBottom };
-        public Dictionary<Quadrant, Direction[]> Directions = new Dictionary<Quadrant, Direction[]>()
-        {
-            { Quadrant.RightTop, new Direction[]{Direction.Right, Direction.Top} },
-            { Quadrant.LeftTop, new Direction[]{Direction.Left, Direction.Top} },
-            { Quadrant.LeftBottom, new Direction[]{Direction.Left, Direction.Bottom} },
-            { Quadrant.RightBottom, new Direction[]{Direction.Right, Direction.Bottom} }
-        };
+        public Dictionary<Quadrant, Direction[]> Directions = new Dictionary<Quadrant, Direction[]>(Default.Directions);
         public int DirIndex = 0;
         public int QuadIndex = 0;
         public IrregularGridMaker(IGrid grid)
@@ -118,7 +112,8 @@ namespace MakeGrid3D
             End = false;
             if (aspect_ratios != null) aspect_ratios.Clear();
             if (smartMerge) calcAROnly = true; else calcAROnly = false;
-        }
+            Directions = new Dictionary<Quadrant, Direction[]>(Default.Directions);
+    }
 
         // TODO: В GridState нет инфы связанной с SmartMerge
         public void Set(GridState gridState)
@@ -135,6 +130,9 @@ namespace MakeGrid3D
             NodeK = gridState.NodeK;
             QuadIndex = gridState.QuadIndex;
             DirIndex = gridState.DirIndex;
+            smartMerge = gridState.smartMerge;
+            aspect_ratios = new List<Tuple<float, int>>(gridState.aspect_ratios);
+            calcAROnly = gridState.calcAROnly;
             End = gridState.End;
         }
 
@@ -636,6 +634,8 @@ namespace MakeGrid3D
                             case Direction.Top:
                                 ProcessNode(Direction.Top, Direction.Right, IJ_new, ref merged);
                                 break;
+                            case Direction.None:
+                                DirIndex++; break;
                         }
                         break;
 
@@ -648,6 +648,8 @@ namespace MakeGrid3D
                             case Direction.Top:
                                 ProcessNode(Direction.Top, Direction.Left, IJ_new, ref merged);
                                 break;
+                            case Direction.None:
+                                DirIndex++; break;
                         }
                         break;
 
@@ -660,6 +662,8 @@ namespace MakeGrid3D
                             case Direction.Bottom:
                                 ProcessNode(Direction.Bottom, Direction.Left, IJ_new, ref merged);
                                 break;
+                            case Direction.None:
+                                DirIndex++; break;
                         }
                         break;
 
@@ -672,8 +676,22 @@ namespace MakeGrid3D
                             case Direction.Bottom:
                                 ProcessNode(Direction.Bottom, Direction.Right, IJ_new, ref merged);
                                 break;
+                            case Direction.None:
+                                DirIndex++; break;
                         }
                         break;
+                }
+                if (DirIndex >= 2)
+                {
+                    DirIndex = 0;
+                    QuadIndex++;
+                    if (QuadIndex >= 4)
+                    {
+                        QuadIndex = 0;
+                        End = true;
+                    }
+                    I = NodeI; J = NodeJ;
+                    MidI = NodeI; MidJ = NodeJ;
                 }
             }
         }
@@ -785,25 +803,26 @@ namespace MakeGrid3D
             switch (Quadrants[QuadIndex])
             {
                 case Quadrant.LeftTop:
-                    info = "| Левая-верхняя четверть"; break;
+                    info = "Левая-верхняя четверть"; break;
                 case Quadrant.RightTop:
-                    info = "| Правая-верхняя четверть"; break;
+                    info = "Правая-верхняя четверть"; break;
                 case Quadrant.LeftBottom:
-                    info = "| Левая-нижняя четверть"; break;
+                    info = "Левая-нижняя четверть"; break;
                 case Quadrant.RightBottom:
-                    info = "| Правая-нижняя четверть"; break;
+                    info = "Правая-нижняя четверть"; break;
             }
-            switch (Directions[Quadrants[QuadIndex]][DirIndex])
-            {
-                case Direction.Left:
-                    info += "| Обход влево"; break;
-                case Direction.Right:
-                    info += "| Обход вправо"; break;
-                case Direction.Top:
-                    info += "| Обход вверх"; break;
-                case Direction.Bottom:
-                    info += "| Обход вниз"; break;
-            }
+            info += " | Очередь: " + DirIndex;
+            //switch (Directions[Quadrants[QuadIndex]][DirIndex])
+            //{
+            //    case Direction.Left:
+            //        info += " | Обход влево"; break;
+            //    case Direction.Right:
+            //        info += " | Обход вправо"; break;
+            //    case Direction.Top:
+            //        info += " | Обход вверх"; break;
+            //    case Direction.Bottom:
+            //        info += " | Обход вниз"; break;
+            //}
             return info;
         }
     }
