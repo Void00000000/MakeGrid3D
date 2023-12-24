@@ -489,9 +489,49 @@
                         </Grid>
                         </ScrollViewer>
                     </TabItem>
+
+                    <TabItem Header="Решаетель">
+                        <Grid Margin="10 10 10 0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="10 10 10 0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Margin="0 0 0 10" Orientation="Horizontal">
+                                    <TextBlock Text="№ подобласти: "/>
+                                    <ComboBox Name="FEMSubAreaNumDownMenu" SelectionChanged="FEMSubAreaNumChanged" Margin="0 0 25 0"/>
+                                </StackPanel>
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="F =  " Grid.Row="0" Grid.Column="0"/>
+                                    <TextBox Name = "FInput" Grid.Row="0" Width="100" Grid.Column="1"/>
+                                    <TextBlock Text="Lambda =  " Grid.Row="1" Grid.Column="0"/>
+                                    <TextBox Name = "LambdaInput" Grid.Row="1" Width="100" Grid.Column="1"/>
+                                    <TextBlock Text="Gamma =  " Grid.Row="2" Grid.Column="0"/>
+                                    <TextBox Name = "GammaInput"  Grid.Row="2" Width="100" Grid.Column="1"/>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
                 </TabControl>
                 <!--Instrument Panel End-->
-                
+
+
+                <!-- Bottom Mini Windows-->
                 <Grid Grid.Row="4" Grid.RowSpan="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>

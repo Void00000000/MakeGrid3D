@@ -13,6 +13,7 @@ using OpenTK.Windowing.Common;
 using System.Windows.Controls;
 using Xceed.Wpf.AvalonDock.Themes;
 using System.Xml.Serialization;
+using MakeGrid3D.FEM;
 
 namespace MakeGrid3D
 {
@@ -66,6 +67,7 @@ namespace MakeGrid3D
 
         bool isQFileLoaded = false;
         List<float> q;
+        Fem fem;
 
         Vector2 lastMousePos;
         bool firstMove = true;
@@ -2018,6 +2020,19 @@ namespace MakeGrid3D
         private void HalfGridClick(object sender, RoutedEventArgs e)
         {
             DoubleOrHalfGrid(true);
+        }
+
+        private void FEMSubAreaNumChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox comboBox = (ComboBox)sender;
+            string subAreaNum_txt = "";
+            if (comboBox != null && comboBox.SelectedItem != null)
+                subAreaNum_txt = comboBox.SelectedItem.ToString();
+            int subAreaNum;
+            if (int.TryParse(subAreaNum_txt, out subAreaNum))
+            {
+                ;
+            }
         }
     }
 }
