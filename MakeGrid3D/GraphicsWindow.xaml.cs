@@ -67,7 +67,6 @@ namespace MakeGrid3D
 
         bool isQFileLoaded = false;
         List<float> q;
-        Fem fem;
 
         Vector2 lastMousePos;
         bool firstMove = true;
@@ -134,6 +133,7 @@ namespace MakeGrid3D
             for (int i = 0; i < renderGrid.Grid.Nmats; i++)
             {
                 SubAreaNumDownMenu.Items.Add($"{i + 1}");
+                FEMSubAreaNumDownMenu.Items.Add($"{i + 1}");
             }
             if (removeQ)
                 RemoveQFile();
@@ -2031,8 +2031,28 @@ namespace MakeGrid3D
             int subAreaNum;
             if (int.TryParse(subAreaNum_txt, out subAreaNum))
             {
-                ;
+                FEMSubAreaColorPicker.SelectedColor = ColorFloatToByte(renderGrid.AreaColors[subAreaNum - 1]);
             }
+        }
+
+        private void BoundaryCondBottomChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void BoundaryCondRightChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void BoundaryCondTopChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void BoundaryCondLeftChanged(object sender, SelectionChangedEventArgs e)
+        {
+
         }
     }
 }
