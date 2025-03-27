@@ -1002,28 +1002,232 @@
                     </TabItem>
 
                     <TabItem Header="Решаетель">
-                        <Grid Margin="10">
+                        <Grid Margin="50,10">
                             <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Top"
-                                Text="№ подобласти: " />
-                            <ComboBox
-                                Name="FEMSubAreaNumDownMenu"
+                            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                <TextBlock Text="№ подобласти: " />
+                                <ComboBox
+                                    x:Name="FEMSubAreaNumDownMenu"
+                                    Height="20"
+                                    Margin="0,0,5,0"
+                                    SelectionChanged="FEMSubAreaNumChanged" />
+                                <Rectangle
+                                    x:Name="FEMSubAreaColorRect"
+                                    Width="20"
+                                    Height="20"
+                                    Fill="Red" />
+                            </StackPanel>
+
+                            <StackPanel
                                 Grid.Column="1"
-                                Height="20"
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal">
+                                <TextBlock Text="λ = " />
+                                <TextBox
+                                    x:Name="FEMLambdaBox"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMLambdaChanged" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="1"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <TextBlock Text="σ = " />
+                                <TextBox
+                                    x:Name="FEMSigmaBox"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMSigmaChanged" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal">
+                                <TextBlock Text="χ = " />
+                                <TextBox
+                                    x:Name="FEMChiBox"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMChiChanged" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="2"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <TextBlock Text="F = " />
+                                <TextBox
+                                    x:Name="FEMFBox"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMFChanged" />
+                            </StackPanel>
+
+                            <TextBlock
+                                Grid.Row="3"
+                                Grid.ColumnSpan="2"
+                                Margin="0,15,0,0"
                                 HorizontalAlignment="Center"
-                                VerticalAlignment="Top"
-                                SelectionChanged="FEMSubAreaNumChanged" />
+                                FontWeight="Bold"
+                                Text="Временная сетка" />
+
+                            <StackPanel
+                                Grid.Row="4"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <TextBlock Text="t0 =    " />
+                                <TextBox
+                                    x:Name="FEMT0Box"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMT0Changed" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="4"
+                                Grid.Column="1"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal">
+                                <TextBlock Text="tn = " />
+                                <TextBox
+                                    x:Name="FEMTnBox"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMTnChanged" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="5"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <TextBlock Text="nt =    " />
+                                <TextBox
+                                    x:Name="FEMNtBox"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMNtChanged" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="5"
+                                Grid.Column="1"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal">
+                                <TextBlock Text="qt = " />
+                                <TextBox
+                                    x:Name="FEMQtBox"
+                                    Width="60"
+                                    Height="20"
+                                    SelectionChanged="FEMQtChanged" />
+                            </StackPanel>
+
+                            <TextBlock
+                                Grid.Row="6"
+                                Grid.ColumnSpan="2"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Center"
+                                FontWeight="Bold"
+                                Text="Краевые условия 1-го рода" />
+
+                            <StackPanel
+                                Grid.Row="7"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Left">
+                                <TextBlock
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    Text="Левая сторона" />
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                    <TextBlock Text="ug1 = " />
+                                    <TextBox
+                                        x:Name="FEM1BCLeftBox"
+                                        Width="60"
+                                        Height="20"
+                                        SelectionChanged="FEM1BCLeftChanged" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="7"
+                                Grid.Column="1"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Right">
+                                <TextBlock
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    Text="Правая сторона" />
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                    <TextBlock Text="ug2 = " />
+                                    <TextBox
+                                        x:Name="FEM1BCRightBox"
+                                        Width="60"
+                                        Height="20"
+                                        SelectionChanged="FEM1BCRightChanged" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="8"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Left">
+                                <TextBlock
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    Text="Нижняя сторона" />
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                    <TextBlock Text="ug3 = " />
+                                    <TextBox
+                                        x:Name="FEM1BCBottomBox"
+                                        Width="60"
+                                        Height="20"
+                                        SelectionChanged="FEM1BCBottomChanged" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="8"
+                                Grid.Column="1"
+                                Margin="0,15,0,0"
+                                HorizontalAlignment="Right">
+                                <TextBlock
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    Text="Верхняя сторона" />
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                    <TextBlock Text="ug4 = " />
+                                    <TextBox
+                                        x:Name="FEM1BCTopBox"
+                                        Width="60"
+                                        Height="20"
+                                        SelectionChanged="FEM1BCTopChanged" />
+                                </StackPanel>
+                            </StackPanel>
                         </Grid>
                     </TabItem>
                 </TabControl>

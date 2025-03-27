@@ -2034,5 +2034,65 @@ namespace MakeGrid3D
                 ;
             }
         }
+
+        private void FEMLambdaChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEMSigmaChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEMChiChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEMFChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEM1BCLeftChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEM1BCRightChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEM1BCTopChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEM1BCBottomChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEMT0Changed(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEMTnChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEMNtChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FEMQtChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
