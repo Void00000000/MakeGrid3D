@@ -1,592 +1,1191 @@
-﻿<Window x:Class="MakeGrid3D.GraphicsWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MakeGrid3D"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:glWpfControl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
-        mc:Ignorable="d"
-        Icon="Images/icon.ico"
-        Title="MakeGrid3D" Height="720" Width="1280"
-        WindowStartupLocation="CenterScreen"
-        ResizeMode="CanResizeWithGrip"
-        Closing="Window_Closing"
-        KeyDown="KeyDownHandler">
+﻿<Window
+    x:Class="MakeGrid3D.GraphicsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:glWpfControl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
+    xmlns:local="clr-namespace:MakeGrid3D"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    Title="MakeGrid3D"
+    Width="1280"
+    Height="720"
+    Closing="Window_Closing"
+    Icon="Images/icon.ico"
+    KeyDown="KeyDownHandler"
+    ResizeMode="CanResizeWithGrip"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0">
-            <MenuItem Header="Новая сетка" Click="CreateNewGridClick"/>
-            <MenuItem Header="Открыть" Click="OpenFileClick"/>
-            <MenuItem Header="Сохранить" Click="SaveFileClick"/>
+            <MenuItem Click="CreateNewGridClick" Header="Новая сетка" />
+            <MenuItem Click="OpenFileClick" Header="Открыть" />
+            <MenuItem Click="SaveFileClick" Header="Сохранить" />
         </Menu>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <glWpfControl:GLWpfControl 
-            x:Name="OpenTkControl" RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
-            Render="OpenTkControl_OnRender" Loaded="OpenTkControl_OnLoad" SizeChanged="OpenTkControl_Resize" MouseMove="OpenTkControl_MouseMove" MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp" MouseRightButtonUp="OpenTkControl_MouseRightButtonUp" MouseWheel="OpenTkControl_MouseWheel" Grid.ColumnSpan="3"/>
+            <glWpfControl:GLWpfControl
+                x:Name="OpenTkControl"
+                Grid.ColumnSpan="3"
+                CanInvokeOnHandledEvents="False"
+                Loaded="OpenTkControl_OnLoad"
+                MouseLeftButtonUp="OpenTkControl_MouseLeftButtonUp"
+                MouseMove="OpenTkControl_MouseMove"
+                MouseRightButtonUp="OpenTkControl_MouseRightButtonUp"
+                MouseWheel="OpenTkControl_MouseWheel"
+                RegisterToEventsDirectly="False"
+                Render="OpenTkControl_OnRender"
+                SizeChanged="OpenTkControl_Resize" />
 
             <Grid Grid.Column="3">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- Instrument Panel -->
-                <TabControl Grid.RowSpan="4" Name="Panel" Grid.Column="3" Background="WhiteSmoke">
+                <!--  Instrument Panel  -->
+                <TabControl
+                    Name="Panel"
+                    Grid.RowSpan="4"
+                    Grid.Column="3"
+                    Background="WhiteSmoke">
                     <TabItem Header="Просмотр">
-                        <Grid Margin="10 10 10 0">
+                        <Grid Margin="10,10,10,0">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <!-- Speed move slider -->
-                            <Grid Grid.Row="0" Margin="10 10 10 0">
+                            <!--  Speed move slider  -->
+                            <Grid Grid.Row="0" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Скорость движения: " Foreground="Black" FontSize="14"/>
-                                <Slider Name = "SpeedMoveSlider" Grid.Column="1" Minimum="0" Maximum="5" ValueChanged="SpeedMoveChanged"/>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Скорость движения: " />
+                                <Slider
+                                    Name="SpeedMoveSlider"
+                                    Grid.Column="1"
+                                    Maximum="5"
+                                    Minimum="0"
+                                    ValueChanged="SpeedMoveChanged" />
                             </Grid>
-                            <!-- Speed zoom slider -->
-                            <Grid Grid.Row="1" Margin="10 10 10 0">
+                            <!--  Speed zoom slider  -->
+                            <Grid Grid.Row="1" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Скорость зума:          " Foreground="Black" FontSize="14"/>
-                                <Slider Name="SpeedZoomSlider" Grid.Column="1" Minimum="0.001" Maximum="0.1" ValueChanged="SpeedZoomChanged"/>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Скорость зума:          " />
+                                <Slider
+                                    Name="SpeedZoomSlider"
+                                    Grid.Column="1"
+                                    Maximum="0.1"
+                                    Minimum="0.001"
+                                    ValueChanged="SpeedZoomChanged" />
                             </Grid>
-                            <!-- Move buttons -->
-                            <Grid Grid.Row="2" Margin="10 10 10 0">
+                            <!--  Move buttons  -->
+                            <Grid Grid.Row="2" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <RepeatButton Grid.Column="0" Click="MoveLeftClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/arrow_left.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="0"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="MoveLeftClick">
+                                    <Image Source="Images/arrow_left.png" />
                                 </RepeatButton>
-                                <RepeatButton Grid.Column="1" Click ="MoveRightClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/arrow_right.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="1"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="MoveRightClick">
+                                    <Image Source="Images/arrow_right.png" />
                                 </RepeatButton>
-                                <RepeatButton Grid.Column="2" Click="MoveDownClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/arrow_down.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="2"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="MoveDownClick">
+                                    <Image Source="Images/arrow_down.png" />
                                 </RepeatButton>
-                                <RepeatButton Grid.Column="3" Click="MoveUpClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/arrow_up.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="3"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="MoveUpClick">
+                                    <Image Source="Images/arrow_up.png" />
                                 </RepeatButton>
-                                <RepeatButton Grid.Column="4" Click="ZoomInClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/zoom_in.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="4"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="ZoomInClick">
+                                    <Image Source="Images/zoom_in.png" />
                                 </RepeatButton>
-                                <RepeatButton Grid.Column="5" Click="ZoomOutClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/zoom_out.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="5"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="ZoomOutClick">
+                                    <Image Source="Images/zoom_out.png" />
                                 </RepeatButton>
                             </Grid>
 
-                            <!-- Rotating -->
-                            <Grid Grid.Row="3" Margin="10 10 10 0">
+                            <!--  Rotating  -->
+                            <Grid Grid.Row="3" Margin="10,10,10,0">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
                                 <Grid Grid.Row="0">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Скорость вращения: " Foreground="Black" FontSize="14"/>
-                                    <Slider Name="SpeedRotateSlider" Grid.Column="1" Minimum="1" Maximum="45" ValueChanged="SpeedRotateChanged"/>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        FontSize="14"
+                                        Foreground="Black"
+                                        Text="Скорость вращения: " />
+                                    <Slider
+                                        Name="SpeedRotateSlider"
+                                        Grid.Column="1"
+                                        Maximum="45"
+                                        Minimum="1"
+                                        ValueChanged="SpeedRotateChanged" />
                                 </Grid>
 
-                                <Grid Grid.Row="1" Margin="0 10 0 0">
+                                <Grid Grid.Row="1" Margin="0,10,0,0">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <RepeatButton Grid.Column="0" Click="RollLeftClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                        <Image Source="Images/rotate_left.png"></Image>
+                                    <RepeatButton
+                                        Grid.Column="0"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="RollLeftClick">
+                                        <Image Source="Images/rotate_left.png" />
                                     </RepeatButton>
-                                    <RepeatButton Grid.Column="1" Click="RollRightClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                        <Image Source="Images/rotate_right.png"></Image>
+                                    <RepeatButton
+                                        Grid.Column="1"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="RollRightClick">
+                                        <Image Source="Images/rotate_right.png" />
                                     </RepeatButton>
-                                    <RepeatButton Grid.Column="2" Click="YawLeftClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                        <Image Source="Images/rotate_around_left.png"></Image>
+                                    <RepeatButton
+                                        Grid.Column="2"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="YawLeftClick">
+                                        <Image Source="Images/rotate_around_left.png" />
                                     </RepeatButton>
-                                    <RepeatButton Grid.Column="3" Click="YawRightClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                        <Image Source="Images/rotate_around_right.png"></Image>
+                                    <RepeatButton
+                                        Grid.Column="3"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="YawRightClick">
+                                        <Image Source="Images/rotate_around_right.png" />
                                     </RepeatButton>
-                                    <RepeatButton Grid.Column="4" Click="PitchTopClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                        <Image Source="Images/rotate_top.png"></Image>
+                                    <RepeatButton
+                                        Grid.Column="4"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="PitchTopClick">
+                                        <Image Source="Images/rotate_top.png" />
                                     </RepeatButton>
-                                    <RepeatButton Grid.Column="5" Click="PitchBottomClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                        <Image Source="Images/rotate_bottom.png"></Image>
+                                    <RepeatButton
+                                        Grid.Column="5"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="PitchBottomClick">
+                                        <Image Source="Images/rotate_bottom.png" />
                                     </RepeatButton>
                                 </Grid>
                             </Grid>
-                            <!-- Separator: Rotating|Replication -->
-                            <Separator Grid.Row="4" Margin="10 10 10 0" Background="Black">
+                            <!--  Separator: Rotating|Replication  -->
+                            <Separator
+                                Grid.Row="4"
+                                Margin="10,10,10,0"
+                                Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
-                            <!-- Replicate cross section -->
-                            <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="10 10 10 0">
-                                <TextBlock Text="z0: " Margin="0,5,5,0" />
-                                <TextBox Name="Z0Block" Width="20" Height="20" Margin="0,0,5,0"/>
-                                <TextBlock Text="zn: " Margin="0,5,5,0" />
-                                <TextBox Name="ZnBlock" Width="20" Height="20" Margin="0,0,5,0"/>
-                                <TextBlock Text="nz: " Margin="0,5,5,0" />
-                                <TextBox Name="NZBlock" Width="20" Height="20" Margin="0,0,5,0"/>
-                                <TextBlock Text="qz: " Margin="0,5,5,0" />
-                                <TextBox Name="QZBlock" Width="20" Height="20" Margin="0,0,5,0"/>
-                                <Button Click="ReplicateCrossSectionsClick" Content="-> 3D" Width="65" Height="20" HorizontalAlignment="Right" Margin="10,3,0,0"/>
+                            <!--  Replicate cross section  -->
+                            <StackPanel
+                                Grid.Row="5"
+                                Margin="10,10,10,0"
+                                Orientation="Horizontal">
+                                <TextBlock Margin="0,5,5,0" Text="z0: " />
+                                <TextBox
+                                    Name="Z0Block"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,5,0" />
+                                <TextBlock Margin="0,5,5,0" Text="zn: " />
+                                <TextBox
+                                    Name="ZnBlock"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,5,0" />
+                                <TextBlock Margin="0,5,5,0" Text="nz: " />
+                                <TextBox
+                                    Name="NZBlock"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,5,0" />
+                                <TextBlock Margin="0,5,5,0" Text="qz: " />
+                                <TextBox
+                                    Name="QZBlock"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,5,0" />
+                                <Button
+                                    Width="65"
+                                    Height="20"
+                                    Margin="10,3,0,0"
+                                    HorizontalAlignment="Right"
+                                    Click="ReplicateCrossSectionsClick"
+                                    Content="-&gt; 3D" />
                             </StackPanel>
-                            <!-- Separator: Replication|CrossSections -->
-                            <Separator Grid.Row="6" Margin="10 10 10 0" Background="Black">
+                            <!--  Separator: Replication|CrossSections  -->
+                            <Separator
+                                Grid.Row="6"
+                                Margin="10,10,10,0"
+                                Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
-                            <!-- Cross section -->
-                            <Grid Grid.Row="7" Margin="10 10 10 0">
+                            <!--  Cross section  -->
+                            <Grid Grid.Row="7" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Плоскость сечения: " Foreground="Black" FontSize="14"/>
-                                <ComboBox Grid.Column="1" Name="PlaneDropDownMenu" SelectionChanged="PlaneChanged" Margin="0,0,5,0">
-                                    <ComboBoxItem Content="XY"/>
-                                    <ComboBoxItem Content="XZ"/>
-                                    <ComboBoxItem Content="YZ"/>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Плоскость сечения: " />
+                                <ComboBox
+                                    Name="PlaneDropDownMenu"
+                                    Grid.Column="1"
+                                    Margin="0,0,5,0"
+                                    SelectionChanged="PlaneChanged">
+                                    <ComboBoxItem Content="XY" />
+                                    <ComboBoxItem Content="XZ" />
+                                    <ComboBoxItem Content="YZ" />
                                 </ComboBox>
-                                <RepeatButton Grid.Column="2" Click="PrevPlaneCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
-                                    <Image Source="Images/tri_left.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="2"
+                                    Width="20"
+                                    Height="20"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="PrevPlaneCLick">
+                                    <Image Source="Images/tri_left.png" />
                                 </RepeatButton>
-                                <RepeatButton Grid.Column="3" Click="NextPlaneCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,5,0">
-                                    <Image Source="Images/tri_right.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="3"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,5,0"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="NextPlaneCLick">
+                                    <Image Source="Images/tri_right.png" />
                                 </RepeatButton>
-                                <TextBlock Grid.Column="4" Name="CurrentPlaneBlock" Margin="0,2,0,0"/>
-                                <TextBlock Grid.Column="5" Name="CurrentPlaneSecBlock" Margin="0,2,0,0"/>
+                                <TextBlock
+                                    Name="CurrentPlaneBlock"
+                                    Grid.Column="4"
+                                    Margin="0,2,0,0" />
+                                <TextBlock
+                                    Name="CurrentPlaneSecBlock"
+                                    Grid.Column="5"
+                                    Margin="0,2,0,0" />
                             </Grid>
-                            <Button Grid.Row="8" Content="Вернуться в 3D" Click="Return3DClick" HorizontalAlignment="Left" Margin="10 10 10 0"/>
-                            <Button Grid.Row="8" Content="Построить сечение" Click="DrawCrossSectionClick" HorizontalAlignment="Right" Margin="10 10 10 0"/>
-                            <!-- Separator: CrossSection|Elem Selector -->
-                            <Separator Grid.Row="9" Margin="10 10 10 0" Background="Black">
+                            <Button
+                                Grid.Row="8"
+                                Margin="10,10,10,0"
+                                HorizontalAlignment="Left"
+                                Click="Return3DClick"
+                                Content="Вернуться в 3D" />
+                            <Button
+                                Grid.Row="8"
+                                Margin="10,10,10,0"
+                                HorizontalAlignment="Right"
+                                Click="DrawCrossSectionClick"
+                                Content="Построить сечение" />
+                            <!--  Separator: CrossSection|Elem Selector  -->
+                            <Separator
+                                Grid.Row="9"
+                                Margin="10,10,10,0"
+                                Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
-                            <!-- Elem Selector -->
-                            <Grid Grid.Row="10" Margin="10 10 10 0">
+                            <!--  Elem Selector  -->
+                            <Grid Grid.Row="10" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Name ="ElemNumBlock" Text="№ элемента: |" Foreground="Black" FontSize="14" Margin="0,0,5,0"/>
-                                <TextBlock Grid.Column="1" Text="Шаг: " Foreground="Black" FontSize="14" Margin="0,0,5,0"/>
-                                <TextBox Grid.Column="2" Name="StepSelectorInput" Text="1" Margin="0,0,5,0" Width="25"/>
-                                <RepeatButton Grid.Column="3" Click="PrevElemCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
-                                    <Image Source="Images/tri_left.png"></Image>
+                                <TextBlock
+                                    Name="ElemNumBlock"
+                                    Grid.Column="0"
+                                    Margin="0,0,5,0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="№ элемента: |" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Margin="0,0,5,0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Шаг: " />
+                                <TextBox
+                                    Name="StepSelectorInput"
+                                    Grid.Column="2"
+                                    Width="25"
+                                    Margin="0,0,5,0"
+                                    Text="1" />
+                                <RepeatButton
+                                    Grid.Column="3"
+                                    Width="20"
+                                    Height="20"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="PrevElemCLick">
+                                    <Image Source="Images/tri_left.png" />
                                 </RepeatButton>
-                                <RepeatButton Grid.Column="4" Click="NextElemCLick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,5,0">
-                                    <Image Source="Images/tri_right.png"></Image>
+                                <RepeatButton
+                                    Grid.Column="4"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,5,0"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="NextElemCLick">
+                                    <Image Source="Images/tri_right.png" />
                                 </RepeatButton>
-                                <Button Grid.Column="5" Click="ResetElemClick" Content="Сброс"/>
+                                <Button
+                                    Grid.Column="5"
+                                    Click="ResetElemClick"
+                                    Content="Сброс" />
                             </Grid>
-                            <!-- Separator: Elem Selector|Reset -->
-                            <Separator Grid.Row="11" Margin="10 10 10 0" Background="Black">
+                            <!--  Separator: Elem Selector|Reset  -->
+                            <Separator
+                                Grid.Row="11"
+                                Margin="10,10,10,0"
+                                Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2" />
                                 </Separator.RenderTransform>
                             </Separator>
-                            <!-- Reset -->
-                            <Button Grid.Row="12" Content="Сбросить положение по умолчанию" Click="ResetPositionClick" HorizontalAlignment="Center" Margin="0 10 0 0"/>
-                            <!-- Camera -->
-                            <TextBlock Grid.Row="13" Name="CameraPositionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
-                            <TextBlock Grid.Row="14" Name="CameraDirectionBlock" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <!--  Reset  -->
+                            <Button
+                                Grid.Row="12"
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Center"
+                                Click="ResetPositionClick"
+                                Content="Сбросить положение по умолчанию" />
+                            <!--  Camera  -->
+                            <TextBlock
+                                Name="CameraPositionBlock"
+                                Grid.Row="13"
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Center" />
+                            <TextBlock
+                                Name="CameraDirectionBlock"
+                                Grid.Row="14"
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Center" />
                         </Grid>
                     </TabItem>
 
-                    <!-- Settings tab -->
+                    <!--  Settings tab  -->
                     <TabItem Header="Настройки">
-                        <Grid Margin="10 10 10 0">
+                        <Grid Margin="10,10,10,0">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <!-- Node size row -->
-                            <Grid Grid.Row="0" Margin="10 10 10 0">
+                            <!--  Node size row  -->
+                            <Grid Grid.Row="0" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Размер узлов (px):  " Foreground="Black" FontSize="14"/>
-                                <Slider Name="PointsSizeSlider" Grid.Column="1" Minimum="1" Maximum="50" ValueChanged="PointsSizeChanged"/>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Размер узлов (px):  " />
+                                <Slider
+                                    Name="PointsSizeSlider"
+                                    Grid.Column="1"
+                                    Maximum="50"
+                                    Minimum="1"
+                                    ValueChanged="PointsSizeChanged" />
                             </Grid>
 
-                            <!-- Lines size row -->
-                            <Grid Grid.Row="1" Margin="10 10 10 0">
+                            <!--  Lines size row  -->
+                            <Grid Grid.Row="1" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Толщина линий (px): " Foreground="Black" FontSize="14"/>
-                                <Slider Name="LinesSizeSlider" Grid.Column="1" Minimum="1" Maximum="15" ValueChanged="LinesSizeChanged"/>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Толщина линий (px): " />
+                                <Slider
+                                    Name="LinesSizeSlider"
+                                    Grid.Column="1"
+                                    Maximum="15"
+                                    Minimum="1"
+                                    ValueChanged="LinesSizeChanged" />
                             </Grid>
 
-                            <!-- Color pickers -->
-                            <Grid Grid.Row="2" Margin="10 10 10 0">
+                            <!--  Color pickers  -->
+                            <Grid Grid.Row="2" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Цвет узлов: " Foreground="Black" FontSize="14"/>
-                                <xctk:ColorPicker Name="PointsColorPicker" Grid.Column="1" Width="50" SelectedColorChanged="PointsColorChanged"></xctk:ColorPicker>
-                                <TextBlock Grid.Column="2" Text="Цвет линий: " Foreground="Black" FontSize="14" Margin="10 0 0 0"/>
-                                <xctk:ColorPicker Name="LinesColorPicker" Grid.Column="3" Width="50" SelectedColorChanged="LinesColorChanged"></xctk:ColorPicker>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Цвет узлов: " />
+                                <xctk:ColorPicker
+                                    Name="PointsColorPicker"
+                                    Grid.Column="1"
+                                    Width="50"
+                                    SelectedColorChanged="PointsColorChanged" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Margin="10,0,0,0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Цвет линий: " />
+                                <xctk:ColorPicker
+                                    Name="LinesColorPicker"
+                                    Grid.Column="3"
+                                    Width="50"
+                                    SelectedColorChanged="LinesColorChanged" />
                             </Grid>
 
-                            <Grid Grid.Row="3" Margin="10 10 10 0">
+                            <Grid Grid.Row="3" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Цвет фона:  " Foreground="Black" FontSize="14"/>
-                                <xctk:ColorPicker Name="BgColorPicker" Grid.Column="1" Width="50" SelectedColorChanged="BgColorChanged"></xctk:ColorPicker>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Цвет фона:  " />
+                                <xctk:ColorPicker
+                                    Name="BgColorPicker"
+                                    Grid.Column="1"
+                                    Width="50"
+                                    SelectedColorChanged="BgColorChanged" />
                             </Grid>
 
-                            <!-- Wirefrrame mode -->
-                            <Grid Grid.Row="4" Margin="10 10 10 0">
+                            <!--  Wirefrrame mode  -->
+                            <Grid Grid.Row="4" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Каркасный режим: " Foreground="Black"/>
-                                <CheckBox Name="WiremodeCheckBox" Grid.Column="1" Checked="WiremodeChecked" Unchecked="WiremodeUnChecked"/>
-                                <TextBlock Grid.Column="2" Text="Отображать сетку: " Foreground="Black"/>
-                                <CheckBox Name="ShowGridCheckBox" Grid.Column="3" Checked="ShowGridChecked" Unchecked="ShowGridUnChecked"/>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Foreground="Black"
+                                    Text="Каркасный режим: " />
+                                <CheckBox
+                                    Name="WiremodeCheckBox"
+                                    Grid.Column="1"
+                                    Checked="WiremodeChecked"
+                                    Unchecked="WiremodeUnChecked" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Foreground="Black"
+                                    Text="Отображать сетку: " />
+                                <CheckBox
+                                    Name="ShowGridCheckBox"
+                                    Grid.Column="3"
+                                    Checked="ShowGridChecked"
+                                    Unchecked="ShowGridUnChecked" />
                             </Grid>
 
-                            <!-- Separator: Settings|Change SubAreas -->
-                            <Separator Grid.Row="5" Margin="10 10 10 0" Background="Black">
+                            <!--  Separator: Settings|Change SubAreas  -->
+                            <Separator
+                                Grid.Row="5"
+                                Margin="10,10,10,0"
+                                Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
 
-                            <!-- Change SubAreas -->
-                            <Grid Grid.Row="6" Margin="10 10 10 0">
+                            <!--  Change SubAreas  -->
+                            <Grid Grid.Row="6" Margin="10,10,10,0">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <StackPanel Grid.Row="0" Margin="0 0 0 10" Orientation="Horizontal">
-                                    <TextBlock Text="№ подобласти: "/>
-                                    <ComboBox Name="SubAreaNumDownMenu" SelectionChanged="SubAreaNumChanged" Margin="0 0 25 0"/>
-                                    <TextBlock Text="Ось: "/>
+                                <StackPanel
+                                    Grid.Row="0"
+                                    Margin="0,0,0,10"
+                                    Orientation="Horizontal">
+                                    <TextBlock Text="№ подобласти: " />
+                                    <ComboBox
+                                        Name="SubAreaNumDownMenu"
+                                        Margin="0,0,25,0"
+                                        SelectionChanged="SubAreaNumChanged" />
+                                    <TextBlock Text="Ось: " />
                                     <ComboBox Name="SubAreaAxisDownMenu" Margin="0,0,10,0">
-                                        <ComboBoxItem Content="X"/>
-                                        <ComboBoxItem Content="Y"/>
-                                        <ComboBoxItem Content="Z"/>
+                                        <ComboBoxItem Content="X" />
+                                        <ComboBoxItem Content="Y" />
+                                        <ComboBoxItem Content="Z" />
                                     </ComboBox>
-                                    <Button Content="x2" Click="DoubleGridClick" Width="25" Margin="0 0 10 0"/>
-                                    <Button Content="/2" Click="HalfGridClick" Width="25"/>
+                                    <Button
+                                        Width="25"
+                                        Margin="0,0,10,0"
+                                        Click="DoubleGridClick"
+                                        Content="x2" />
+                                    <Button
+                                        Width="25"
+                                        Click="HalfGridClick"
+                                        Content="/2" />
                                 </StackPanel>
                                 <StackPanel Grid.Row="1" Orientation="Horizontal">
-                                    <TextBlock Text="Цвет подобласти: "/>
-                                    <xctk:ColorPicker Name="SubAreaColorPicker" SelectedColorChanged="SubAreaColorChanged" Width="50"></xctk:ColorPicker>
+                                    <TextBlock Text="Цвет подобласти: " />
+                                    <xctk:ColorPicker
+                                        Name="SubAreaColorPicker"
+                                        Width="50"
+                                        SelectedColorChanged="SubAreaColorChanged" />
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Separator: Change SubAreas|Uploading q vector -->
-                            <Separator Grid.Row="7" Margin="10 10 10 0" Background="Black">
+                            <!--  Separator: Change SubAreas|Uploading q vector  -->
+                            <Separator
+                                Grid.Row="7"
+                                Margin="10,10,10,0"
+                                Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
 
-                            <!-- Uploading q vector -->
-                            <Grid Grid.Row="8" Margin="10 10 10 0">
+                            <!--  Uploading q vector  -->
+                            <Grid Grid.Row="8" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <Border BorderThickness="1" BorderBrush="Black" Width="150" Height="20" Margin="0,0,5,0">
-                                    <TextBlock Grid.Column="0" Text="Файл не загружен" Name="QFileNameBlock" Width="150" Height="25" Background="White"/>
+                                <Border
+                                    Width="150"
+                                    Height="20"
+                                    Margin="0,0,5,0"
+                                    BorderBrush="Black"
+                                    BorderThickness="1">
+                                    <TextBlock
+                                        Name="QFileNameBlock"
+                                        Grid.Column="0"
+                                        Width="150"
+                                        Height="25"
+                                        Background="White"
+                                        Text="Файл не загружен" />
                                 </Border>
-                                <Button Grid.Column="1" Click="UploadQFileClick" Background="Transparent" Width="35" Height="35" Margin="0,0,5,0" BorderThickness="0">
-                                    <Image Source="Images/upload.png"></Image>
+                                <Button
+                                    Grid.Column="1"
+                                    Width="35"
+                                    Height="35"
+                                    Margin="0,0,5,0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="UploadQFileClick">
+                                    <Image Source="Images/upload.png" />
                                 </Button>
-                                <Button Grid.Column="2" Click="RemoveQFileClick" Background="Transparent" Width="40" Height="40" BorderThickness="0">
-                                    <Image Source="Images/cancel.png"></Image>
+                                <Button
+                                    Grid.Column="2"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="RemoveQFileClick">
+                                    <Image Source="Images/cancel.png" />
                                 </Button>
                             </Grid>
-                            <CheckBox Grid.Row="9" Name="ShowQGradientCheckbox" Content="Визуализировать вектор q" Checked="ShowQGradientChecked" Unchecked="ShowQGradientUnChecked" Margin="10 10 10 0"/>
-                            <Grid Grid.Row="10" Margin="10 10 10 0">
+                            <CheckBox
+                                Name="ShowQGradientCheckbox"
+                                Grid.Row="9"
+                                Margin="10,10,10,0"
+                                Checked="ShowQGradientChecked"
+                                Content="Визуализировать вектор q"
+                                Unchecked="ShowQGradientUnChecked" />
+                            <Grid Grid.Row="10" Margin="10,10,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Цвет 1: " Foreground="Black" FontSize="14"/>
-                                <xctk:ColorPicker Name="MinColorPicker" Grid.Column="1" Width="50" SelectedColorChanged="MinColorChanged"></xctk:ColorPicker>
-                                <TextBlock Grid.Column="2" Text="Цвет 2: " Foreground="Black" FontSize="14" Margin="10 0 0 0"/>
-                                <xctk:ColorPicker Name="MaxColorPicker" Grid.Column="3" Width="50" SelectedColorChanged="MaxColorChanged"></xctk:ColorPicker>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Цвет 1: " />
+                                <xctk:ColorPicker
+                                    Name="MinColorPicker"
+                                    Grid.Column="1"
+                                    Width="50"
+                                    SelectedColorChanged="MinColorChanged" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Margin="10,0,0,0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Цвет 2: " />
+                                <xctk:ColorPicker
+                                    Name="MaxColorPicker"
+                                    Grid.Column="3"
+                                    Width="50"
+                                    SelectedColorChanged="MaxColorChanged" />
                             </Grid>
 
-                            <!-- Separator: Uploading q vector|Reset Settings -->
-                            <Separator Grid.Row="11" Margin="10 10 10 0" Background="Black">
+                            <!--  Separator: Uploading q vector|Reset Settings  -->
+                            <Separator
+                                Grid.Row="11"
+                                Margin="10,10,10,0"
+                                Background="Black">
                                 <Separator.RenderTransform>
                                     <ScaleTransform ScaleY="2.5" />
                                 </Separator.RenderTransform>
                             </Separator>
 
-                            <!-- Reset Settings -->
-                            <Button Grid.Row="12" Click="ResetSettingsClick" Content="Сбросить настройки по умолчанию" HorizontalAlignment="Center" Margin="0 10 0 0"/>
+                            <!--  Reset Settings  -->
+                            <Button
+                                Grid.Row="12"
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Center"
+                                Click="ResetSettingsClick"
+                                Content="Сбросить настройки по умолчанию" />
                         </Grid>
                     </TabItem>
 
-                    <!--Unstructed grid-->
+                    <!--  Unstructed grid  -->
                     <TabItem Header="Нерегулярная сетка">
                         <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Visible">
-                        <Grid Margin="10 10 10 0">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid Grid.Row="0" Margin="10 10 10 0" HorizontalAlignment="Center">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Отображать удалённые линии: " Foreground="Black"/>
-                                <CheckBox Name="DrawRemovedLinesCheckBox" Grid.Column="1" Checked="DrawRemovedLinesChecked" Unchecked="DrawRemovedLinesUnChecked"/>
-                            </Grid>
-                            <Grid Grid.Row="1" Margin="10 10 10 0" HorizontalAlignment="Center">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Max W:H " Foreground="Black" FontSize="14"/>
-                                <TextBox Name = "WidthInput" Grid.Column="1" Width="25"/>
-                                <TextBlock Grid.Column="2" Text=" : " Foreground="Black" FontSize="14"/>
-                                <TextBox Name = "HeightInput" Grid.Column="3" Width="25" Margin="0 0 10 0"/>
-                                <Button Grid.Column="4" Content="  Ok  " Click="MaxARClick"/>
-                            </Grid>
-                            <Button Grid.Row="2" Click="UndoClick" Background="Transparent" Margin="10 10 10 0" BorderThickness="1" Width="40" Height="40" HorizontalAlignment="Left">
-                                <Image Source="Images/undo.png"></Image>
-                            </Button>
-                            <Grid Grid.Row="2" HorizontalAlignment="Center" Margin="10 10 10 0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <RepeatButton Grid.Column="0" Click="RemoveElemsClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/single_arrow.png"></Image>
-                                </RepeatButton>
-                                <Button Grid.Column="1" Click="RemoveAllElemsClick" Background="Transparent" BorderThickness="1" Width="40" Height="40">
-                                    <Image Source="Images/double_arrow.png"></Image>
+                            <Grid Margin="10,10,10,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid
+                                    Grid.Row="0"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Foreground="Black"
+                                        Text="Отображать удалённые линии: " />
+                                    <CheckBox
+                                        Name="DrawRemovedLinesCheckBox"
+                                        Grid.Column="1"
+                                        Checked="DrawRemovedLinesChecked"
+                                        Unchecked="DrawRemovedLinesUnChecked" />
+                                </Grid>
+                                <Grid
+                                    Grid.Row="1"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        FontSize="14"
+                                        Foreground="Black"
+                                        Text="Max W:H " />
+                                    <TextBox
+                                        Name="WidthInput"
+                                        Grid.Column="1"
+                                        Width="25" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        FontSize="14"
+                                        Foreground="Black"
+                                        Text=" : " />
+                                    <TextBox
+                                        Name="HeightInput"
+                                        Grid.Column="3"
+                                        Width="25"
+                                        Margin="0,0,10,0" />
+                                    <Button
+                                        Grid.Column="4"
+                                        Click="MaxARClick"
+                                        Content="  Ok  " />
+                                </Grid>
+                                <Button
+                                    Grid.Row="2"
+                                    Width="40"
+                                    Height="40"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Left"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="UndoClick">
+                                    <Image Source="Images/undo.png" />
                                 </Button>
+                                <Grid
+                                    Grid.Row="2"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <RepeatButton
+                                        Grid.Column="0"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="RemoveElemsClick">
+                                        <Image Source="Images/single_arrow.png" />
+                                    </RepeatButton>
+                                    <Button
+                                        Grid.Column="1"
+                                        Width="40"
+                                        Height="40"
+                                        Background="Transparent"
+                                        BorderThickness="1"
+                                        Click="RemoveAllElemsClick">
+                                        <Image Source="Images/double_arrow.png" />
+                                    </Button>
+                                </Grid>
+                                <Button
+                                    Grid.Row="2"
+                                    Width="40"
+                                    Height="40"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Right"
+                                    Background="Transparent"
+                                    BorderThickness="1"
+                                    Click="DoClick">
+                                    <Image Source="Images/do.png" />
+                                </Button>
+                                <TextBlock
+                                    Name="CurrentUnstructedNodeBlock1"
+                                    Grid.Row="3"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center" />
+                                <TextBlock
+                                    Name="CurrentUnstructedNodeBlock2"
+                                    Grid.Row="4"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center" />
+                                <CheckBox
+                                    Name="SmartMergeCheckBox"
+                                    Grid.Row="5"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center"
+                                    Checked="SmartMergeChecked"
+                                    Content="Умное объединение"
+                                    Unchecked="SmartMergeUnChecked" />
+                                <CheckBox
+                                    Name="ShowCurrentUnstructedNodeCheckBox"
+                                    Grid.Row="6"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center"
+                                    Checked="ShowCurrentUnstructedNodeChecked"
+                                    Content="Отображать положение узла"
+                                    Unchecked="ShowCurrentUnstructedNodeUnChecked" />
+                                <xctk:ColorPicker
+                                    Name="CurrentUnstructedNodeColorPicker"
+                                    Grid.Row="7"
+                                    Width="50"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center"
+                                    SelectedColorChanged="CurrentUnstructedNodeColorChanged" />
+                                <ComboBox
+                                    Name="LT1QuadDirDropDownMenu"
+                                    Grid.Row="8"
+                                    Width="110"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Left"
+                                    SelectionChanged="LT1QuadDirChanged" />
+                                <ComboBox
+                                    Name="LT2QuadDirDropDownMenu"
+                                    Grid.Row="9"
+                                    Width="110"
+                                    Margin="10,10,10,10"
+                                    HorizontalAlignment="Left"
+                                    SelectionChanged="LT2QuadDirChanged" />
+                                <ComboBox
+                                    Name="RT1QuadDirDropDownMenu"
+                                    Grid.Row="8"
+                                    Width="110"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Right"
+                                    SelectionChanged="RT1QuadDirChanged" />
+                                <ComboBox
+                                    Name="RT2QuadDirDropDownMenu"
+                                    Grid.Row="9"
+                                    Width="110"
+                                    Margin="10,10,10,10"
+                                    HorizontalAlignment="Right"
+                                    SelectionChanged="RT2QuadDirChanged" />
+                                <ComboBox
+                                    Name="LB1QuadDirDropDownMenu"
+                                    Grid.Row="10"
+                                    Width="110"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Left"
+                                    SelectionChanged="LB1QuadDirChanged" />
+                                <ComboBox
+                                    Name="LB2QuadDirDropDownMenu"
+                                    Grid.Row="11"
+                                    Width="110"
+                                    Margin="10,10,10,10"
+                                    HorizontalAlignment="Left"
+                                    SelectionChanged="LB2QuadDirChanged" />
+                                <ComboBox
+                                    Name="RB1QuadDirDropDownMenu"
+                                    Grid.Row="10"
+                                    Width="110"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Right"
+                                    SelectionChanged="RB1QuadDirChanged" />
+                                <ComboBox
+                                    Name="RB2QuadDirDropDownMenu"
+                                    Grid.Row="11"
+                                    Width="110"
+                                    Margin="10,10,10,10"
+                                    HorizontalAlignment="Right"
+                                    SelectionChanged="RB2QuadDirChanged" />
+                                <Button
+                                    Grid.Row="12"
+                                    Margin="10,10,10,0"
+                                    HorizontalAlignment="Center"
+                                    Click="MakeRegularGridClick"
+                                    Content="Построить регулярную сетку" />
                             </Grid>
-                            <Button Grid.Row="2" Click="DoClick" Background="Transparent" Margin="10 10 10 0" BorderThickness="1" Width="40" Height="40" HorizontalAlignment="Right">
-                                <Image Source="Images/do.png"></Image>
-                            </Button>
-                            <TextBlock Name="CurrentUnstructedNodeBlock1" Grid.Row="3" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <TextBlock Name="CurrentUnstructedNodeBlock2" Grid.Row="4" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <CheckBox Name="SmartMergeCheckBox" Content="Умное объединение" Grid.Row="5" Checked="SmartMergeChecked" Unchecked="SmartMergeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <CheckBox Name="ShowCurrentUnstructedNodeCheckBox" Content="Отображать положение узла" Grid.Row="6" Checked="ShowCurrentUnstructedNodeChecked" Unchecked="ShowCurrentUnstructedNodeUnChecked" Margin="10 10 10 0" HorizontalAlignment="Center"/>
-                            <xctk:ColorPicker Name="CurrentUnstructedNodeColorPicker" Grid.Row="7" Width="50" SelectedColorChanged="CurrentUnstructedNodeColorChanged" HorizontalAlignment="Center" Margin="10 10 10 0"></xctk:ColorPicker>
-                                <ComboBox Grid.Row="8" Name="LT1QuadDirDropDownMenu" SelectionChanged="LT1QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,0"/>
-                                <ComboBox Grid.Row="9" Name="LT2QuadDirDropDownMenu" SelectionChanged="LT2QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,10"/>
-                                <ComboBox Grid.Row="8" Name="RT1QuadDirDropDownMenu" SelectionChanged="RT1QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,0"/>
-                                <ComboBox Grid.Row="9" Name="RT2QuadDirDropDownMenu" SelectionChanged="RT2QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,10"/>
-                                <ComboBox Grid.Row="10" Name="LB1QuadDirDropDownMenu" SelectionChanged="LB1QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,0"/>
-                                <ComboBox Grid.Row="11" Name="LB2QuadDirDropDownMenu" SelectionChanged="LB2QuadDirChanged" Width="110" HorizontalAlignment="Left" Margin="10,10,10,10"/>
-                                <ComboBox Grid.Row="10" Name="RB1QuadDirDropDownMenu" SelectionChanged="RB1QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,0"/>
-                                <ComboBox Grid.Row="11" Name="RB2QuadDirDropDownMenu" SelectionChanged="RB2QuadDirChanged" Width="110" HorizontalAlignment="Right" Margin="10,10,10,10"/>
-                                <Button Grid.Row="12" Click="MakeRegularGridClick" Content="Построить регулярную сетку" HorizontalAlignment="Center" Margin="10 10 10 0"/>
-                        </Grid>
                         </ScrollViewer>
                     </TabItem>
 
                     <TabItem Header="Решаетель">
-                        <Grid Margin="10 10 10 0">
+                        <Grid Margin="10">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
                             </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
 
-                            <Grid Grid.Row="0" Margin="10 10 10 0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <StackPanel Grid.Row="0" Margin="0 0 0 10" Orientation="Horizontal">
-                                    <TextBlock Text="№ подобласти: "/>
-                                    <ComboBox Name="FEMSubAreaNumDownMenu" SelectionChanged="FEMSubAreaNumChanged" Margin="0 0 25 0"/>
-                                </StackPanel>
-                                <Grid Grid.Row="1">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Text="F =  " Grid.Row="0" Grid.Column="0"/>
-                                    <TextBox Name = "FInput" Grid.Row="0" Width="100" Grid.Column="1"/>
-                                    <TextBlock Text="Lambda =  " Grid.Row="1" Grid.Column="0"/>
-                                    <TextBox Name = "LambdaInput" Grid.Row="1" Width="100" Grid.Column="1"/>
-                                    <TextBlock Text="Gamma =  " Grid.Row="2" Grid.Column="0"/>
-                                    <TextBox Name = "GammaInput"  Grid.Row="2" Width="100" Grid.Column="1"/>
-                                </Grid>
-                            </Grid>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Text="№ подобласти: " />
+                            <ComboBox
+                                Name="FEMSubAreaNumDownMenu"
+                                Grid.Column="1"
+                                Height="20"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                SelectionChanged="FEMSubAreaNumChanged" />
                         </Grid>
                     </TabItem>
                 </TabControl>
-                <!--Instrument Panel End-->
+                <!--  Instrument Panel End  -->
 
 
-                <!-- Bottom Mini Windows-->
+                <!--  Bottom Mini Windows  -->
                 <Grid Grid.Row="4" Grid.RowSpan="2">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <glWpfControl:GLWpfControl RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
-                     x:Name="SelectedElemOpenTkControl" Grid.RowSpan="2" Grid.Column="0" Render="SelectedElemOpenTkControl_OnRender" SizeChanged="SelectedElemOpenTkControl_Resize"/>
-                    <ScrollViewer Grid.Row="0" Grid.Column="1" CanContentScroll="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+                    <glWpfControl:GLWpfControl
+                        x:Name="SelectedElemOpenTkControl"
+                        Grid.RowSpan="2"
+                        Grid.Column="0"
+                        CanInvokeOnHandledEvents="False"
+                        RegisterToEventsDirectly="False"
+                        Render="SelectedElemOpenTkControl_OnRender"
+                        SizeChanged="SelectedElemOpenTkControl_Resize" />
+                    <ScrollViewer
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        CanContentScroll="True"
+                        HorizontalScrollBarVisibility="Visible"
+                        VerticalScrollBarVisibility="Visible">
                         <Grid Grid.Row="0" Grid.Column="1">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Name="BlockSubAreaNum" Grid.Row="0" Grid.ColumnSpan="2" Text=""/>
-                            <TextBlock Name="BlockNodesNum1" Grid.Row="1" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords1" Grid.Row="1" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum2" Grid.Row="2" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords2" Grid.Row="2" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum3" Grid.Row="3" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords3" Grid.Row="3" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum4" Grid.Row="4" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords4" Grid.Row="4" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum5" Grid.Row="5" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords5" Grid.Row="5" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum6" Grid.Row="6" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords6" Grid.Row="6" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum7" Grid.Row="7" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords7" Grid.Row="7" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum8" Grid.Row="8" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords8" Grid.Row="8" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum9" Grid.Row="9" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords9" Grid.Row="9" Grid.Column="1" Text=""/>
-                            <TextBlock Name="BlockNodesNum10" Grid.Row="10" Grid.Column="0" Text=""/>
-                            <TextBlock Name="BlockNodesCoords10" Grid.Row="10" Grid.Column="1" Text=""/>
+                            <TextBlock
+                                Name="BlockSubAreaNum"
+                                Grid.Row="0"
+                                Grid.ColumnSpan="2"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum1"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords1"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum2"
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords2"
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum3"
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords3"
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum4"
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords4"
+                                Grid.Row="4"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum5"
+                                Grid.Row="5"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords5"
+                                Grid.Row="5"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum6"
+                                Grid.Row="6"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords6"
+                                Grid.Row="6"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum7"
+                                Grid.Row="7"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords7"
+                                Grid.Row="7"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum8"
+                                Grid.Row="8"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords8"
+                                Grid.Row="8"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum9"
+                                Grid.Row="9"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords9"
+                                Grid.Row="9"
+                                Grid.Column="1"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesNum10"
+                                Grid.Row="10"
+                                Grid.Column="0"
+                                Text="" />
+                            <TextBlock
+                                Name="BlockNodesCoords10"
+                                Grid.Row="10"
+                                Grid.Column="1"
+                                Text="" />
                         </Grid>
                     </ScrollViewer>
-                    <glWpfControl:GLWpfControl RegisterToEventsDirectly="False" CanInvokeOnHandledEvents="False"
-                     x:Name="AxisOpenTkControl" Grid.Row="1" Grid.Column="1" Render="AxisOpenTkControl_OnRender"/>
+                    <glWpfControl:GLWpfControl
+                        x:Name="AxisOpenTkControl"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        CanInvokeOnHandledEvents="False"
+                        RegisterToEventsDirectly="False"
+                        Render="AxisOpenTkControl_OnRender" />
                 </Grid>
             </Grid>
         </Grid>
@@ -612,30 +1211,30 @@
                 </ItemsPanelTemplate>
             </StatusBar.ItemsPanel>
             <StatusBarItem Grid.Column="0">
-                <TextBlock Name="BlockAreaCount"/>
+                <TextBlock Name="BlockAreaCount" />
             </StatusBarItem>
-            <Separator Grid.Column="1" Width="2"/>
+            <Separator Grid.Column="1" Width="2" />
             <StatusBarItem Grid.Column="2">
-                <TextBlock Name="BlockNodesCount"/>
+                <TextBlock Name="BlockNodesCount" />
             </StatusBarItem>
             <Separator Grid.Column="3" Width="2" />
             <StatusBarItem Grid.Column="4">
-                <TextBlock Name="BlockElemsCount"/>
+                <TextBlock Name="BlockElemsCount" />
             </StatusBarItem>
-            <Separator Grid.Column="5" Width="2"/>
+            <Separator Grid.Column="5" Width="2" />
             <StatusBarItem Grid.Column="6">
-                <TextBlock Name="BlockCurrentMode"/>
+                <TextBlock Name="BlockCurrentMode" />
             </StatusBarItem>
-            <Separator Grid.Column="7" Width="2"/>
+            <Separator Grid.Column="7" Width="2" />
             <StatusBarItem Grid.Column="8">
-                <TextBlock Name="BlockMeanAR"/>
+                <TextBlock Name="BlockMeanAR" />
             </StatusBarItem>
-            <Separator Grid.Column="9" Width="2"/>
+            <Separator Grid.Column="9" Width="2" />
             <StatusBarItem Grid.Column="10">
-                <TextBlock Name="BlockWorstAR"/>
+                <TextBlock Name="BlockWorstAR" />
             </StatusBarItem>
             <StatusBarItem Grid.Column="11" HorizontalAlignment="Right">
-                <TextBlock Name="BlockCoordinates"/>
+                <TextBlock Name="BlockCoordinates" />
             </StatusBarItem>
         </StatusBar>
     </Grid>

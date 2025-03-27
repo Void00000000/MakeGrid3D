@@ -1,34 +1,86 @@
-﻿<Page x:Class="MakeGrid3D.Pages.Page4"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:MakeGrid3D.Pages"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="Page4">
+﻿<Page
+    x:Class="MakeGrid3D.Pages.Page4"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MakeGrid3D.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Page4"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
 
     <Grid>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="Введите параметры подобласти(xmin, xmax, ymin, ymax, zmin, zmax и номер подобласти)" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Click="PrevAreaClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
-                    <Image Source="../Images/tri_left.png"></Image>
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Введите параметры подобласти(xmin, xmax, ymin, ymax, zmin, zmax и номер подобласти)" />
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button
+                    Width="20"
+                    Height="20"
+                    Margin="0,0,10,0"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="PrevAreaClick">
+                    <Image Source="../Images/tri_left.png" />
                 </Button>
-                <ComboBox Name="NX1DownMenu" SelectionChanged="NX1Changed" Margin="0,0,10,0"/>
-                <ComboBox Name="NX2DownMenu" SelectionChanged="NX2Changed" Margin="0,0,10,0"/>
-                <ComboBox Name="NY1DownMenu" SelectionChanged="NY1Changed" Margin="0,0,10,0"/>
-                <ComboBox Name="NY2DownMenu" SelectionChanged="NY2Changed" Margin="0,0,10,0"/>
-                <ComboBox Name="NZ1DownMenu" SelectionChanged="NZ1Changed" Margin="0,0,10,0"/>
-                <ComboBox Name="NZ2DownMenu" SelectionChanged="NZ2Changed" Margin="0,0,10,0"/>
-                <ComboBox Name="WiDownMenu" SelectionChanged="WiChanged" Margin="0,0,10,0"/>
-                <Button Click="NextAreaClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
-                    <Image Source="../Images/tri_right.png"></Image>
+                <ComboBox
+                    Name="NX1DownMenu"
+                    Margin="0,0,10,0"
+                    SelectionChanged="NX1Changed" />
+                <ComboBox
+                    Name="NX2DownMenu"
+                    Margin="0,0,10,0"
+                    SelectionChanged="NX2Changed" />
+                <ComboBox
+                    Name="NY1DownMenu"
+                    Margin="0,0,10,0"
+                    SelectionChanged="NY1Changed" />
+                <ComboBox
+                    Name="NY2DownMenu"
+                    Margin="0,0,10,0"
+                    SelectionChanged="NY2Changed" />
+                <ComboBox
+                    Name="NZ1DownMenu"
+                    Margin="0,0,10,0"
+                    SelectionChanged="NZ1Changed" />
+                <ComboBox
+                    Name="NZ2DownMenu"
+                    Margin="0,0,10,0"
+                    SelectionChanged="NZ2Changed" />
+                <ComboBox
+                    Name="WiDownMenu"
+                    Margin="0,0,10,0"
+                    SelectionChanged="WiChanged" />
+                <Button
+                    Width="20"
+                    Height="20"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="NextAreaClick">
+                    <Image Source="../Images/tri_right.png" />
                 </Button>
             </StackPanel>
-            <TextBlock Name = "AreasCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+            <TextBlock
+                Name="AreasCounterBlock"
+                Margin="0,10,0,10"
+                HorizontalAlignment="Center" />
         </StackPanel>
-    <Button VerticalAlignment="Bottom" Width="100" Content="Назад" Click="PrevPageClick" HorizontalAlignment="Left" Margin="20,0,0,20"/>
-    <Button VerticalAlignment="Bottom" Width="100" Content="Далее" Click="NextPageClick" HorizontalAlignment="Right" Margin="0,0,20,20"/>
+        <Button
+            Width="100"
+            Margin="20,0,0,20"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Click="PrevPageClick"
+            Content="Назад" />
+        <Button
+            Width="100"
+            Margin="0,0,20,20"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Click="NextPageClick"
+            Content="Далее" />
     </Grid>
 </Page>

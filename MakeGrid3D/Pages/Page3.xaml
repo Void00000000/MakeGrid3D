@@ -1,64 +1,165 @@
-﻿<Page x:Class="MakeGrid3D.Pages.Page3"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:MakeGrid3D.Pages" xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="Page3">
+﻿<Page
+    x:Class="MakeGrid3D.Pages.Page3"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MakeGrid3D.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    Title="Page3"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
 
     <Grid>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="Введите границы подобластей по оси X" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button Click="PrevXwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
-                <Image Source="../Images/tri_left.png"></Image>
-            </Button>
-            <TextBox Name="XwBlock" TextChanged="XwChanged" Width="50" Margin="0 0 10 0"/>
-            <Button Click="NextXwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
-                <Image Source="../Images/tri_right.png"></Image>
-            </Button>
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Введите границы подобластей по оси X" />
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button
+                    Width="20"
+                    Height="20"
+                    Margin="0,0,10,0"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="PrevXwClick">
+                    <Image Source="../Images/tri_left.png" />
+                </Button>
+                <TextBox
+                    Name="XwBlock"
+                    Width="50"
+                    Margin="0,0,10,0"
+                    TextChanged="XwChanged" />
+                <Button
+                    Width="20"
+                    Height="20"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="NextXwClick">
+                    <Image Source="../Images/tri_right.png" />
+                </Button>
             </StackPanel>
-            <TextBlock Name = "XwCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+            <TextBlock
+                Name="XwCounterBlock"
+                Margin="0,10,0,10"
+                HorizontalAlignment="Center" />
 
-            <TextBlock Text="Введите границы подобластей по оси Y" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Click="PrevYwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
-                    <Image Source="../Images/tri_left.png"></Image>
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Введите границы подобластей по оси Y" />
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button
+                    Width="20"
+                    Height="20"
+                    Margin="0,0,10,0"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="PrevYwClick">
+                    <Image Source="../Images/tri_left.png" />
                 </Button>
-                <TextBox Name="YwBlock" TextChanged="YwChanged" Width="50" Margin="0 0 10 0"/>
-                <Button Click="NextYwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
-                    <Image Source="../Images/tri_right.png"></Image>
+                <TextBox
+                    Name="YwBlock"
+                    Width="50"
+                    Margin="0,0,10,0"
+                    TextChanged="YwChanged" />
+                <Button
+                    Width="20"
+                    Height="20"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="NextYwClick">
+                    <Image Source="../Images/tri_right.png" />
                 </Button>
             </StackPanel>
-            <TextBlock Name = "YwCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+            <TextBlock
+                Name="YwCounterBlock"
+                Margin="0,10,0,10"
+                HorizontalAlignment="Center" />
 
-            <TextBlock Text="Введите границы подобластей по оси Z" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Name="PrevZwButton" Click="PrevZwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
-                    <Image Source="../Images/tri_left.png"></Image>
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Введите границы подобластей по оси Z" />
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button
+                    Name="PrevZwButton"
+                    Width="20"
+                    Height="20"
+                    Margin="0,0,10,0"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="PrevZwClick">
+                    <Image Source="../Images/tri_left.png" />
                 </Button>
-                <TextBox Name="ZwBlock" TextChanged="ZwChanged" Width="50" Margin="0 0 10 0"/>
-                <Button Name="NextZwButton" Click="NextZwClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
-                    <Image Source="../Images/tri_right.png"></Image>
+                <TextBox
+                    Name="ZwBlock"
+                    Width="50"
+                    Margin="0,0,10,0"
+                    TextChanged="ZwChanged" />
+                <Button
+                    Name="NextZwButton"
+                    Width="20"
+                    Height="20"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="NextZwClick">
+                    <Image Source="../Images/tri_right.png" />
                 </Button>
             </StackPanel>
-            <TextBlock Name = "ZwCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+            <TextBlock
+                Name="ZwCounterBlock"
+                Margin="0,10,0,10"
+                HorizontalAlignment="Center" />
 
-            <TextBlock Text="Введите цвета подобластей" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Click="PrevMatColorClick" Background="Transparent" BorderThickness="1" Width="20" Height="20" Margin="0,0,10,0">
-                    <Image Source="../Images/tri_left.png"></Image>
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Введите цвета подобластей" />
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button
+                    Width="20"
+                    Height="20"
+                    Margin="0,0,10,0"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="PrevMatColorClick">
+                    <Image Source="../Images/tri_left.png" />
                 </Button>
-                <xctk:ColorPicker Name="MatColorPicker" Width="50" SelectedColorChanged="MatColorChanged" Margin="0 0 10 0"></xctk:ColorPicker>
-                <Button Click="NextMatColorClick" Background="Transparent" BorderThickness="1" Width="20" Height="20">
-                    <Image Source="../Images/tri_right.png"></Image>
+                <xctk:ColorPicker
+                    Name="MatColorPicker"
+                    Width="50"
+                    Margin="0,0,10,0"
+                    SelectedColorChanged="MatColorChanged" />
+                <Button
+                    Width="20"
+                    Height="20"
+                    Background="Transparent"
+                    BorderThickness="1"
+                    Click="NextMatColorClick">
+                    <Image Source="../Images/tri_right.png" />
                 </Button>
             </StackPanel>
-            <TextBlock Name = "MatColorCounterBlock" HorizontalAlignment="Center" Margin="0,10,0,10"/>
+            <TextBlock
+                Name="MatColorCounterBlock"
+                Margin="0,10,0,10"
+                HorizontalAlignment="Center" />
         </StackPanel>
-        <Button VerticalAlignment="Bottom" Width="100" Content="Назад" Click="PrevPageClick" HorizontalAlignment="Left" Margin="20,0,0,20"/>
-        <Button VerticalAlignment="Bottom" Width="100" Content="Далее" Click="NextPageClick" HorizontalAlignment="Right" Margin="0,0,20,20"/>
+        <Button
+            Width="100"
+            Margin="20,0,0,20"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Click="PrevPageClick"
+            Content="Назад" />
+        <Button
+            Width="100"
+            Margin="0,0,20,20"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Click="NextPageClick"
+            Content="Далее" />
     </Grid>
 </Page>

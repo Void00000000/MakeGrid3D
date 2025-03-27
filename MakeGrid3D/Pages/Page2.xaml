@@ -1,32 +1,88 @@
-﻿<Page x:Class="MakeGrid3D.Pages.Page2"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:MakeGrid3D.Pages"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="Page2">
+﻿<Page
+    x:Class="MakeGrid3D.Pages.Page2"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MakeGrid3D.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Page2"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
 
     <Grid>
-        <CheckBox Content="3D" IsChecked="True" Checked="Mode3DChecked" Unchecked="Mode3DUnChecked" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,10,10,0"/>
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <TextBlock Text = "Количество границ подобластей по оси X" HorizontalAlignment="Center" Margin="0,0,0,10" ></TextBlock>
-            <TextBox Name ="NXwBlock" HorizontalAlignment="Center" Width="50" Margin="0,0,0,10"></TextBox>
-            <Separator/>
-            <TextBlock Text = "Количество границ подобластей по оси Y" HorizontalAlignment="Center" Margin="0,0,0,10" ></TextBlock>
-            <TextBox Name ="NYwBlock" HorizontalAlignment="Center" Width="50" Margin="0,0,0,10"></TextBox>
-            <Separator/>
-            <TextBlock Text = "Количество границ подобластей по оси Z" HorizontalAlignment="Center" Margin="0,0,0,10" ></TextBlock>
-            <TextBox Name ="NZwBlock" HorizontalAlignment="Center" Width="50" Margin="0,0,0,10"></TextBox>
-            <Separator/>
-            <TextBlock Text = "Количество материалов" HorizontalAlignment="Center" Margin="0,0,0,10" ></TextBlock>
-            <TextBox Name ="NmatsBlock" HorizontalAlignment="Center" Width="50" Margin="0,0,0,10"></TextBox>
-            <Separator/>
-            <TextBlock Text = "Количество подобластей" HorizontalAlignment="Center" Margin="0,0,0,10" ></TextBlock>
-            <TextBox Name ="NareasBlock" HorizontalAlignment="Center" Width="50" Margin="0,0,0,10"></TextBox>
+        <CheckBox
+            Margin="0,10,10,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Checked="Mode3DChecked"
+            Content="3D"
+            IsChecked="True"
+            Unchecked="Mode3DUnChecked" />
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Количество границ подобластей по оси X" />
+            <TextBox
+                Name="NXwBlock"
+                Width="50"
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center" />
+            <Separator />
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Количество границ подобластей по оси Y" />
+            <TextBox
+                Name="NYwBlock"
+                Width="50"
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center" />
+            <Separator />
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Количество границ подобластей по оси Z" />
+            <TextBox
+                Name="NZwBlock"
+                Width="50"
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center" />
+            <Separator />
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Количество материалов" />
+            <TextBox
+                Name="NmatsBlock"
+                Width="50"
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center" />
+            <Separator />
+            <TextBlock
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center"
+                Text="Количество подобластей" />
+            <TextBox
+                Name="NareasBlock"
+                Width="50"
+                Margin="0,0,0,10"
+                HorizontalAlignment="Center" />
         </StackPanel>
-        <Button VerticalAlignment="Bottom" Width="100" Content="Назад" Click="PrevPageClick" HorizontalAlignment="Left" Margin="20,0,0,20"/>
-        <Button VerticalAlignment="Bottom" Width="100" Content="Далее" Click="NextPageClick" HorizontalAlignment="Right" Margin="0,0,20,20"/>
+        <Button
+            Width="100"
+            Margin="20,0,0,20"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Click="PrevPageClick"
+            Content="Назад" />
+        <Button
+            Width="100"
+            Margin="0,0,20,20"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Click="NextPageClick"
+            Content="Далее" />
     </Grid>
 </Page>
