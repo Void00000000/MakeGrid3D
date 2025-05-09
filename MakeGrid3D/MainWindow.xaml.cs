@@ -29,10 +29,6 @@ namespace MakeGrid3D
         public MainWindow()
         {
             InitializeComponent();
-
-            //GraphicsWindow graphicsWindow = new GraphicsWindow();
-           // graphicsWindow.Show();
-            //Close();
         }
     }
 }

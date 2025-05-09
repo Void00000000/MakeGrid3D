@@ -23,6 +23,9 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
+            LogService.Log("Просто лог");
+            LogService.LogWarning("Просто предупреждение");
+            LogService.LogError(new NotImplementedException("Просто ошибка"));
         }
 
         private void OpenFileClick(object sender, RoutedEventArgs e)
