@@ -8,18 +8,18 @@ namespace MakeGrid3D.Solver
         {
             static public double chi(int wi)
             {
-                return 1;
+                return 0;
             }
 
             static public double sigma(int wi)
             {
                 switch (wi)
                 {
-                    case 1:
+                    case 0:
                         return 2;
-                    case 2:
+                    case 1:
                         return 1;
-                    case 3:
+                    case 2:
                         return 0;
                 }
                 return 0;
@@ -29,49 +29,49 @@ namespace MakeGrid3D.Solver
             {
                 switch (wi)
                 {
-                    case 1:
+                    case 0:
                         return 1;
-                    case 2:
+                    case 1:
                         return 10;
-                    case 3:
+                    case 2:
                         return 10;
                 }
                 return 0;
             }
 
-            static public double f(int wi, double x, double y, double z = 0)
+            static public double f(int wi, double x, double y)
             {
                 switch (wi)
                 {
-                    case 1:
+                    case 0:
                         return 2 * x;
-                    case 2:
+                    case 1:
                         return 1.8 + 0.1 * x;
-                    case 3:
+                    case 2:
                         return 0;
                 }
                 return 0;
             }
 
-            static public double u_g(int si, double x, double y, double z = 0)
+            static public double u_g(int si, double x, double y)
             {
                 switch (si)
                 {
-                    case 1:
+                    case 0:
                         return 2;
-                    case 2:
+                    case 1:
                         return 1.8 + 0.1 * x;
                 }
                 return 0;
             }
 
-            static public double theta(int si, double x, double y, double z = 0)
+            static public double theta(int si, double x, double y)
             {
                 switch (si)
                 {
-                    case 1:
+                    case 0:
                         return 1;
-                    case 2:
+                    case 1:
                         return 0;
                 }
                 return 0;
@@ -81,25 +81,25 @@ namespace MakeGrid3D.Solver
             {
                 switch (si)
                 {
-                    case 1:
+                    case 0:
                         return 1;
-                    case 2:
+                    case 1:
                         return 2;
-                    case 3:
+                    case 2:
                         return 0.5;
                 }
                 return 0;
             }
 
-            static public double u_beta(int si, double x, double y, double z=0)
+            static public double u_beta(int si, double x, double y)
             {
                 switch (si)
                 {
-                    case 1:
+                    case 0:
                         return x;
-                    case 2:
+                    case 1:
                         return 1.8 + 0.1 * x;
-                    case 3:
+                    case 2:
                         return -1;
                 }
                 return 0;
@@ -108,9 +108,9 @@ namespace MakeGrid3D.Solver
 
         public Grid2D Grid;
         public FEMParams FemParams;
-        List<Boundary> Bc1;
-        List<Boundary> Bc2;
-        List<Boundary> Bc3;
+        public List<Boundary> Bc1;
+        public List<Boundary> Bc2;
+        public List<Boundary> Bc3;
 
         public void CreateTest()
         {
@@ -125,6 +125,7 @@ namespace MakeGrid3D.Solver
             {
                 new Vector2(1,1),
                 new Vector2(2,1),
+                new Vector2(2,2),
                 new Vector2(1,2),
                 new Vector2(2,2),
                 new Vector2(6,2),
@@ -137,18 +138,22 @@ namespace MakeGrid3D.Solver
             };
             List<Elem2D> elems = new List<Elem2D>()
             {
-                new Elem2D(0,0,1,2,3),
-                new Elem2D(0,2,3,5,6),
-                new Elem2D(1,3,4,6,7),
-                new Elem2D(0,5,6,8,9),
-                new Elem2D(2,6,7,9,10)
+                new Elem2D(0,0,1,3,4),
+                new Elem2D(0,3,4,6,7),
+                new Elem2D(1,4,5,7,8),
+                new Elem2D(0,6,7,9,10),
+                new Elem2D(2,7,8,10,11)
             };
             int nx = 3;
             int ny = 4;
             ByteMat2D IG = new ByteMat2D(nx);
-            for (int j = 0; j < ny; j++) 
+            for (int i = 0; i < nx; i++) 
             {
-                IG[j] = new List<NodeType>(ny);
+                IG.Add(new List<NodeType>(ny));
+                for (int j = 0; j< ny; j++) 
+                {
+                    IG[i].Add(NodeType.Regular);
+                }
             }
             Grid = new Grid2D(area, XY, elems, IG);
             Grid.IXw = new List<int> { 0, 1, 2 };
@@ -156,22 +161,22 @@ namespace MakeGrid3D.Solver
 
             Bc1 = new List<Boundary>()
             {
-                new Boundary(1,1,1,0,1),
-                new Boundary(2,1,2,1,1),
+                new Boundary(0,1,1,0,1),
+                new Boundary(1,1,2,1,1),
             };
 
             Bc2 = new List<Boundary>()
             {
-                new Boundary(1,2,2,1,2),
-                new Boundary(1,2,2,2,3),
-                new Boundary(2,0,1,0,0),
+                new Boundary(0,2,2,1,2),
+                new Boundary(0,2,2,2,3),
+                new Boundary(1,0,1,0,0),
             };
 
            Bc3 = new List<Boundary>()
             {
-                new Boundary(1,0,1,3,3),
-                new Boundary(2,1,2,3,3),
-                new Boundary(3,0,0,0,3),
+                new Boundary(0,0,1,3,3),
+                new Boundary(1,1,2,3,3),
+                new Boundary(2,0,0,0,3),
             };
 
             FemParams = new FEMParams();
@@ -182,6 +187,7 @@ namespace MakeGrid3D.Solver
             FemParams.Theta = Functions.theta;
             FemParams.Beta = Functions.beta;
             FemParams.Ug = Functions.u_g;
+            FemParams.F = Functions.f;
         }
     }
 }

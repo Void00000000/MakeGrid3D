@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MakeGrid3D.Solver;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,12 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
+            Test1 test = new Test1();
+            test.CreateTest();
+            FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams, 
+                test.Bc1, test.Bc2, test.Bc3);
+            List<double> q = FEMSolver2D.Instance.Solve();
+            LogService.LogVector(q);
         }
 
         private void OpenFileClick(object sender, RoutedEventArgs e)

@@ -156,6 +156,11 @@
             _bc2 = bc2;
             _bc3 = bc3;
             _nNodes = _grid.Nnodes;
+
+            _b = new List<double>(_nNodes);
+            for (int i = 0; i < _nNodes; i++)
+                _b.Add(0);
+
             GeneratePortrait();
         }
 
@@ -171,7 +176,10 @@
             ApplyBc(2);
             ApplyBc(3);
             ApplyBc(1);
-            return LOSSolver.Instance.LOS(_matrix, _b);
+            //
+            _matrix.Di[2] = 1;
+            //
+            return LOSSolver.Instance.LOS_DI(_matrix, _b);
         } 
 
         #endregion Public Methods
@@ -184,6 +192,8 @@
         private void GeneratePortrait() 
         {
             List<List<int>> list = new List<List<int>>(_nNodes);
+            for (int i = 0; i < _nNodes; i++)
+                list.Add(new List<int>());
             list[0].Add(0);
             int g1, g2;  // Глобальные номера базисных функций
             bool not_in;
@@ -199,7 +209,7 @@
                     // Цикл по ненулевым базисным функциям
                     for (int i_n = 0; i_n < 4; i_n++) {
                         g1 = global_nodes[i_n];
-                        for (int j_n = i_n +1; j_n < 4; j_n++) {
+                        for (int j_n = i_n + 1; j_n < 4; j_n++) {
                             // g2 > g1
                             g2 = global_nodes[j_n];
                             // Перед добавлением проверяем наличие элемента в списке
@@ -350,31 +360,51 @@
         /// Применяет краевое условие. 
         /// </summary>
         /// <param name="bc">Номер краевого услоивя (1,2,3).</param>
-        private void ApplyBc(int bc) 
+        private void ApplyBc(int bcNum) 
         {
             int p;
             int i_beg, i_end, j_beg, j_end;
-            for (int s = 0; s < _bc1.Count; s++)
+            int end = 0;
+            List<Boundary> bc;
+            switch (bcNum) 
             {
-                i_beg = _grid.IXw[_bc1[s].Nx1];
-                i_end = _grid.IXw[_bc1[s].Nx2];
-                j_beg = _grid.IYw[_bc1[s].Ny1];
-                j_end = _grid.IYw[_bc1[s].Ny2];
-                p = _bc1[s].Si;
+                case 1:
+                    bc = _bc1;
+                    break;
+                case 2:
+                    bc = _bc2;
+                    end = 1;
+                    break;
+                case 3:
+                    bc = _bc3;
+                    end = 1;
+                    break;
+                default:
+                    bc = new List<Boundary>();
+                    break;
+            }
+
+            for (int s = 0; s < bc.Count; s++)
+            {
+                i_beg = _grid.IXw[bc[s].Nx1];
+                i_end = _grid.IXw[bc[s].Nx2];
+                j_beg = _grid.IYw[bc[s].Ny1];
+                j_end = _grid.IYw[bc[s].Ny2];
+                p = bc[s].Si;
                 if (i_beg == i_end)
                 {
                     int i = i_beg;
-                    for (int j = j_beg; j <= j_end; j++)
+                    for (int j = j_beg; j <= j_end - end; j++)
                     {
-                        ApplyBcNode(bc, i, j, p, true);
+                        ApplyBcNode(bcNum, i, j, p, false);
                     }
                 }
                 else
                 {
                     int j = j_beg;
-                    for (int i = i_beg; i <= i_end; i++)
+                    for (int i = i_beg; i <= i_end - end; i++)
                     {
-                        ApplyBcNode(bc, i, j, p, false);
+                        ApplyBcNode(bcNum, i, j, p, true);
                     }
                 }
             }
@@ -383,14 +413,14 @@
         /// <summary>
         /// Применяет краевое условие для узла. 
         /// </summary>
-        /// <param name="bc">Номер краевого условия (1,2,3).</param>
+        /// <param name="bcNum">Номер краевого условия (1,2,3).</param>
         /// <param name="i">Порядкой номер узла по горизонтали (нумерация с 0).</param>
         /// <param name="j">Порядкой номер узла по горизонтали (нумерация с 0).</param>
         /// <param name="p">Номер границы.</param>
         /// <param name="isX">true, если граница горизонтальная, вертикальная иначе.</param>
-        private void ApplyBcNode(int bc, int i, int j, int p, bool isX) 
+        private void ApplyBcNode(int bcNum, int i, int j, int p, bool isX) 
         {
-            switch (bc) 
+            switch (bcNum) 
             {
                 case 1:
                     ApplyBc1Node(i, j, p);
@@ -430,7 +460,7 @@
         private void ApplyBc2Node(int i, int j, int p, bool isX)
         {
             int l1 = _grid.global_num(i, j);
-            int l2 = _grid.global_num(i, j + 1);
+            int l2 = isX ? _grid.global_num(i + 1, j) : _grid.global_num(i, j + 1);
             double x1 = _grid.XY[l1].X;
             double x2 = _grid.XY[l2].X;
             double y1 = _grid.XY[l1].Y;
@@ -449,7 +479,7 @@
         private void ApplyBc3Node(int i, int j, int p, bool isX)
         {
             int l1 = _grid.global_num(i, j);
-            int l2 = _grid.global_num(i, j + 1);
+            int l2 = isX ? _grid.global_num(i + 1, j) : _grid.global_num(i, j + 1);
             double x1 = _grid.XY[l1].X;
             double x2 = _grid.XY[l2].X;
             double y1 = _grid.XY[l1].Y;

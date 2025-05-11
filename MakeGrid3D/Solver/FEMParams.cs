@@ -1,6 +1,5 @@
-﻿global using Func1 = System.Func<int, double>;
-global using Func4 = System.Func<int, double, double, double, double>;
-using System;
+﻿global using Function = System.Func<int, double>;
+global using FunctionXY = System.Func<int, double, double, double>;
 
 namespace MakeGrid3D.Solver
 {
@@ -12,42 +11,42 @@ namespace MakeGrid3D.Solver
         /// <summary>
         /// Параметр лямбда. 
         /// </summary>
-        public Func1 Lambda { get; set; }
+        public Function Lambda { get; set; }
 
         /// <summary>
         /// Параметр сигма. 
         /// </summary>
-        public Func1 Sigma { get; set; }
+        public Function Sigma { get; set; }
 
         /// <summary>
         /// Параметр хи. 
         /// </summary>
-        public Func1 Chi { get; set; }
+        public Function Chi { get; set; }
 
         /// <summary>
         /// Функция правой части. 
         /// </summary>
-        public Func4 F { get; set; }
+        public FunctionXY F { get; set; }
 
         /// <summary>
         /// Функция первого краевого условия. 
         /// </summary>
-        public Func4 Ug { get; set; }
+        public FunctionXY Ug { get; set; }
 
         /// <summary>
         /// Функция второго краевого условия. 
         /// </summary>
-        public Func4 Theta { get; set; }
+        public FunctionXY Theta { get; set; }
 
         /// <summary>
         /// Параметр бета 3-го краевого условия. 
         /// </summary>
-        public Func1 Beta { get; set; }
+        public Function Beta { get; set; }
 
         /// <summary>
         /// Функция третьего краевого условия. 
         /// </summary>
-        public Func4 Ubeta { get; set; }
+        public FunctionXY Ubeta { get; set; }
     }
 
     /// <summary>

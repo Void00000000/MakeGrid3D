@@ -64,8 +64,13 @@ namespace MakeGrid3D.Solver.SparseModule
         public SparseMatrix(int n)
         {
             N = n;
+
             Di = new List<double>(N);
+            for (int i = 0; i < N; i++)
+                Di.Add(0);
             Ig = new List<int>(N + 1);
+            for (int i = 0; i < N + 1; i++)
+                Ig.Add(0);
         }
 
         /// <summary>
@@ -75,9 +80,18 @@ namespace MakeGrid3D.Solver.SparseModule
         public void Alloc(int ng)
         {
             Ng = ng;
+            
             Jg = new List<int>(Ng);
+            for (int i = 0; i < Ng; i++)
+                Jg.Add(0);
+
             Gu = new List<double>(Ng);
+            for (int i = 0; i < Ng; i++)
+                Gu.Add(0);
+
             Gl = new List<double>(Ng);
+            for (int i = 0; i < Ng; i++)
+                Gl.Add(0);
         }
 
         #endregion Constructors

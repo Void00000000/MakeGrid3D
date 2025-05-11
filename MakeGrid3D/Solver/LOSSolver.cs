@@ -116,7 +116,7 @@
             for (int i = 0; i < ig[N]; i++)
                 U.Add(ggu[i]);
             di = new List<double>(N);
-            for (int i = 0; i < ig[N]; i++)
+            for (int i = 0; i < N; i++)
                 di.Add(d[i]);
             LUS_factorisation();
             double a1, a2, nr, nf;
@@ -159,7 +159,7 @@
             double a1, a2, nr, nf;
             r0_s();//r=f-A*x
             vec_DI(r, r);//r=r/di
-            z = r;
+            z = new List<double>(r);
             p0();//p=Az
             vec_DI(p, p);//p=p/di
             nr = Norm(r);
@@ -193,7 +193,7 @@
             Initialize(matrix, b);
             double a1, a2, nr, nf;
             r0_s();//r=f-A*x
-            z = r;//z0=r0
+            z = new List<double>(r);//z0=r0
             AVec(z, p);//p0=A*z0
             nr = Norm(r);
             nf = Norm(pr);
@@ -225,19 +225,26 @@
         private void Initialize(SparseMatrix matrix, List<double> b) 
         {
             N = matrix.N;
-            X = new List<double>(N);
+            X = InitializeVector(X);
             d = matrix.Di;
             ggl = matrix.Gl;
             ggu = matrix.Gu;
             pr = b;
             ig = matrix.Ig;
             jg = matrix.Jg;
-            di = new List<double>(N);
-            p = new List<double>(N);
-            r = new List<double>(N);
-            z = new List<double>(N);
-            boof = new List<double>(N);
-            boof1 = new List<double>(N);
+            p = InitializeVector(p);
+            r = InitializeVector(r);
+            z = InitializeVector(z);
+            boof = InitializeVector(boof);
+            boof1 = InitializeVector(boof1);
+        }
+
+        private List<double> InitializeVector(List<double> v) 
+        {
+            v = new List<double>(N);
+            for (int i = 0; i < N; i++)
+                v.Add(0);
+            return v;
         }
 
         private void LUS_factorisation()
@@ -313,7 +320,7 @@
         private void U_1(List<double> pr, List<double> z)
         {
             int i0, i1, j, k;
-            z = pr;
+            z = new List<double>(pr);
             for (int i = N - 1; i >= 0; i--)
             {
                 i0 = ig[i];
