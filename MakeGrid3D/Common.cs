@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MakeGrid3D
 {
-    enum NodeType : byte
+    public enum NodeType : byte
     {
         Regular,
         Left,
@@ -18,7 +18,7 @@ namespace MakeGrid3D
         Bottom,
         Removed
     }
-    enum Direction
+    public enum Direction
     {
         Left,
         Right,
@@ -27,7 +27,7 @@ namespace MakeGrid3D
         None
     }
 
-    enum Quadrant
+    public enum Quadrant
     {
         RightTop,
         LeftTop,
@@ -35,13 +35,13 @@ namespace MakeGrid3D
         RightBottom
     }
 
-    enum Plane
+    public enum Plane
     {
         XY,
         XZ,
         YZ,
     }
-    interface IGrid
+    public interface IGrid
     {
         public int Nnodes { get; }
         public int Nelems { get; }
@@ -51,7 +51,7 @@ namespace MakeGrid3D
         public string PrintInfo();
     }
 
-    class GridState
+    public class GridState
     {
         public IGrid Grid { get; }
         public int I { get; } = 1;
@@ -95,8 +95,8 @@ namespace MakeGrid3D
         }
     }
 
-    // TODO: В UI значения по умолчаниюплохо ставятся при загрузке новой сетки
-    class Mesh
+    // TODO: В UI значения по умолчанию плохо ставятся при загрузке новой сетки
+    public class Mesh
     {
         public int Vao { get; private set; }
         public int Vbo { get; private set; }

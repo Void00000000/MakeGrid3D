@@ -1,6 +1,7 @@
 ﻿namespace MakeGrid3D
 {
     using System;
+    using System.Collections;
     using System.IO;
 
     /// <summary>
@@ -29,13 +30,22 @@
         #region Private Methods
 
         /// <summary>
-        /// Пробует записать сообщение в файл c датой. 
+        /// Пробует записать сообщение в файл. 
         /// </summary>
-        private static void TryWriteToFile(string message) 
+        /// <param name="message">Сообщение.</param>
+        /// <param name="writeDate">Логировать ли с датой.</param>
+        private static void TryWriteToFile(string message, bool writeDate=true) 
         {
             try
             {
-                File.AppendAllText(_logFileName, $"[{DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss")}] {message}\n");
+                if (writeDate)
+                {
+                    File.AppendAllText(_logFileName, $"[{DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss")}] {message}\n");
+                }
+                else 
+                {
+                    File.AppendAllText(_logFileName, $"{message}\n");
+                }
             }
             catch (Exception ex) { }
         }
@@ -75,6 +85,17 @@
         public static void LogError(Exception ex)
         {
             TryWriteToFile("[ERROR] " + ex.StackTrace + " " + ex.Message);
+        }
+
+        /// <summary>
+        /// Выводит элементы вектор в столбец. 
+        /// </summary>
+        public static void LogVector(IEnumerable vector) 
+        { 
+            foreach (var v in vector) 
+            {
+                TryWriteToFile(v.ToString(), false);
+            }
         }
 
         #endregion Public Methods

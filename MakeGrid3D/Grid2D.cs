@@ -52,7 +52,7 @@ namespace MakeGrid3D
     }
 
     // Расчётная область
-    class Area2D
+    public class Area2D
     {
         // Количество подобластей
         public int Nareas { get; }
@@ -188,7 +188,7 @@ namespace MakeGrid3D
         }
     }
 
-    class Grid2D : IGrid
+    public class Grid2D : IGrid
     {
         public Area2D Area { get; }
         public int Nnodes { get; }
@@ -199,6 +199,10 @@ namespace MakeGrid3D
 
         public int Nx { get; private set; }
         public int Ny { get; private set; }
+
+        // Хранят позиции координат границ подобластей в векторах X и Y
+        public List<int> IXw { get; private set; }
+        public List<int> IYw { get; private set; }
 
         public List<Elem2D> Elems { get; }
         public List<Vector2> XY { get; }

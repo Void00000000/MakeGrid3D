@@ -7,6 +7,8 @@ namespace MakeGrid3D.Solver.SparseModule
     /// </summary>
     public class SparseMatrix
     {
+        #region Public Properties
+
         /// <summary>
         /// Целочисленный массив ig. 
         /// Элемент ig(k) равен индексу, с которого начинаются элементы k -й строки (столбца) в массивах jg, gl и gu.
@@ -49,7 +51,11 @@ namespace MakeGrid3D.Solver.SparseModule
         /// <summary>
         /// Размерность массивов jg, gl, gu.
         /// </summary>
-        public int Ng { get; }
+        public int Ng { get; private set; }
+
+        #endregion Public Properties
+
+        #region Constructors
 
         /// <summary>
         /// Инициализирует <see cref="SparseMatrix"/>.
@@ -60,41 +66,20 @@ namespace MakeGrid3D.Solver.SparseModule
             N = n;
             Di = new List<double>(N);
             Ig = new List<int>(N + 1);
-            Jg = new List<int>();
-            Gu = new List<double>();
-            Gl = new List<double>();
         }
 
         /// <summary>
-        /// Получает элемент в i строке, j столбце (нумерация с 0).
+        /// Выделяет память для массивов jg, gl, gu.
         /// </summary>
-        public double this[int i, int j]
+        /// <param name="ng">Размерность массивов jg,gl,gu.</param>
+        public void Alloc(int ng)
         {
-            get
-            {
-                if (i >= N || j >= N) 
-                {
-                    return 0;
-                }
-
-                if (i == j)
-                {
-                    return Di[i];
-                }
-
-                for (int k = Ig[i]; k < Ig[i+1]; k++)
-                {
-                    if (Jg[k] == j)
-                    {
-                        return i > j ? Gl[i] : Gu[i];
-                    }
-                }
-                return 0;
-            }
-
-            set 
-            { 
-            }
+            Ng = ng;
+            Jg = new List<int>(Ng);
+            Gu = new List<double>(Ng);
+            Gl = new List<double>(Ng);
         }
+
+        #endregion Constructors
     }
 }

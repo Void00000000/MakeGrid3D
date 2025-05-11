@@ -61,7 +61,7 @@ namespace MakeGrid3D
     }
 
     // Расчётная область
-    class Area3D
+    public class Area3D
     {
         // Количество подобластей
         public int Nareas { get; }
@@ -148,7 +148,7 @@ namespace MakeGrid3D
         }
     }
 
-    class Grid3D : IGrid
+    public class Grid3D : IGrid
     {
         public Area3D Area { get; }
         public int Nnodes { get; }
