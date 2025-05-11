@@ -1,15 +1,11 @@
-﻿using OpenTK.Mathematics;
-using MakeGrid3D;
+﻿global using ByteMat2D = System.Collections.Generic.List<System.Collections.Generic.List<MakeGrid3D.NodeType>>;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Windows.Controls;
-using System.Windows.Shapes;
 
 namespace MakeGrid3D
 {
-    using ByteMat2D = List<List<NodeType>>;
     public struct SubArea2D
     {
         public int wi; // Номер подобласти
@@ -201,8 +197,8 @@ namespace MakeGrid3D
         public int Ny { get; private set; }
 
         // Хранят позиции координат границ подобластей в векторах X и Y
-        public List<int> IXw { get; private set; }
-        public List<int> IYw { get; private set; }
+        public List<int> IXw { get; set; }
+        public List<int> IYw { get; set; }
 
         public List<Elem2D> Elems { get; }
         public List<Vector2> XY { get; }

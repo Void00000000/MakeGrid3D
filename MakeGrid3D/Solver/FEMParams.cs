@@ -1,4 +1,8 @@
-﻿namespace MakeGrid3D.Solver
+﻿global using Func1 = System.Func<int, double>;
+global using Func4 = System.Func<int, double, double, double, double>;
+using System;
+
+namespace MakeGrid3D.Solver
 {
     /// <summary>
     /// Параметры краевой задачи (лямбда, гамма, сигма, хи, параметры краевых условий). 
@@ -8,74 +12,42 @@
         /// <summary>
         /// Параметр лямбда. 
         /// </summary>
-        /// <param name="wi">Номер подобласти.</param>
-        public double Lambda(int wi) 
-        {
-            return 0;
-        }
+        public Func1 Lambda { get; set; }
 
         /// <summary>
         /// Параметр сигма. 
         /// </summary>
-        /// <param name="wi">Номер подобласти.</param>
-        public double Sigma(int wi)
-        {
-            return 0;
-        }
+        public Func1 Sigma { get; set; }
 
         /// <summary>
         /// Параметр хи. 
         /// </summary>
-        /// <param name="wi">Номер подобласти.</param>
-        public double Chi(int wi)
-        {
-            return 0;
-        }
+        public Func1 Chi { get; set; }
 
         /// <summary>
         /// Функция правой части. 
         /// </summary>
-        /// <param name="si">Номер границы.</param>
-        public double F(int si, double x, double y, double z = 0)
-        {
-            return 0;
-        }
+        public Func4 F { get; set; }
 
         /// <summary>
         /// Функция первого краевого условия. 
         /// </summary>
-        /// <param name="si">Номер границы.</param>
-        public double Ug(int si, double x, double y, double z=0) 
-        {
-            return 0;
-        }
+        public Func4 Ug { get; set; }
 
         /// <summary>
         /// Функция второго краевого условия. 
         /// </summary>
-        /// <param name="si">Номер границы.</param>
-        public double Theta(int si, double x, double y, double z = 0)
-        {
-            return 0;
-        }
+        public Func4 Theta { get; set; }
 
         /// <summary>
         /// Параметр бета 3-го краевого условия. 
         /// </summary>
-        /// <param name="wi">Номер подобласти.</param>
-        public double Beta(int wi)
-        {
-            return 0;
-        }
+        public Func1 Beta { get; set; }
 
         /// <summary>
         /// Функция третьего краевого условия. 
         /// </summary>
-        /// <param name="si">Номер границы.</param>
-        public double Ubeta(int si, double x, double y, double z = 0)
-        {
-            return 0;
-        }
+        public Func4 Ubeta { get; set; }
     }
 
     /// <summary>
