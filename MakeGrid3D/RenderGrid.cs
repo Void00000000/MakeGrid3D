@@ -18,9 +18,9 @@ namespace MakeGrid3D
         public List<Mesh> LinesMeshes;
 
         public readonly Shader shader;
-        private float[] vertices;
+        private double[] vertices;
         private uint[] indices;
-        private float[] vertices_area;
+        private double[] vertices_area;
         private uint[] indices_area;
         private Matrix4 projection;
         private Matrix4 view;
@@ -29,12 +29,12 @@ namespace MakeGrid3D
         public Matrix4 Translate { get; set; } = Matrix4.Identity;
         public Matrix4 Scale { get; set; } = Matrix4.Identity;
         public Matrix4 Rotate { get; set; } = Matrix4.Identity;
-        public float Indent { get; set; } = Default.indent;
+        public double Indent { get; set; } = Default.indent;
         public float LinesSize { get; set; } = Default.linesSize;
         public float PointsSize { get; set; } = Default.pointsSize;
         public List<Color4> GridColors { get; set; }
-        private float minGradValue;
-        private float maxGradValue;
+        private double minGradValue;
+        private double maxGradValue;
         public List<Color4> AreaColors { get; set; }
         public Color4 LinesColor { get; set; } = Default.linesColor;
         public Color4 PointsColor { get; set; } = Default.pointsColor;
@@ -57,17 +57,17 @@ namespace MakeGrid3D
                 SetSize();
             }
         }
-        public float Left { get; private set; }
-        public float Right { get; private set; }
-        public float Bottom { get; private set; }
-        public float Top { get; private set;}
-        public float Front { get; private set; } = 0;
-        public float Back { get; private set; } = 0;
+        public double Left { get; private set; }
+        public double Right { get; private set; }
+        public double Bottom { get; private set; }
+        public double Top { get; private set;}
+        public double Front { get; private set; } = 0;
+        public double Back { get; private set; } = 0;
 
-        public float WindowWidth { get; set; }
-        public float WindowHeight { get; set; }
+        public double WindowWidth { get; set; }
+        public double WindowHeight { get; set; }
 
-        public RenderGrid(IGrid grid, float windowWidth, float windowHeight)
+        public RenderGrid(IGrid grid, double windowWidth, double windowHeight)
         {
             this.grid = grid;
             WindowWidth= windowWidth;
@@ -83,23 +83,23 @@ namespace MakeGrid3D
         {
             Grid2D grid2D = (Grid2D)grid;
             // TODO: может не влезать
-            float left = grid2D.Area.X0;
-            float right = grid2D.Area.Xn;
-            float bottom = grid2D.Area.Y0;
-            float top = grid2D.Area.Yn;
+            double left = grid2D.Area.X0;
+            double right = grid2D.Area.Xn;
+            double bottom = grid2D.Area.Y0;
+            double top = grid2D.Area.Yn;
 
-            float width = right - left;
-            float height = top - bottom;
+            double width = right - left;
+            double height = top - bottom;
 
-            float hor_offset = width * Indent;
-            float ver_offset = height * Indent;
+            double hor_offset = width * Indent;
+            double ver_offset = height * Indent;
 
-            float left_ = left - hor_offset;
-            float right_ = right + hor_offset;
-            float bottom_ = bottom - ver_offset;
-            float top_ = top + ver_offset;
+            double left_ = left - hor_offset;
+            double right_ = right + hor_offset;
+            double bottom_ = bottom - ver_offset;
+            double top_ = top + ver_offset;
 
-            float w;
+            double w;
             if ((right_ - left_) >= (top_ - bottom_))
             {
                 Left = left_;
@@ -116,7 +116,7 @@ namespace MakeGrid3D
                 Right = right + w;
                 Left = left - w;
             }
-            projection = Matrix4.CreateOrthographicOffCenter(Left, Right, Bottom, Top, -0.1f, 100.0f);
+            projection = Matrix4.CreateOrthographicOffCenter((float)Left, (float)Right, (float)Bottom, (float)Top, -0.1f, 100.0f);
         }
 
         private void SetSize3D()
@@ -128,7 +128,7 @@ namespace MakeGrid3D
             Top = grid3D.Area.Yn;
             Front = grid3D.Area.Z0;
             Back = grid3D.Area.Zn;
-            Camera = new Camera(new Vector3(0, 0, Back), WindowWidth / WindowHeight);
+            Camera = new Camera(new Vector3D(0f, 0f, (float)Back), (float)(WindowWidth / WindowHeight));
         }
 
         public void SetSize()
@@ -143,7 +143,7 @@ namespace MakeGrid3D
             int Nnodes = grid2D.Nnodes;
             int Nareas = grid2D.Area.Nareas;
 
-            vertices = new float[Nnodes * 3];
+            vertices = new double[Nnodes * 3];
             int n = 0;
             foreach (Vector2 node in grid2D.XY)
             {
@@ -167,10 +167,10 @@ namespace MakeGrid3D
 
             if (area)
             {
-                vertices_area = new float[grid2D.Area.NXw * grid2D.Area.NYw * 3];
+                vertices_area = new double[grid2D.Area.NXw * grid2D.Area.NYw * 3];
                 int yx = 0;
-                foreach (float y in grid2D.Area.Yw)
-                    foreach (float x in grid2D.Area.Xw)
+                foreach (double y in grid2D.Area.Yw)
+                    foreach (double x in grid2D.Area.Xw)
                     {
                         vertices_area[yx] = x; vertices_area[yx + 1] = y; vertices_area[yx + 2] = 0;
                         yx += 3;
@@ -201,15 +201,15 @@ namespace MakeGrid3D
             LinesMeshes = new List<Mesh>(Nelems);
             foreach (Elem2D elem in grid2D.Elems)
             {
-                float xmin = grid2D.XY[elem.n1].X; float ymin = grid2D.XY[elem.n1].Y;
-                float xmax = grid2D.XY[elem.n4].X; float ymax = grid2D.XY[elem.n4].Y;
-                float[] verticesGradElem = { xmin, ymin, 0, 0, 0, // 0
+                double xmin = grid2D.XY[elem.n1].X; double ymin = grid2D.XY[elem.n1].Y;
+                double xmax = grid2D.XY[elem.n4].X; double ymax = grid2D.XY[elem.n4].Y;
+                double[] verticesGradElem = { xmin, ymin, 0, 0, 0, // 0
                                           xmax, ymin, 0, 1, 0, // 1
                                           xmin, ymax, 0, 0, 1, // 2
                                           xmax, ymax, 0, 1, 1}; // 3
-                float xt, yt;
+                double xt, yt;
                 if (elem.n5 < 0) { xt = xmin; yt = ymin; } else { xt = grid2D.XY[elem.n5].X; yt = grid2D.XY[elem.n5].Y; }
-                float[] verticesElem = {  xmin, ymin, 0, // 0
+                double[] verticesElem = {  xmin, ymin, 0, // 0
                                           xmax, ymin, 0, // 1
                                           xmin, ymax, 0, // 2
                                           xmax, ymax, 0, // 3
@@ -228,7 +228,7 @@ namespace MakeGrid3D
             int Nnodes = grid3D.Nnodes;
             int Nareas = grid3D.Area.Nareas;
 
-            vertices = new float[Nnodes * 3];
+            vertices = new double[Nnodes * 3];
             int n = 0;
             foreach (Vector3 node in grid3D.XYZ)
             {
@@ -260,11 +260,11 @@ namespace MakeGrid3D
 
             if (area)
             {
-                vertices_area = new float[grid3D.Area.NXw * grid3D.Area.NYw * grid3D.Area.NZw * 3];
+                vertices_area = new double[grid3D.Area.NXw * grid3D.Area.NYw * grid3D.Area.NZw * 3];
                 int zyx = 0;
-                foreach (float z in grid3D.Area.Zw)
-                    foreach (float y in grid3D.Area.Yw)
-                        foreach (float x in grid3D.Area.Xw)
+                foreach (double z in grid3D.Area.Zw)
+                    foreach (double y in grid3D.Area.Yw)
+                        foreach (double x in grid3D.Area.Xw)
                         {
                             vertices_area[zyx] = x; vertices_area[zyx + 1] = y; vertices_area[zyx + 2] = z;
                             zyx += 3;
@@ -317,14 +317,14 @@ namespace MakeGrid3D
             LinesMeshes = new List<Mesh>(Nelems);
             foreach (Elem3D elem in grid3D.Elems)
             {
-                float left = grid3D.XYZ[elem.n1].X;
-                float right = grid3D.XYZ[elem.n8].X;
-                float bottom = grid3D.XYZ[elem.n1].Y;
-                float top = grid3D.XYZ[elem.n8].Y;
-                float front = grid3D.XYZ[elem.n1].Z;
-                float back = grid3D.XYZ[elem.n8].Z;
+                double left = grid3D.XYZ[elem.n1].X;
+                double right = grid3D.XYZ[elem.n8].X;
+                double bottom = grid3D.XYZ[elem.n1].Y;
+                double top = grid3D.XYZ[elem.n8].Y;
+                double front = grid3D.XYZ[elem.n1].Z;
+                double back = grid3D.XYZ[elem.n8].Z;
 
-                float[] verticesElem =     {left,  bottom, front, // 0
+                double[] verticesElem =     {left,  bottom, front, // 0
                                             right, bottom, front, // 1
                                             left,  top,    front, // 2
                                             right, top,    front, // 3
@@ -337,7 +337,7 @@ namespace MakeGrid3D
 
                 // Для каждой грани
                 uint[] indicesFace = { 0, 2, 3, 0, 3, 1 };
-                float[] verticesFrontFace = {
+                double[] verticesFrontFace = {
                     left,  bottom, front, 0, 0,  // 0|n1
                     right, bottom, front, 0, 1,  // 1|n2
                     left,  top,    front, 1, 0,  // 2|n3
@@ -345,7 +345,7 @@ namespace MakeGrid3D
                 Mesh meshFrontFace = new Mesh(verticesFrontFace, indicesFace, true);
                 GradientMeshes.Add(meshFrontFace);
 
-                float[] verticesRightFace = {
+                double[] verticesRightFace = {
                     right,  bottom, front, 0, 0,  // 0|n2
                     right,  bottom, back,  0, 1,  // 1|n6
                     right,  top,   front,  1, 0,  // 2|n4
@@ -353,7 +353,7 @@ namespace MakeGrid3D
                 Mesh meshRightFace = new Mesh(verticesRightFace, indicesFace, true);
                 GradientMeshes.Add(meshRightFace);
 
-                float[] verticesBackFace = {
+                double[] verticesBackFace = {
                     right, bottom, back,  0, 0,  // 0|n6
                     left,  bottom, back,  0, 1,  // 1|n5
                     right, top,    back,  1, 0,  // 2|n8
@@ -361,7 +361,7 @@ namespace MakeGrid3D
                 Mesh meshBackFace = new Mesh(verticesBackFace, indicesFace, true);
                 GradientMeshes.Add(meshBackFace);
 
-                float[] verticesLeftFace = {
+                double[] verticesLeftFace = {
                     left, bottom, back,   0, 0,  // 0|n5
                     left, bottom, front,  0, 1,  // 1|n1
                     left, top,    back,   1, 0,  // 2|n7
@@ -369,7 +369,7 @@ namespace MakeGrid3D
                 Mesh meshLeftFace = new Mesh(verticesLeftFace, indicesFace, true);
                 GradientMeshes.Add(meshLeftFace);
 
-                float[] verticesTopFace = {
+                double[] verticesTopFace = {
                     left,  top,  front,  0, 0,  // 0|n3
                     right, top,  front,  0, 1,  // 1|n4
                     left,  top,  back,   1, 0,  // 2|n7
@@ -377,7 +377,7 @@ namespace MakeGrid3D
                 Mesh meshTopFace = new Mesh(verticesTopFace, indicesFace, true);
                 GradientMeshes.Add(meshTopFace);
 
-                float[] verticesBottomFace = {
+                double[] verticesBottomFace = {
                     right, bottom, back,  0, 0,  // 0|n6
                     right, bottom, front, 0, 1,  // 1|n2
                     left,  bottom, back,  1, 0,  // 2|n5
@@ -439,11 +439,11 @@ namespace MakeGrid3D
             if (grid is Grid3D)
                 projection = Camera.GetProjectionMatrix();
             shader.SetMatrix4("projection", ref projection);
-            float center_x = (Left + Right) / 2;
-            float center_y = (Top + Bottom) / 2;
-            float center_z = (Front + Back) / 2;
+            double center_x = (Left + Right) / 2;
+            double center_y = (Top + Bottom) / 2;
+            double center_z = (Front + Back) / 2;
             if (grid is Grid3D)
-                Translate = Matrix4.CreateTranslation(-center_x, -center_y, -center_z);
+                Translate = Matrix4.CreateTranslation((float)-center_x, (float)-center_y, (float)-center_z);
             Matrix4 model = Translate * Scale * Rotate;
             shader.SetMatrix4("model", ref model);
             if (grid is Grid2D)
@@ -451,7 +451,7 @@ namespace MakeGrid3D
             else
                 view = Camera.GetViewMatrix();
             shader.SetMatrix4("view", ref view);
-            shader.SetVector2("u_resolution", new Vector2(Right - Left, Top - Bottom));
+            shader.SetVector2("u_resolution", new Vector2D((float)(Right - Left), (float)(Top - Bottom)));
             GL.LineWidth(LinesSize);
             GL.PointSize(PointsSize);
 
@@ -494,7 +494,7 @@ namespace MakeGrid3D
             GL.DepthMask(true);
         }
 
-        public void SetGridColors(List<float> q, bool changeMinMaxQ = true)
+        public void SetGridColors(List<double> q, bool changeMinMaxQ = true)
         {
             if (changeMinMaxQ)
             {
@@ -565,13 +565,13 @@ namespace MakeGrid3D
             }
         }
 
-        private Color4 CalcGradientColor(float qi)
+        private Color4 CalcGradientColor(double qi)
         {
-            float h = maxGradValue - minGradValue;
-            float r = MinColor.R * (maxGradValue - qi) / h + MaxColor.R * (qi - minGradValue) / h;
-            float g = MinColor.G * (maxGradValue - qi) / h + MaxColor.G * (qi - minGradValue) / h;
-            float b = MinColor.B * (maxGradValue - qi) / h + MaxColor.B * (qi - minGradValue) / h;
-            return new Color4(r, g, b, 1);
+            double h = maxGradValue - minGradValue;
+            double r = MinColor.R * (maxGradValue - qi) / h + MaxColor.R * (qi - minGradValue) / h;
+            double g = MinColor.G * (maxGradValue - qi) / h + MaxColor.G * (qi - minGradValue) / h;
+            double b = MinColor.B * (maxGradValue - qi) / h + MaxColor.B * (qi - minGradValue) / h;
+            return new Color4((float)r, (float)g, (float)b, 1);
         }
 
         // When application exists OS and GPU drives handle cleaning up but closing the GraphicsWindow

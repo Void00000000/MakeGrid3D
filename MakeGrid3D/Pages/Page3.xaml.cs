@@ -23,9 +23,9 @@ namespace MakeGrid3D.Pages
     public partial class Page3 : Page
     {
         public Page2 prevPage { get; }
-        public List<float> Xw { get; set; }
-        public List<float> Yw { get; set; }
-        public List<float> Zw { get; set; }
+        public List<double> Xw { get; set; }
+        public List<double> Yw { get; set; }
+        public List<double> Zw { get; set; }
         public bool TwoD { get; set; }
         public List<Color4> AreaColors { get; set; }
         int indexXw = 0, indexYw = 0, indexZw = 0, indexAreaColors = 0;
@@ -41,9 +41,9 @@ namespace MakeGrid3D.Pages
                 NextZwButton.IsEnabled = false;
             }
 
-            Xw = new List<float>(new float[prevPage.NXw]);
-            Yw = new List<float>(new float[prevPage.NYw]);
-            Zw = new List<float>(new float[prevPage.NZw]);
+            Xw = new List<double>(new double[prevPage.NXw]);
+            Yw = new List<double>(new double[prevPage.NYw]);
+            Zw = new List<double>(new double[prevPage.NZw]);
             AreaColors = new List<Color4>(prevPage.Nmats);
             for (int i = 0; i < prevPage.Nmats; i++)
                 AreaColors.Add(Color4.White);
@@ -79,8 +79,8 @@ namespace MakeGrid3D.Pages
 
         private void XwChanged(object sender, TextChangedEventArgs e)
         {
-            float xwi;
-            if (float.TryParse(XwBlock.Text, out xwi))
+            double xwi;
+            if (double.TryParse(XwBlock.Text, out xwi))
             {
                 Xw[indexXw] = xwi;
             }
@@ -110,8 +110,8 @@ namespace MakeGrid3D.Pages
 
         private void YwChanged(object sender, TextChangedEventArgs e)
         {
-            float ywi;
-            if (float.TryParse(YwBlock.Text, out ywi))
+            double ywi;
+            if (double.TryParse(YwBlock.Text, out ywi))
             {
                 Yw[indexYw] = ywi;
             }
@@ -141,8 +141,8 @@ namespace MakeGrid3D.Pages
 
         private void ZwChanged(object sender, TextChangedEventArgs e)
         {
-            float zwi;
-            if (float.TryParse(ZwBlock.Text, out zwi))
+            double zwi;
+            if (double.TryParse(ZwBlock.Text, out zwi))
             {
                 Zw[indexZw] = zwi;
             }
@@ -173,7 +173,7 @@ namespace MakeGrid3D.Pages
 
         private void MatColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
-            AreaColors[indexAreaColors] = GraphicsWindow.ColorByteToFloat((Color)e.NewValue);
+            AreaColors[indexAreaColors] = GraphicsWindow.ColorByteTodouble((Color)e.NewValue);
         }
 
         private void PrevMatColorClick(object sender, RoutedEventArgs e)
@@ -183,7 +183,7 @@ namespace MakeGrid3D.Pages
             {
                 indexAreaColors = prevPage.Nmats - 1;
             }
-            MatColorPicker.SelectedColor = GraphicsWindow.ColorFloatToByte(AreaColors[indexAreaColors]);
+            MatColorPicker.SelectedColor = GraphicsWindow.ColordoubleToByte(AreaColors[indexAreaColors]);
             MatColorCounterBlock.Text = $"{indexAreaColors + 1}/{prevPage.Nmats}";
         }
 
@@ -194,7 +194,7 @@ namespace MakeGrid3D.Pages
             {
                 indexAreaColors = 0;
             }
-            MatColorPicker.SelectedColor = GraphicsWindow.ColorFloatToByte(AreaColors[indexAreaColors]);
+            MatColorPicker.SelectedColor = GraphicsWindow.ColordoubleToByte(AreaColors[indexAreaColors]);
             MatColorCounterBlock.Text = $"{indexAreaColors + 1}/{prevPage.Nmats}";
         }
     }

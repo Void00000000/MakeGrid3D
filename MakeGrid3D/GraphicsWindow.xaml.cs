@@ -40,15 +40,15 @@ namespace MakeGrid3D
         Matrix4 rscale = Matrix4.Identity; // TODO: не используется вообще все матрицы scale
         float horOffset = 0;
         float verOffset = 0;
-        float scaleX = 1;
-        float scaleY = 1;
+        double scaleX = 1;
+        double scaleY = 1;
         float angleX = 0;
         float angleY = 0;
         float angleZ = 0;
         float mouse_horOffset = 0;
         float mouse_verOffset = 0;
-        float mouse_scaleX = 1;
-        float mouse_scaleY = 1;
+        double mouse_scaleX = 1;
+        double mouse_scaleY = 1;
         float speedMove = Default.speedMove;
         float speedZoom = Default.speedZoom;
         float speedRotate = Default.speedRotate;
@@ -62,12 +62,12 @@ namespace MakeGrid3D
         Color4 currentUnstructedNodeColor = Default.currentUnstructedNodeColor;
 
         bool isQFileLoaded = false;
-        List<float> q;
+        List<double> q;
 
         Vector2 lastMousePos;
         bool firstMove = true;
         bool rotateState = false;
-        const float sensitivity = 0.2f;
+        const double sensitivity = 0.2f;
 
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
@@ -109,7 +109,7 @@ namespace MakeGrid3D
         private void SetRenderGrid(bool removeQ = true)
         {
             if (renderGrid == null)
-                renderGrid = new RenderGrid(regularGrid, (float)OpenTkControl.ActualWidth, (float)OpenTkControl.ActualHeight);
+                renderGrid = new RenderGrid(regularGrid, (double)OpenTkControl.ActualWidth, (double)OpenTkControl.ActualHeight);
             else
             {
                 renderGrid.Grid = regularGrid;
@@ -122,8 +122,8 @@ namespace MakeGrid3D
             gridList.AddLast(new GridState(regularGrid));
             currentNode = gridList.Last;
             // Множители скорости = 1 процент от ширины(высоты) мира
-            speedHor = (renderGrid.Right - renderGrid.Left) * 0.01f;
-            speedVer = (renderGrid.Top - renderGrid.Bottom) * 0.01f;
+            speedHor = (float)(renderGrid.Right - renderGrid.Left) * 0.01f;
+            speedVer = (float)(renderGrid.Top - renderGrid.Bottom) * 0.01f;
             SetAxis();
             SubAreaNumDownMenu.Items.Clear();
             for (int i = 0; i < renderGrid.Grid.Nmats; i++)
@@ -179,8 +179,8 @@ namespace MakeGrid3D
         {
             if (renderGrid == null)
                 return;
-            renderGrid.WindowWidth = (float)OpenTkControl.ActualWidth;
-            renderGrid.WindowHeight = (float)OpenTkControl.ActualHeight;
+            renderGrid.WindowWidth = (double)OpenTkControl.ActualWidth;
+            renderGrid.WindowHeight = (double)OpenTkControl.ActualHeight;
             if (twoD)
                 renderGrid.SetSize();
             else renderGrid.Camera.AspectRatio = (float)OpenTkControl.ActualWidth / (float)OpenTkControl.ActualHeight;
@@ -338,7 +338,7 @@ namespace MakeGrid3D
                 if (twoD)
                 {
                     Grid2D grid2D = (Grid2D)renderGrid.Grid;
-                    float[] vert = { grid2D.XY[0].X, grid2D.XY[0].Y, 0 };
+                    double[] vert = { grid2D.XY[0].X, grid2D.XY[0].Y, 0 };
                     uint[] index = { 0 };
                     Mesh firstNode = new Mesh(vert, index);
                     renderGrid.DrawNodes(firstNode, renderGrid.PointsColor);
@@ -347,8 +347,8 @@ namespace MakeGrid3D
                     int node = grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J);
                     if (node >= 0)
                     {
-                        float x = grid2D.XY[node].X;
-                        float y = grid2D.XY[node].Y;
+                        double x = grid2D.XY[node].X;
+                        double y = grid2D.XY[node].Y;
                         CurrentUnstructedNodeBlock1.Text = $"Номер узла: {node} | X: " + x.ToString("0.00") + ", Y: " + y.ToString("0.00");
                     }
                 }
@@ -395,10 +395,10 @@ namespace MakeGrid3D
 
         private Point MouseMap(Point pos)
         {
-            float left = renderGrid.Left;
-            float bottom = renderGrid.Bottom;
-            float right = renderGrid.Right;
-            float top = renderGrid.Top;
+            double left = renderGrid.Left;
+            double bottom = renderGrid.Bottom;
+            double right = renderGrid.Right;
+            double top = renderGrid.Top;
 
             double width = OpenTkControl.ActualWidth;
             double height = OpenTkControl.ActualHeight;
@@ -433,8 +433,8 @@ namespace MakeGrid3D
             else
             {
                 BlockCoordinates.Text = "";
-                float x = (float)position.X;
-                float y = (float)position.Y;
+                double x = (double)position.X;
+                double y = (double)position.Y;
                 if (firstMove)
                 {
                     lastMousePos = new Vector2(x, y);
@@ -442,7 +442,7 @@ namespace MakeGrid3D
                 }
                 else if (rotateState)
                 {
-                    float deltaX, deltaY;
+                    double deltaX, deltaY;
                     OpenTkControl.CaptureMouse();
                     if (x < 0)
                     {
@@ -456,7 +456,7 @@ namespace MakeGrid3D
                     else if (x > OpenTkControl.ActualWidth)
                     {
                         lastMousePos = new Vector2(x, y);
-                        x = (float)OpenTkControl.ActualWidth;
+                        x = (double)OpenTkControl.ActualWidth;
                         Point screenPoint = OpenTkControl.PointToScreen(new Point(x, y));
                         SetCursorPos((int)screenPoint.X, (int)screenPoint.Y);
                         deltaX = lastMousePos.X - x;
@@ -474,7 +474,7 @@ namespace MakeGrid3D
                     else if (y > OpenTkControl.ActualHeight)
                     {
                         lastMousePos = new Vector2(x, y);
-                        y = (float)OpenTkControl.ActualHeight;
+                        y = (double)OpenTkControl.ActualHeight;
                         Point screenPoint = OpenTkControl.PointToScreen(new Point(x, y));
                         SetCursorPos((int)screenPoint.X, (int)screenPoint.Y);
                         deltaX = x - lastMousePos.X;
@@ -488,8 +488,8 @@ namespace MakeGrid3D
                     }
                     
 
-                    renderGrid.Camera.Yaw += deltaX * sensitivity;
-                    renderGrid.Camera.Pitch -= deltaY * sensitivity; // Reversed since y-coordinates range from bottom to top
+                    renderGrid.Camera.Yaw += (float)(deltaX * sensitivity);
+                    renderGrid.Camera.Pitch -= (float)(deltaY * sensitivity); // Reversed since y-coordinates range from bottom to top
                 }
             }
         }
@@ -555,26 +555,26 @@ namespace MakeGrid3D
             {
                 Grid2D grid2D = (Grid2D)renderGrid.Grid;
                 Elem2D selectedElem2D = grid2D.Elems[currentElemIndex];
-                float left = grid2D.XY[selectedElem2D.n1].X;
-                float right = grid2D.XY[selectedElem2D.n4].X;
-                float bottom = grid2D.XY[selectedElem2D.n1].Y;
-                float top = grid2D.XY[selectedElem2D.n4].Y;
+                double left = grid2D.XY[selectedElem2D.n1].X;
+                double right = grid2D.XY[selectedElem2D.n4].X;
+                double bottom = grid2D.XY[selectedElem2D.n1].Y;
+                double top = grid2D.XY[selectedElem2D.n4].Y;
 
-                float width = right - left;
-                float height = top - bottom;
+                double width = right - left;
+                double height = top - bottom;
 
-                float indent = 0.1f;
-                float hor_offset = width * indent;
-                float ver_offset = height * indent;
+                double indent = 0.1f;
+                double hor_offset = width * indent;
+                double ver_offset = height * indent;
 
-                float left_ = left - hor_offset;
-                float right_ = right + hor_offset;
-                float bottom_ = bottom - ver_offset;
-                float top_ = top + ver_offset;
+                double left_ = left - hor_offset;
+                double right_ = right + hor_offset;
+                double bottom_ = bottom - ver_offset;
+                double top_ = top + ver_offset;
 
-                float w, left__, right__, bottom__, top__;
-                float windowWidth = (float)SelectedElemOpenTkControl.ActualWidth;
-                float windowHeight = (float)SelectedElemOpenTkControl.ActualHeight;
+                double w, left__, right__, bottom__, top__;
+                double windowWidth = (double)SelectedElemOpenTkControl.ActualWidth;
+                double windowHeight = (double)SelectedElemOpenTkControl.ActualHeight;
                 if ((right_ - left_) >= (top_ - bottom_))
                 {
                     left__ = left_;
@@ -591,7 +591,7 @@ namespace MakeGrid3D
                     right__ = right + w;
                     left__ = left - w;
                 }
-                projectionSelectedElem = Matrix4.CreateOrthographicOffCenter(left__, right__, bottom__, top__, -0.1f, 100.0f);
+                projectionSelectedElem = Matrix4.CreateOrthographicOffCenter((float)left__, (float)right__, (float)bottom__, (float)top__, -0.1f, 100.0f);
             }
             // -----------------------------------3D------------------------------------ -
             else
@@ -732,8 +732,8 @@ namespace MakeGrid3D
                 return;
             var position = e.GetPosition(OpenTkControl);
             Point new_position = MouseMap(position);
-            float x = (float)new_position.X;
-            float y = (float)new_position.Y;
+            double x = (double)new_position.X;
+            double y = (double)new_position.Y;
             if (twoD)
             {
                 // ----------------------------------------- 2D -----------------------------------------
@@ -757,15 +757,15 @@ namespace MakeGrid3D
                 int node_num_1 = grid2D.global_num(irregularGridMaker.I, irregularGridMaker.J);
                 int node_num_2 = grid2D.global_num(irregularGridMaker.NodeI, irregularGridMaker.NodeJ);
                 if (node_num_1 < 0 || node_num_2 < 0) { return; }
-                float x1 = grid2D.XY[node_num_1].X;
-                float y1 = grid2D.XY[node_num_1].Y;
-                float[] vertices1 = { x1, y1, 0 };
+                double x1 = grid2D.XY[node_num_1].X;
+                double y1 = grid2D.XY[node_num_1].Y;
+                double[] vertices1 = { x1, y1, 0 };
                 uint[] indices1 = { 0 };
                 currentPosMesh = new Mesh(vertices1, indices1);
 
-                float x2 = grid2D.XY[node_num_2].X;
-                float y2 = grid2D.XY[node_num_2].Y;
-                float[] vertices2 = { x2, y2, 0 };
+                double x2 = grid2D.XY[node_num_2].X;
+                double y2 = grid2D.XY[node_num_2].Y;
+                double[] vertices2 = { x2, y2, 0 };
                 uint[] indices2 = { 0 };
                 currentNodeMesh = new Mesh(vertices2, indices2);
             }
@@ -785,8 +785,8 @@ namespace MakeGrid3D
                 return;
             var position = e.GetPosition(OpenTkControl);
             Point new_position = MouseMap(position);
-            float x = (float)new_position.X;
-            float y = (float)new_position.Y;
+            double x = (double)new_position.X;
+            double y = (double)new_position.Y;
 
             if (twoD)
             {
@@ -796,18 +796,18 @@ namespace MakeGrid3D
                 if (grid2D.FindElem(x, y, ref num))
                 {
                     Elem2D selectedElem2D = grid2D.Elems[num];
-                    float x1 = grid2D.XY[selectedElem2D.n1].X;
-                    float x2 = grid2D.XY[selectedElem2D.n4].X;
-                    float y1 = grid2D.XY[selectedElem2D.n1].Y;
-                    float y2 = grid2D.XY[selectedElem2D.n4].Y;
+                    double x1 = grid2D.XY[selectedElem2D.n1].X;
+                    double x2 = grid2D.XY[selectedElem2D.n4].X;
+                    double y1 = grid2D.XY[selectedElem2D.n1].Y;
+                    double y2 = grid2D.XY[selectedElem2D.n4].Y;
 
                     // TODO: Что за...
-                    Tuple<int, float> distance_lb = new Tuple<int, float>(1, MathF.Sqrt(MathF.Pow(x - x1, 2) + MathF.Pow(y - y1, 2)));
-                    Tuple<int, float> distance_rb = new Tuple<int, float>(2, MathF.Sqrt(MathF.Pow(x - x2, 2) + MathF.Pow(y - y1, 2)));
-                    Tuple<int, float> distance_lu = new Tuple<int, float>(3, MathF.Sqrt(MathF.Pow(x - x1, 2) + MathF.Pow(y - y2, 2)));
-                    Tuple<int, float> distance_ru = new Tuple<int, float>(4, MathF.Sqrt(MathF.Pow(x - x2, 2) + MathF.Pow(y - y2, 2)));
+                    Tuple<int, double> distance_lb = new Tuple<int, double>(1, Math.Sqrt(Math.Pow(x - x1, 2) + Math.Pow(y - y1, 2)));
+                    Tuple<int, double> distance_rb = new Tuple<int, double>(2, Math.Sqrt(Math.Pow(x - x2, 2) + Math.Pow(y - y1, 2)));
+                    Tuple<int, double> distance_lu = new Tuple<int, double>(3, Math.Sqrt(Math.Pow(x - x1, 2) + Math.Pow(y - y2, 2)));
+                    Tuple<int, double> distance_ru = new Tuple<int, double>(4, Math.Sqrt(Math.Pow(x - x2, 2) + Math.Pow(y - y2, 2)));
 
-                    List<Tuple<int, float>> distances = new List<Tuple<int, float>> { distance_lb, distance_rb, distance_lu, distance_ru };
+                    List<Tuple<int, double>> distances = new List<Tuple<int, double>> { distance_lb, distance_rb, distance_lu, distance_ru };
                     int id = distances.MinBy(t => t.Item2).Item1;
                     int node = 0;
                     int i = 0; int j = 0;
@@ -874,10 +874,10 @@ namespace MakeGrid3D
                 renderGrid.Camera.Fov /= 1.5f;
                 Matrix4 axis_proj3d = renderGrid.Camera.GetProjectionMatrix();
                 renderGrid.shader.SetMatrix4("projection", ref axis_proj3d);
-                float width = renderGrid.Right - renderGrid.Left;
-                float height = renderGrid.Top - renderGrid.Bottom;
-                float depth = renderGrid.Back - renderGrid.Front;
-                float min, max;
+                double width = renderGrid.Right - renderGrid.Left;
+                double height = renderGrid.Top - renderGrid.Bottom;
+                double depth = renderGrid.Back - renderGrid.Front;
+                double min, max;
                 if (width >= height && width >= depth)
                 {
                     min = renderGrid.Left; max = renderGrid.Right;
@@ -890,8 +890,8 @@ namespace MakeGrid3D
                 {
                     min = renderGrid.Front; max = renderGrid.Back;
                 }
-                float center = (min + max) / 2;
-                Matrix4 translate = Matrix4.CreateTranslation(-center, -center, -center);
+                double center = (min + max) / 2;
+                Matrix4 translate = Matrix4.CreateTranslation((float)-center, (float)-center, (float)-center);
                 Matrix4 model = translate * renderGrid.Rotate;
                 renderGrid.shader.SetMatrix4("model", ref model);
             }
@@ -924,8 +924,8 @@ namespace MakeGrid3D
             // ----------------------------------- 2D -------------------------------------------
             if (twoD)
             {
-                float offset = 2 * 0.05f;
-                float[] vertices = {
+                double offset = 2 * 0.05f;
+                double[] vertices = {
                                                     // x
                                  0, -1, 0, //0
                                  0, 1, 0, // 1
@@ -944,10 +944,10 @@ namespace MakeGrid3D
             // ----------------------------------- 3D -------------------------------------------
             else
             {
-                float width = renderGrid.Right - renderGrid.Left;
-                float height = renderGrid.Top - renderGrid.Bottom;
-                float depth = renderGrid.Back - renderGrid.Front;
-                float min, max;
+                double width = renderGrid.Right - renderGrid.Left;
+                double height = renderGrid.Top - renderGrid.Bottom;
+                double depth = renderGrid.Back - renderGrid.Front;
+                double min, max;
                 if (width >= height && width >= depth)
                 {
                     min = renderGrid.Left; max = renderGrid.Right;
@@ -961,9 +961,9 @@ namespace MakeGrid3D
                     min = renderGrid.Front; max = renderGrid.Back;
                 }
 
-                float mid = (max + min) / 2f;
-                float offset = (max - min) * 0.05f;
-                float[] vertices = {
+                double mid = (max + min) / 2f;
+                double offset = (max - min) * 0.05f;
+                double[] vertices = {
                                                     // y
                                  mid, min, mid, //0
                                  mid, max, mid, // 1
@@ -993,7 +993,7 @@ namespace MakeGrid3D
             }
         }
 
-        static public Color ColorFloatToByte(Color4 color4)
+        static public Color ColordoubleToByte(Color4 color4)
         {
             Color color = new Color();
             color.R = (byte)(color4.R * 255);
@@ -1002,7 +1002,7 @@ namespace MakeGrid3D
             color.A = (byte)(color4.A * 255);
             return color;
         }
-        static public Color4 ColorByteToFloat(Color color)
+        static public Color4 ColorByteTodouble(Color color)
         {
             Color4 color4 = new Color4();
             color4.R = color.R / 255f;
@@ -1019,11 +1019,11 @@ namespace MakeGrid3D
             SpeedZoomSlider.Value = Default.speedZoom;
             SpeedRotateSlider.Value = Default.speedRotate;
 
-            PointsColorPicker.SelectedColor = ColorFloatToByte(Default.pointsColor);
-            LinesColorPicker.SelectedColor = ColorFloatToByte(Default.linesColor);
-            BgColorPicker.SelectedColor = ColorFloatToByte(Default.bgColor);
-            MinColorPicker.SelectedColor = ColorFloatToByte(Default.MinColor);
-            MaxColorPicker.SelectedColor = ColorFloatToByte(Default.MaxColor);
+            PointsColorPicker.SelectedColor = ColordoubleToByte(Default.pointsColor);
+            LinesColorPicker.SelectedColor = ColordoubleToByte(Default.linesColor);
+            BgColorPicker.SelectedColor = ColordoubleToByte(Default.bgColor);
+            MinColorPicker.SelectedColor = ColordoubleToByte(Default.MinColor);
+            MaxColorPicker.SelectedColor = ColordoubleToByte(Default.MaxColor);
 
             if (renderGrid != null)
             {
@@ -1045,7 +1045,7 @@ namespace MakeGrid3D
             }
 
             ShowCurrentUnstructedNodeCheckBox.IsChecked = Default.showCurrentUnstructedNode;
-            CurrentUnstructedNodeColorPicker.SelectedColor = ColorFloatToByte(Default.currentUnstructedNodeColor);
+            CurrentUnstructedNodeColorPicker.SelectedColor = ColordoubleToByte(Default.currentUnstructedNodeColor);
         }
 
         void FillComboBoxes()
@@ -1218,7 +1218,7 @@ namespace MakeGrid3D
             rtranslate = Matrix4.CreateTranslation(mouse_horOffset, mouse_verOffset, 0);
         }
 
-        private void ZoomIn2D(float delta = 1f)
+        private void ZoomIn2D(double delta = 1f)
         {
             if (renderGrid.Indent >= -0.5f)
             {
@@ -1235,7 +1235,7 @@ namespace MakeGrid3D
             //BufferClass.mouse_scaleY /= BufferClass.speedZoom;
         }
 
-        private void ZoomOut2D(float delta = 1f)
+        private void ZoomOut2D(double delta = 1f)
         {
             renderGrid.Indent += speedZoom;
             renderGrid.SetSize();
@@ -1298,18 +1298,18 @@ namespace MakeGrid3D
         private void PointsColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
             if (renderGrid == null) return;
-            renderGrid.PointsColor = ColorByteToFloat((Color)e.NewValue);
+            renderGrid.PointsColor = ColorByteTodouble((Color)e.NewValue);
         }
 
         private void LinesColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
             if (renderGrid == null) return;
-            renderGrid.LinesColor = ColorByteToFloat((Color)e.NewValue);
+            renderGrid.LinesColor = ColorByteTodouble((Color)e.NewValue);
         }
 
         private void BgColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
-            bgColor = ColorByteToFloat((Color)e.NewValue);
+            bgColor = ColorByteTodouble((Color)e.NewValue);
         }
 
         private void SpeedMoveChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -1367,7 +1367,7 @@ namespace MakeGrid3D
                 {
                     throw new BelowZeroException("Числа в полях меньше или равны нулю");
                 }
-                float maxAr = (float)w / h;
+                double maxAr = (double)w / h;
                 if (maxAr < 1f) maxAr = 1f / maxAr;
                 irregularGridMaker.MaxAR = maxAr;
             }
@@ -1493,7 +1493,7 @@ namespace MakeGrid3D
 
         private void CurrentUnstructedNodeColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
-            currentUnstructedNodeColor = ColorByteToFloat((Color)e.NewValue);
+            currentUnstructedNodeColor = ColorByteTodouble((Color)e.NewValue);
         }
 
         private void SetLTQuadDir(string dir_txt, int index)
@@ -1626,8 +1626,8 @@ namespace MakeGrid3D
         {
             if (twoD)
             {
-                if ((float)e.Delta > 0) ZoomIn2D((float)e.Delta / 100);
-                else ZoomOut2D(-(float)e.Delta / 100);
+                if ((double)e.Delta > 0) ZoomIn2D((double)e.Delta / 100);
+                else ZoomOut2D(-(double)e.Delta / 100);
             }
             else renderGrid.Camera.Zoom(speedZoom * e.Delta);
         }
@@ -1636,15 +1636,15 @@ namespace MakeGrid3D
         {
             if (twoD)
             {
-                float z0, zn, qz;
+                double z0, zn, qz;
                 int nz;
-                if (float.TryParse(Z0Block.Text, out z0) && float.TryParse(ZnBlock.Text, out zn) &&
-                    int.TryParse(NZBlock.Text, out nz) && float.TryParse(QZBlock.Text, out qz) &&
+                if (double.TryParse(Z0Block.Text, out z0) && double.TryParse(ZnBlock.Text, out zn) &&
+                    int.TryParse(NZBlock.Text, out nz) && double.TryParse(QZBlock.Text, out qz) &&
                     zn > z0 && nz > 0)
                 {
                     twoD = false;
                     BlockCurrentMode.Text = "Режим: 3D";
-                    List<float> Z = new List<float>(new float[nz + 1]);
+                    List<double> Z = new List<double>(new double[nz + 1]);
                     int i0 = 0, j0 = 0;
                     Grid2D.MakeGrid1D(Z, z0, zn, nz, qz, ref i0, ref j0);
                     Z[nz] = zn;
@@ -1728,8 +1728,8 @@ namespace MakeGrid3D
                 Grid3D grid3D = (Grid3D)renderGrid.Grid;
                 Plane plane = crossSections.CurrentPlane;
                 int index = crossSections.CurrentPlaneSec;
-                float value = crossSections.CurrentValue;
-                List<float> q_new;
+                double value = crossSections.CurrentValue;
+                List<double> q_new;
                 if (isQFileLoaded) regularGrid = new Grid2D(grid3D, plane, index, value, true, q, out q_new);
                 else regularGrid = new Grid2D(grid3D, plane, index, value, false, q, out q_new);
                 q = q_new;
@@ -1814,15 +1814,15 @@ namespace MakeGrid3D
             if (result == true)
             { 
                 string qfileName = dialog.FileName;
-                List<float> q_temp;
+                List<double> q_temp;
                 try
                 {
                     using (TextReader reader = File.OpenText(qfileName))
                     {
-                        q_temp = new List<float>(renderGrid.Grid.Nnodes);
+                        q_temp = new List<double>(renderGrid.Grid.Nnodes);
                         for (int i = 0; i < q_temp.Capacity; i++)
                         {
-                            float qi =  float.Parse(reader.ReadLine());
+                            double qi =  double.Parse(reader.ReadLine());
                             q_temp.Add(qi);
                         }
                     }
@@ -1877,7 +1877,7 @@ namespace MakeGrid3D
         private void MinColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
             if (renderGrid == null) return;
-            renderGrid.MinColor = ColorByteToFloat((Color)e.NewValue);
+            renderGrid.MinColor = ColorByteTodouble((Color)e.NewValue);
             if (isQFileLoaded)
                 renderGrid.SetGridColors(q);
         }
@@ -1885,7 +1885,7 @@ namespace MakeGrid3D
         private void MaxColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
             if (renderGrid == null) return;
-            renderGrid.MaxColor = ColorByteToFloat((Color)e.NewValue);
+            renderGrid.MaxColor = ColorByteTodouble((Color)e.NewValue);
             if (isQFileLoaded)
                 renderGrid.SetGridColors(q);
         }
@@ -1951,7 +1951,7 @@ namespace MakeGrid3D
             int subAreaNum;
             if (int.TryParse(subAreaNum_txt, out subAreaNum))
             {
-                SubAreaColorPicker.SelectedColor = ColorFloatToByte(renderGrid.AreaColors[subAreaNum - 1]);
+                SubAreaColorPicker.SelectedColor = ColordoubleToByte(renderGrid.AreaColors[subAreaNum - 1]);
             }
         }
         private void SubAreaColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
@@ -1963,7 +1963,7 @@ namespace MakeGrid3D
             int subAreaNum;
             if (int.TryParse(subAreaNum_txt, out subAreaNum))
             {
-                renderGrid.AreaColors[subAreaNum - 1] = ColorByteToFloat((Color)e.NewValue);
+                renderGrid.AreaColors[subAreaNum - 1] = ColorByteTodouble((Color)e.NewValue);
             }
         }
 

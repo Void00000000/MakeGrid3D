@@ -9,7 +9,7 @@ namespace MakeGrid3D
     using ByteMat3D = List<List<List<NodeType>>>;
     using ByteMat2D = List<List<NodeType>>;
 
-    class IrregularGridMaker
+    public class IrregularGridMaker
     {
         public IGrid Grid
         {
@@ -37,7 +37,7 @@ namespace MakeGrid3D
         public int Nx { get; private set; }
         public int Ny { get; private set; }
         public int Nz { get; private set; }
-        public float MaxAR { get; set; } = (float)Default.maxAR_width / Default.maxAR_height;
+        public double MaxAR { get; set; } = (double)Default.maxAR_width / Default.maxAR_height;
         public bool AllSteps { get; set; } = false;
         private bool smartMerge = Default.smartMerge;
         public bool SmartMerge
@@ -47,7 +47,7 @@ namespace MakeGrid3D
             {
                 if (value)
                 {
-                    aspect_ratios = new List<Tuple<float, int>>();
+                    aspect_ratios = new List<Tuple<double, int>>();
                     calcAROnly = true;
                 }
                 else calcAROnly = false;
@@ -55,7 +55,7 @@ namespace MakeGrid3D
             }
         }
 
-        public List<Tuple<float, int>> aspect_ratios = new List<Tuple<float, int>>();
+        public List<Tuple<double, int>> aspect_ratios = new List<Tuple<double, int>>();
         public bool calcAROnly = Default.smartMerge;
 
         public int NodeI { get; set; } = 1;
@@ -131,27 +131,27 @@ namespace MakeGrid3D
             QuadIndex = gridState.QuadIndex;
             DirIndex = gridState.DirIndex;
             smartMerge = gridState.smartMerge;
-            aspect_ratios = new List<Tuple<float, int>>(gridState.aspect_ratios);
+            aspect_ratios = new List<Tuple<double, int>>(gridState.aspect_ratios);
             calcAROnly = gridState.calcAROnly;
             End = gridState.End;
         }
 
         // Calculate Aspect Ratio
-        private float CalcAR2D(int n1, int n4)
+        private double CalcAR2D(int n1, int n4)
         {
-            float x1 = grid2D.XY[n1].X;
-            float y1 = grid2D.XY[n1].Y;
+            double x1 = grid2D.XY[n1].X;
+            double y1 = grid2D.XY[n1].Y;
 
-            float x2 = grid2D.XY[n4].X;
-            float y2 = grid2D.XY[n4].Y;
+            double x2 = grid2D.XY[n4].X;
+            double y2 = grid2D.XY[n4].Y;
 
-            float width = (x2 - x1);
-            float height = (y2 - y1);
+            double width = (x2 - x1);
+            double height = (y2 - y1);
             return width / height;
         }
 
         // a1 > a2
-        private bool CompareAR(float a1, float a2)
+        private bool CompareAR(double a1, double a2)
         {
             if (a2 < 1f) a2 = 1f / a2;
             if (a1 < 1f) a1 = 1f / a1;
@@ -232,15 +232,15 @@ namespace MakeGrid3D
 
             if (nrt < 0 || nrb < 0) return;
 
-            float xmin = grid2D.XY[nb].X;
-            float ymin = grid2D.XY[nb].Y;
-            float xmax = grid2D.XY[nrt].X;
-            float ymax = grid2D.XY[nrt].Y;
+            double xmin = grid2D.XY[nb].X;
+            double ymin = grid2D.XY[nb].Y;
+            double xmax = grid2D.XY[nrt].X;
+            double ymax = grid2D.XY[nrt].Y;
             if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
-            float arb = CalcAR2D(nb, nr);
-            float art = CalcAR2D(n, nrt);
-            float ar = CalcAR2D(nb, nrt);
+            double arb = CalcAR2D(nb, nr);
+            double art = CalcAR2D(n, nrt);
+            double ar = CalcAR2D(nb, nrt);
 
             if ((CompareAR(arb, MaxAR) || CompareAR(art, MaxAR)) &&
                  CompareAR(arb, ar) && CompareAR(art, ar))
@@ -254,7 +254,7 @@ namespace MakeGrid3D
                 {
                     if (arb < 1f) arb = 1f / arb;
                     if (art < 1f) art = 1f / art;
-                    float a = (arb > art) ? arb : art;
+                    double a = (arb > art) ? arb : art;
                     aspect_ratios.Add(Tuple.Create(a, J));
                     return;
                 }
@@ -287,15 +287,15 @@ namespace MakeGrid3D
 
             if (nlb < 0 || nlt < 0) return;
 
-            float xmin = grid2D.XY[nlb].X;
-            float ymin = grid2D.XY[nlb].Y;
-            float xmax = grid2D.XY[nt].X;
-            float ymax = grid2D.XY[nt].Y;
+            double xmin = grid2D.XY[nlb].X;
+            double ymin = grid2D.XY[nlb].Y;
+            double xmax = grid2D.XY[nt].X;
+            double ymax = grid2D.XY[nt].Y;
             if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
-            float alb = CalcAR2D(nlb, n);
-            float alt = CalcAR2D(nl, nt);
-            float al = CalcAR2D(nlb, nt);
+            double alb = CalcAR2D(nlb, n);
+            double alt = CalcAR2D(nl, nt);
+            double al = CalcAR2D(nlb, nt);
 
             if ((CompareAR(alb, MaxAR) || CompareAR(alt, MaxAR)) &&
                  CompareAR(alb, al) && CompareAR(alt, al))
@@ -309,7 +309,7 @@ namespace MakeGrid3D
                 {
                     if (alb < 1f) alb = 1f / alb;
                     if (alt < 1f) alt = 1f / alt;
-                    float a = (alb > alt) ? alb : alt;
+                    double a = (alb > alt) ? alb : alt;
                     aspect_ratios.Add(Tuple.Create(a, J));
                     return;
                 }
@@ -342,15 +342,15 @@ namespace MakeGrid3D
 
             if (nlt < 0 || nrt < 0) return;
 
-            float xmin = grid2D.XY[nl].X;
-            float ymin = grid2D.XY[nl].Y;
-            float xmax = grid2D.XY[nrt].X;
-            float ymax = grid2D.XY[nrt].Y;
+            double xmin = grid2D.XY[nl].X;
+            double ymin = grid2D.XY[nl].Y;
+            double xmax = grid2D.XY[nrt].X;
+            double ymax = grid2D.XY[nrt].Y;
             if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
-            float alt = CalcAR2D(nl, nt);
-            float art = CalcAR2D(n, nrt);
-            float at = CalcAR2D(nl, nrt);
+            double alt = CalcAR2D(nl, nt);
+            double art = CalcAR2D(n, nrt);
+            double at = CalcAR2D(nl, nrt);
 
             if ((CompareAR(alt, MaxAR) || CompareAR(art, MaxAR)) &&
                  CompareAR(alt, at) && CompareAR(art, at))
@@ -364,7 +364,7 @@ namespace MakeGrid3D
                 {
                     if (alt < 1f) alt = 1f / alt;
                     if (art < 1f) art = 1f / art;
-                    float a = (alt > art) ? alt : art;
+                    double a = (alt > art) ? alt : art;
                     aspect_ratios.Add(Tuple.Create(a, I));
                     return;
                 }
@@ -397,15 +397,15 @@ namespace MakeGrid3D
 
             if (nlb < 0 || nrb < 0) return;
 
-            float xmin = grid2D.XY[nlb].X;
-            float ymin = grid2D.XY[nlb].Y;
-            float xmax = grid2D.XY[nr].X;
-            float ymax = grid2D.XY[nr].Y;
+            double xmin = grid2D.XY[nlb].X;
+            double ymin = grid2D.XY[nlb].Y;
+            double xmax = grid2D.XY[nr].X;
+            double ymax = grid2D.XY[nr].Y;
             if (grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax) < 0) return;
 
-            float alb = CalcAR2D(nlb, n);
-            float arb = CalcAR2D(nb, nr);
-            float ab = CalcAR2D(nlb, nr);
+            double alb = CalcAR2D(nlb, n);
+            double arb = CalcAR2D(nb, nr);
+            double ab = CalcAR2D(nlb, nr);
 
             if ((CompareAR(alb, MaxAR) || CompareAR(arb, MaxAR)) &&
                  CompareAR(alb, ab) && CompareAR(arb, ab))
@@ -419,7 +419,7 @@ namespace MakeGrid3D
                 {
                     if (alb < 1f) alb = 1f / alb;
                     if (arb < 1f) arb = 1f / arb;
-                    float a = (alb > arb) ? alb : arb;
+                    double a = (alb > arb) ? alb : arb;
                     aspect_ratios.Add(Tuple.Create(a, I));
                     return;
                 }
@@ -764,18 +764,18 @@ namespace MakeGrid3D
 
                     // TODO: OPTIMIZE THAT
                     int n1_new, n2_new, n3_new, n4_new, n5_new;
-                    n1_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n1].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n1].Y) < 1e-14f);
-                    n2_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n2].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n2].Y) < 1e-14f);
-                    n3_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n3].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n3].Y) < 1e-14f);
-                    n4_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n4].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n4].Y) < 1e-14f);
+                    n1_new = XY_new.FindIndex(v => Math.Abs(v.X - grid2D.XY[n1].X) < 1e-14f && Math.Abs(v.Y - grid2D.XY[n1].Y) < 1e-14f);
+                    n2_new = XY_new.FindIndex(v => Math.Abs(v.X - grid2D.XY[n2].X) < 1e-14f && Math.Abs(v.Y - grid2D.XY[n2].Y) < 1e-14f);
+                    n3_new = XY_new.FindIndex(v => Math.Abs(v.X - grid2D.XY[n3].X) < 1e-14f && Math.Abs(v.Y - grid2D.XY[n3].Y) < 1e-14f);
+                    n4_new = XY_new.FindIndex(v => Math.Abs(v.X - grid2D.XY[n4].X) < 1e-14f && Math.Abs(v.Y - grid2D.XY[n4].Y) < 1e-14f);
                     if (n5 >= 0)
-                        n5_new = XY_new.FindIndex(v => MathF.Abs(v.X - grid2D.XY[n5].X) < 1e-14f && MathF.Abs(v.Y - grid2D.XY[n5].Y) < 1e-14f);
+                        n5_new = XY_new.FindIndex(v => Math.Abs(v.X - grid2D.XY[n5].X) < 1e-14f && Math.Abs(v.Y - grid2D.XY[n5].Y) < 1e-14f);
                     else
                         n5_new = -1;
-                    float xmin = XY_new[n1_new].X;
-                    float xmax = XY_new[n4_new].X;
-                    float ymin = XY_new[n1_new].Y;
-                    float ymax = XY_new[n4_new].Y;
+                    double xmin = XY_new[n1_new].X;
+                    double xmax = XY_new[n4_new].X;
+                    double ymin = XY_new[n1_new].Y;
+                    double ymax = XY_new[n4_new].Y;
                     int wi = grid2D.Area.FindSubArea(xmin, xmax, ymin, ymax);
                     Elems_new.Add(new Elem2D(wi, n1_new, n2_new, n3_new, n4_new, n5_new));
                 }

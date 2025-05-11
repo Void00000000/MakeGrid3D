@@ -189,42 +189,42 @@ namespace MakeGrid3D.Pages
             if (nx1 < 0) NX1DownMenu.SelectedItem = string.Empty;
             else
             {
-                float x1 = prevPage.Xw[nx1];
+                double x1 = prevPage.Xw[nx1];
                 NX1DownMenu.SelectedItem = $"{nx1 + 1}| {x1}";
             }
             int nx2 = Mw[indexArea].nx2;
             if (nx2 < 0) NX2DownMenu.SelectedItem = string.Empty;
             else
             {
-                float x2 = prevPage.Xw[nx2];
+                double x2 = prevPage.Xw[nx2];
                 NX2DownMenu.SelectedItem = $"{nx2 + 1}| {x2}";
             }
             int ny1 = Mw[indexArea].ny1;
             if (ny1 < 0) NY1DownMenu.SelectedItem = string.Empty;
             else
             {
-                float y1 = prevPage.Yw[ny1];
+                double y1 = prevPage.Yw[ny1];
                 NY1DownMenu.SelectedItem = $"{ny1 + 1}| {y1}";
             }
             int ny2 = Mw[indexArea].ny2;
             if (ny2 < 0) NY2DownMenu.SelectedItem = string.Empty;
             else
             {
-                float y2 = prevPage.Yw[ny2];
+                double y2 = prevPage.Yw[ny2];
                 NY2DownMenu.SelectedItem = $"{ny2 + 1}| {y2}";
             }
             int nz1 = Mw[indexArea].nz1;
             if (nz1 < 0) NZ1DownMenu.SelectedItem = string.Empty;
             else
             {
-                float z1 = prevPage.Zw[nz1];
+                double z1 = prevPage.Zw[nz1];
                 NZ1DownMenu.SelectedItem = $"{nz1 + 1}| {z1}";
             }
             int nz2 = Mw[indexArea].nz2;
             if (nz2 < 0) NZ2DownMenu.SelectedItem = string.Empty;
             else
             {
-                float z2 = prevPage.Zw[nz2];
+                double z2 = prevPage.Zw[nz2];
                 NZ2DownMenu.SelectedItem = $"{nz2 + 1}| {z2}";
             }
             int wi = Mw[indexArea].wi;

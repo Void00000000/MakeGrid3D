@@ -12,12 +12,12 @@ namespace MakeGrid3D
     class CrossSections
     {
         // XY - 0; XZ - 1; YZ - 2;
-        private List<Tuple<Mesh, float>>[] planes = new List<Tuple<Mesh, float>>[3];
+        private List<Tuple<Mesh, double>>[] planes = new List<Tuple<Mesh, double>>[3];
         private int indexPlane = 0;
         private int indexPlaneSec = -1;
         public int MaxPlaneIndex { get; private set; } = int.MinValue;
         public bool Active { get; set; } = false;
-        public float CurrentValue { get; private set; }
+        public double CurrentValue { get; private set; }
         public Plane CurrentPlane
         {
             get { return (Plane)indexPlane; }
@@ -61,14 +61,14 @@ namespace MakeGrid3D
         public Color4 PlaneColor { get; set; } = new Color4(50 / 255f, 168 / 255f, 107 / 255f, 0.75f);
         public CrossSections(Grid3D grid3D)
         {
-            float xmin = grid3D.Area.X0;
-            float ymin = grid3D.Area.Y0;
-            float zmin = grid3D.Area.Z0;
-            float xmax = grid3D.Area.Xn;
-            float ymax = grid3D.Area.Yn;
-            float zmax = grid3D.Area.Zn;
+            double xmin = grid3D.Area.X0;
+            double ymin = grid3D.Area.Y0;
+            double zmin = grid3D.Area.Z0;
+            double xmax = grid3D.Area.Xn;
+            double ymax = grid3D.Area.Yn;
+            double zmax = grid3D.Area.Zn;
             // XY
-            planes[0] = new List<Tuple<Mesh, float>>(grid3D.Nz);
+            planes[0] = new List<Tuple<Mesh, double>>(grid3D.Nz);
             for (int k = 0; k < grid3D.Nz; k++)
             {
                 int n = -1;
@@ -81,8 +81,8 @@ namespace MakeGrid3D
                     }
                 if (n >= 0)
                 {
-                    float z = grid3D.XYZ[n].Z;
-                    float[] vertices = { xmin, ymin, z,
+                    double z = grid3D.XYZ[n].Z;
+                    double[] vertices = { xmin, ymin, z,
                                          xmax, ymin, z,
                                          xmin, ymax, z,
                                          xmax, ymax, z};
@@ -92,7 +92,7 @@ namespace MakeGrid3D
                 }
             }
             // XZ
-            planes[1] = new List<Tuple<Mesh, float>>(grid3D.Ny);
+            planes[1] = new List<Tuple<Mesh, double>>(grid3D.Ny);
             for (int j = 0; j < grid3D.Ny; j++)
             {
                 int n = -1;
@@ -105,8 +105,8 @@ namespace MakeGrid3D
                     }
                 if (n >= 0)
                 {
-                    float y = grid3D.XYZ[n].Y;
-                    float[] vertices = { xmin, y, zmin,
+                    double y = grid3D.XYZ[n].Y;
+                    double[] vertices = { xmin, y, zmin,
                                          xmax, y, zmin,
                                          xmin, y, zmax,
                                          xmax, y, zmax};
@@ -116,7 +116,7 @@ namespace MakeGrid3D
                 }
             }
             // YZ
-            planes[2] = new List<Tuple<Mesh, float>>(grid3D.Nx);
+            planes[2] = new List<Tuple<Mesh, double>>(grid3D.Nx);
             for (int i = 0; i < grid3D.Nx; i++)
             {
                 int n = -1;
@@ -129,8 +129,8 @@ namespace MakeGrid3D
                     }
                 if (n >= 0)
                 {
-                    float x = grid3D.XYZ[n].X;
-                    float[] vertices = { x, ymin, zmin,
+                    double x = grid3D.XYZ[n].X;
+                    double[] vertices = { x, ymin, zmin,
                                      x, ymax, zmin,
                                      x, ymin, zmax,
                                      x, ymax, zmax};

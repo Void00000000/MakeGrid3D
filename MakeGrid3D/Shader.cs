@@ -93,14 +93,14 @@ namespace MakeGrid3D
             GL.UseProgram(Handle);
         }
 
-        public void SetVector2(string name, Vector2 vector)
+        public void SetVector2(string name, Vector2D vector)
         {
             Use();
             int location = GL.GetUniformLocation(Handle, name);
             GL.Uniform2(location, vector.X, vector.Y);
         }
 
-        public void SetFloat(string name, float f)
+        public void Setfloat(string name, float f)
         {
             Use();
             int location = GL.GetUniformLocation(Handle, name);
@@ -133,13 +133,13 @@ namespace MakeGrid3D
         {
             if (dash)
             {
-                SetFloat("u_dashSize", dash_size);
-                SetFloat("u_gapSize", gap_size);
+                Setfloat("u_dashSize", dash_size);
+                Setfloat("u_gapSize", gap_size);
             }
             else
             {
-                SetFloat("u_dashSize", linesSize);
-                SetFloat("u_gapSize", 0f);
+                Setfloat("u_dashSize", linesSize);
+                Setfloat("u_gapSize", 0f);
             }
             Use();
         }

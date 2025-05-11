@@ -1,31 +1,26 @@
-﻿using System;
+﻿global using Vector2D = OpenTK.Mathematics.Vector2;
+global using Vector3D = OpenTK.Mathematics.Vector3;
+using System;
 using OpenTK.Mathematics;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Windows.Media.Media3D;
-
 namespace MakeGrid3D
 {
     public class Camera
     {
-        private Vector3 front = -Vector3.UnitZ;
-        private Vector3 up = Vector3.UnitY;
-        private Vector3 right = Vector3.UnitX;
-        private Vector3 defaultPosition;
+        private Vector3D front = -Vector3D.UnitZ;
+        private Vector3D up = Vector3D.UnitY;
+        private Vector3D right = Vector3D.UnitX;
+        private Vector3D defaultPosition;
         // in radians
         private float pitch;
         private float yaw = -MathHelper.PiOver2; // Without this, you would be started rotated 90 degrees right.
         private float fov = MathHelper.PiOver2;
 
         public float Speed { get; set; } = Default.speedMove;
-        public Vector3 Position { get; set; }
+        public Vector3D Position { get; set; }
         public float AspectRatio { private get; set; }
-        public Vector3 Front => front;
-        public Vector3 Up => up;
-        public Vector3 Right => right;
+        public Vector3D Front => front;
+        public Vector3D Up => up;
+        public Vector3D Right => right;
         // We convert from degrees to radians as soon as the property is set to improve performance.
         public float Pitch
         {
@@ -66,7 +61,7 @@ namespace MakeGrid3D
         }
 
         public Camera() { }
-        public Camera(Vector3 position, float aspectRatio)
+        public Camera(Vector3D position, float aspectRatio)
         {
             defaultPosition = position;
             Position = defaultPosition;
@@ -90,21 +85,21 @@ namespace MakeGrid3D
             front.Z = MathF.Cos(pitch) * MathF.Sin(yaw);
 
             // We need to make sure the vectors are all normalized, as otherwise we would get some funky results.
-            front = Vector3.Normalize(front);
+            front = Vector3D.Normalize(front);
 
             // Calculate both the right and the up vector using cross product.
             // Note that we are calculating the right from the global up; this behaviour might
             // not be what you need for all cameras so keep this in mind if you do not want a FPS camera.
-            right = Vector3.Normalize(Vector3.Cross(front, Vector3.UnitY));
-            up = Vector3.Normalize(Vector3.Cross(right, front));
+            right = Vector3D.Normalize(Vector3D.Cross(front, Vector3D.UnitY));
+            up = Vector3D.Normalize(Vector3D.Cross(right, front));
         }
 
         public void Reset()
         {
             Position = defaultPosition;
-            front = -Vector3.UnitZ;
-            up = Vector3.UnitY;
-            right = Vector3.UnitX;
+            front = -Vector3D.UnitZ;
+            up = Vector3D.UnitY;
+            right = Vector3D.UnitX;
             yaw = -MathHelper.PiOver2;
             fov = MathHelper.PiOver2;
             Speed = Default.speedMove;

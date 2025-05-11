@@ -9,6 +9,32 @@ using System.Threading.Tasks;
 
 namespace MakeGrid3D
 {
+    public struct Vector2 
+    { 
+        public double X {  get; set; } 
+        public double Y {  get; set; } 
+
+        public Vector2(double x, double y) 
+        {
+            X = x;
+            Y = y;
+        }
+    }
+
+    public struct Vector3
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Z { get; set; }
+
+        public Vector3(double x, double y, double z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+    }
+
     public enum NodeType : byte
     {
         Regular,
@@ -46,8 +72,8 @@ namespace MakeGrid3D
         public int Nnodes { get; }
         public int Nelems { get; }
         public int Nmats { get; }
-        public float MeanAR { get; set; }
-        public float WorstAR { get; set; }
+        public double MeanAR { get; set; }
+        public double WorstAR { get; set; }
         public string PrintInfo();
     }
 
@@ -66,7 +92,7 @@ namespace MakeGrid3D
         public int QuadIndex { get; } = 0;
         public int DirIndex { get; } = 0;
         public bool End { get; } = false;
-        public List<Tuple<float, int>> aspect_ratios = new List<Tuple<float, int>>();
+        public List<Tuple<double, int>> aspect_ratios = new List<Tuple<double, int>>();
         public bool calcAROnly = Default.smartMerge;
         public bool smartMerge = Default.smartMerge;
 
@@ -85,7 +111,7 @@ namespace MakeGrid3D
             QuadIndex = irregularGridMaker.QuadIndex;
             DirIndex = irregularGridMaker.DirIndex;
             End = irregularGridMaker.End;
-            aspect_ratios = new List<Tuple<float, int>>(irregularGridMaker.aspect_ratios);
+            aspect_ratios = new List<Tuple<double, int>>(irregularGridMaker.aspect_ratios);
             calcAROnly = irregularGridMaker.calcAROnly;
             smartMerge = irregularGridMaker.SmartMerge;
     }
@@ -119,8 +145,13 @@ namespace MakeGrid3D
             GL.BindVertexArray(0);
         }
 
-        public Mesh(float[] vertices, uint[] indices, bool IsTexture = false)
+        public Mesh(double[] double_vertices, uint[] indices, bool IsTexture = false)
         {
+            float[] vertices = new float[double_vertices.Length];
+            for (int i = 0; i < double_vertices.Length; i++) 
+            {
+                vertices[i] = (float)double_vertices[i];
+            }
             Vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, Vbo);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
@@ -196,19 +227,19 @@ namespace MakeGrid3D
     public class GridParams
     {
         public bool TwoD { get; }
-        public List<float> Xw { get; }
-        public List<float> Yw {get;}
-        public List<float> Zw {get;}
+        public List<double> Xw { get; }
+        public List<double> Yw {get;}
+        public List<double> Zw {get;}
         public List<SubArea3D> Mw { get; }
         public List<int> NX { get; }
         public List<int> NY { get; }
         public List<int> NZ { get; }
-        public List<float> QX { get; }
-        public List<float> QY { get; }
-        public List<float> QZ { get; }
+        public List<double> QX { get; }
+        public List<double> QY { get; }
+        public List<double> QZ { get; }
         public List<Color4> Mats { get; }
 
-        public GridParams(bool twoD, List<float> xw, List<float> yw, List<float> zw, List<SubArea3D> mw, List<int> nx, List<int> ny, List<int> nz, List<float> qx, List<float> qy, List<float> qz, List<Color4> mats)
+        public GridParams(bool twoD, List<double> xw, List<double> yw, List<double> zw, List<SubArea3D> mw, List<int> nx, List<int> ny, List<int> nz, List<double> qx, List<double> qy, List<double> qz, List<Color4> mats)
         {
             TwoD = twoD;
             Xw = xw;

@@ -22,7 +22,7 @@ namespace MakeGrid3D.Pages
     {
         Page4 prevPage;
         List<int> nx, ny, nz;
-        List<float> qx, qy, qz;
+        List<double> qx, qy, qz;
         int indexX = 0, indexY = 0, indexZ = 0;
         bool TwoD { get; set; }
         public Page5(Page4 page4)
@@ -40,13 +40,13 @@ namespace MakeGrid3D.Pages
             }
 
             nx = new List<int>(new int[prevPage.prevPage.prevPage.NXw - 1]);
-            qx = new List<float>(new float[nx.Count]);
+            qx = new List<double>(new double[nx.Count]);
             ny = new List<int>(new int[prevPage.prevPage.prevPage.NYw - 1]);
-            qy = new List<float>(new float[ny.Count]);
+            qy = new List<double>(new double[ny.Count]);
             if (!TwoD)
             {
                 nz = new List<int>(new int[prevPage.prevPage.prevPage.NZw - 1]);
-                qz = new List<float>(new float[nz.Count]);
+                qz = new List<double>(new double[nz.Count]);
             }
             XIntervalsCounterBlock.Text = $"1/{nx.Count}";
             YIntervalsCounterBlock.Text = $"1/{ny.Count}";
@@ -91,23 +91,23 @@ namespace MakeGrid3D.Pages
 
         private void QXChanged(object sender, TextChangedEventArgs e)
         {
-            float qxi;
-            bool success = float.TryParse(QXBlock.Text, out qxi);
+            double qxi;
+            bool success = double.TryParse(QXBlock.Text, out qxi);
             if (success)
             {
-                if (ReverseXCheckBox.IsChecked == true) qx[indexX] = -MathF.Abs(qxi);
-                else qx[indexX] = MathF.Abs(qxi);
+                if (ReverseXCheckBox.IsChecked == true) qx[indexX] = -Math.Abs(qxi);
+                else qx[indexX] = Math.Abs(qxi);
             }
         }
 
         private void ReverseXChecked(object sender, RoutedEventArgs e)
         {
-            qx[indexX] = -MathF.Abs(qx[indexX]);
+            qx[indexX] = -Math.Abs(qx[indexX]);
         }
 
         private void ReverseXUnChecked(object sender, RoutedEventArgs e)
         {
-            qx[indexX] = MathF.Abs(qx[indexX]);
+            qx[indexX] = Math.Abs(qx[indexX]);
         }
 
         private void PrevXClick(object sender, RoutedEventArgs e)
@@ -119,7 +119,7 @@ namespace MakeGrid3D.Pages
             }
             NXBlock.Text = nx[indexX].ToString();
             if (qx[indexX] < 0) ReverseXCheckBox.IsChecked = true; else ReverseXCheckBox.IsChecked = false;
-            QXBlock.Text = MathF.Abs(qx[indexX]).ToString();
+            QXBlock.Text = Math.Abs(qx[indexX]).ToString();
             XIntervalsCounterBlock.Text = $"{indexX + 1}/{nx.Count}";
         }
 
@@ -132,7 +132,7 @@ namespace MakeGrid3D.Pages
             }
             NXBlock.Text = nx[indexX].ToString();
             if (qx[indexX] < 0)  ReverseXCheckBox.IsChecked = true; else ReverseXCheckBox.IsChecked = false;
-            QXBlock.Text = MathF.Abs(qx[indexX]).ToString();
+            QXBlock.Text = Math.Abs(qx[indexX]).ToString();
             XIntervalsCounterBlock.Text = $"{indexX + 1}/{nx.Count}";
         }
 
@@ -148,23 +148,23 @@ namespace MakeGrid3D.Pages
 
         private void QYChanged(object sender, TextChangedEventArgs e)
         {
-            float qyi;
-            bool success = float.TryParse(QYBlock.Text, out qyi);
+            double qyi;
+            bool success = double.TryParse(QYBlock.Text, out qyi);
             if (success)
             {
-                if (ReverseYCheckBox.IsChecked == true) qy[indexY] = -MathF.Abs(qyi);
-                else qy[indexY] = MathF.Abs(qyi);
+                if (ReverseYCheckBox.IsChecked == true) qy[indexY] = -Math.Abs(qyi);
+                else qy[indexY] = Math.Abs(qyi);
             }
         }
 
         private void ReverseYChecked(object sender, RoutedEventArgs e)
         {
-            qy[indexY] = -MathF.Abs(qy[indexY]);
+            qy[indexY] = -Math.Abs(qy[indexY]);
         }
 
         private void ReverseYUnChecked(object sender, RoutedEventArgs e)
         {
-            qy[indexY] = MathF.Abs(qy[indexY]);
+            qy[indexY] = Math.Abs(qy[indexY]);
         }
 
         private void PrevYClick(object sender, RoutedEventArgs e)
@@ -176,7 +176,7 @@ namespace MakeGrid3D.Pages
             }
             NYBlock.Text = ny[indexY].ToString();
             if (qy[indexY] < 0) ReverseYCheckBox.IsChecked = true; else ReverseYCheckBox.IsChecked = false;
-            QYBlock.Text = MathF.Abs(qy[indexY]).ToString();
+            QYBlock.Text = Math.Abs(qy[indexY]).ToString();
             YIntervalsCounterBlock.Text = $"{indexY + 1}/{ny.Count}";
         }
 
@@ -189,7 +189,7 @@ namespace MakeGrid3D.Pages
             }
             NYBlock.Text = ny[indexY].ToString();
             if (qy[indexY] < 0) ReverseYCheckBox.IsChecked = true; else ReverseYCheckBox.IsChecked = false;
-            QYBlock.Text = MathF.Abs(qy[indexY]).ToString();
+            QYBlock.Text = Math.Abs(qy[indexY]).ToString();
             YIntervalsCounterBlock.Text = $"{indexY + 1}/{ny.Count}";
         }
 
@@ -205,23 +205,23 @@ namespace MakeGrid3D.Pages
 
         private void QZChanged(object sender, TextChangedEventArgs e)
         {
-            float qzi;
-            bool success = float.TryParse(QZBlock.Text, out qzi);
+            double qzi;
+            bool success = double.TryParse(QZBlock.Text, out qzi);
             if (success)
             {
-                if (ReverseZCheckBox.IsChecked == true) qz[indexZ] = -MathF.Abs(qzi);
-                else qz[indexZ] = MathF.Abs(qzi);
+                if (ReverseZCheckBox.IsChecked == true) qz[indexZ] = -Math.Abs(qzi);
+                else qz[indexZ] = Math.Abs(qzi);
             }
         }
 
         private void ReverseZChecked(object sender, RoutedEventArgs e)
         {
-            qz[indexZ] = -MathF.Abs(qz[indexZ]);
+            qz[indexZ] = -Math.Abs(qz[indexZ]);
         }
 
         private void ReverseZUnChecked(object sender, RoutedEventArgs e)
         {
-            qz[indexZ] = MathF.Abs(qz[indexZ]);
+            qz[indexZ] = Math.Abs(qz[indexZ]);
         }
 
         private void PrevZClick(object sender, RoutedEventArgs e)
@@ -233,7 +233,7 @@ namespace MakeGrid3D.Pages
             }
             NZBlock.Text = nz[indexZ].ToString();
             if (qz[indexZ] < 0) ReverseZCheckBox.IsChecked = true; else ReverseZCheckBox.IsChecked = false;
-            QZBlock.Text = MathF.Abs(qz[indexZ]).ToString();
+            QZBlock.Text = Math.Abs(qz[indexZ]).ToString();
             ZIntervalsCounterBlock.Text = $"{indexZ + 1}/{nz.Count}";
         }
 
@@ -246,7 +246,7 @@ namespace MakeGrid3D.Pages
             }
             NZBlock.Text = nz[indexZ].ToString();
             if (qz[indexZ] < 0) ReverseZCheckBox.IsChecked = true; else ReverseZCheckBox.IsChecked = false;
-            QZBlock.Text = MathF.Abs(qz[indexZ]).ToString();
+            QZBlock.Text = Math.Abs(qz[indexZ]).ToString();
             ZIntervalsCounterBlock.Text = $"{indexZ + 1}/{nz.Count}";
         }
     }

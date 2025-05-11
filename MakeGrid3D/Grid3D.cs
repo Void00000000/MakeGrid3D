@@ -68,23 +68,23 @@ namespace MakeGrid3D
         // Количество различных номеров подобластей(материалов)
         public int Nmats { get; }
         // Границы области
-        public float X0 { get; }
-        public float Xn { get; }
-        public float Y0 { get; }
-        public float Yn { get; }
-        public float Z0 { get; }
-        public float Zn { get; }
+        public double X0 { get; }
+        public double Xn { get; }
+        public double Y0 { get; }
+        public double Yn { get; }
+        public double Z0 { get; }
+        public double Zn { get; }
         public int NXw { get; }
         public int NYw { get; }
         public int NZw { get; }
         // Массивы содержащие координаты подобластей
-        public List<float> Xw { get; }
-        public List<float> Yw { get; }
-        public List<float> Zw { get; }
+        public List<double> Xw { get; }
+        public List<double> Yw { get; }
+        public List<double> Zw { get; }
         // Массив, содержащий подобласти
         public List<SubArea3D> Mw { get; }
 
-        public Area3D(List<float> xw, List<float> yw, List<float> zw, List<SubArea3D> mw, int nmats)
+        public Area3D(List<double> xw, List<double> yw, List<double> zw, List<SubArea3D> mw, int nmats)
         {
             Xw = xw; Yw = yw; Zw = zw; Mw = mw;
             NXw = xw.Count; NYw = yw.Count; NZw = zw.Count; Nareas = mw.Count;
@@ -93,7 +93,7 @@ namespace MakeGrid3D
         }
 
         // Тиражирование сечений
-        public Area3D(Area2D area2D, List<float> z)
+        public Area3D(Area2D area2D, List<double> z)
         {
             Nareas = area2D.Nareas;
             Nmats = area2D.Nmats;
@@ -108,7 +108,7 @@ namespace MakeGrid3D
             NZw = 2;
             Xw = area2D.Xw;
             Yw = area2D.Yw;
-            Zw = new List<float>{ Z0, Zn };
+            Zw = new List<double>{ Z0, Zn };
             Mw = new List<SubArea3D>(Nareas);
             foreach (SubArea2D subArea2D in area2D.Mw)
             {
@@ -122,17 +122,17 @@ namespace MakeGrid3D
             }
         }
 
-        public int FindSubArea(float xElemMin, float xElemMax, float yElemMin, float yElemMax,
-            float zElemMin, float zElemMax)
+        public int FindSubArea(double xElemMin, double xElemMax, double yElemMin, double yElemMax,
+            double zElemMin, double zElemMax)
         {
             foreach (SubArea3D subArea in Mw)
             {
-                float xAreaMin = Xw[subArea.nx1];
-                float yAreaMin = Yw[subArea.ny1];
-                float zAreaMin = Zw[subArea.nz1];
-                float xAreaMax = Xw[subArea.nx2];
-                float yAreaMax = Yw[subArea.ny2];
-                float zAreaMax = Zw[subArea.nz2];
+                double xAreaMin = Xw[subArea.nx1];
+                double yAreaMin = Yw[subArea.ny1];
+                double zAreaMin = Zw[subArea.nz1];
+                double xAreaMax = Xw[subArea.nx2];
+                double yAreaMax = Yw[subArea.ny2];
+                double zAreaMax = Zw[subArea.nz2];
 
                 if (xAreaMin <= xElemMin && xElemMin <= xAreaMax &&
                     yAreaMin <= yElemMin && yElemMin <= yAreaMax &&
@@ -154,8 +154,8 @@ namespace MakeGrid3D
         public int Nnodes { get; }
         public int Nelems { get; }
         public int Nmats { get; }
-        public float MeanAR { get; set; } = 1;
-        public float WorstAR { get; set; } = 1;
+        public double MeanAR { get; set; } = 1;
+        public double WorstAR { get; set; } = 1;
         public int Nx { get; private set; }
         public int Ny { get; private set; }
         public int Nz { get; private set; }
@@ -196,12 +196,12 @@ namespace MakeGrid3D
             List<int> nx = gridParams.NX;
             List<int> ny = gridParams.NY;
             List<int> nz = gridParams.NZ;
-            List<float> qx = gridParams.QX;
-            List<float> qy = gridParams.QY;
-            List<float> qz = gridParams.QZ;
-            List<float> X = new List<float>();
-            List<float> Y = new List<float>();
-            List<float> Z = new List<float>();
+            List<double> qx = gridParams.QX;
+            List<double> qy = gridParams.QY;
+            List<double> qz = gridParams.QZ;
+            List<double> X = new List<double>();
+            List<double> Y = new List<double>();
+            List<double> Z = new List<double>();
             Nx = 0; Ny = 0; Nz = 0;
             foreach (int nxi in nx)
                 Nx += nxi;
@@ -262,9 +262,9 @@ namespace MakeGrid3D
                         int n6 = global_num(i + 1, j, k + 1);
                         int n7 = global_num(i, j + 1, k + 1);
                         int n8 = global_num(i + 1, j + 1, k + 1);
-                        float xmin = XYZ[n1].X; float xmax = XYZ[n4].X;
-                        float ymin = XYZ[n1].Y; float ymax = XYZ[n4].Y;
-                        float zmin = XYZ[n1].Z; float zmax = XYZ[n4].Z;
+                        double xmin = XYZ[n1].X; double xmax = XYZ[n4].X;
+                        double ymin = XYZ[n1].Y; double ymax = XYZ[n4].Y;
+                        double zmin = XYZ[n1].Z; double zmax = XYZ[n4].Z;
                         int wi = Area.FindSubArea(xmin, xmax, ymin, ymax, zmin, zmax);
                         Elem3D elem = new Elem3D(wi, n1, n2, n3, n4, n5, n6, n7, n8);
                         Elems.Add(elem);
@@ -294,29 +294,29 @@ namespace MakeGrid3D
 
                     string NXw_txt = reader.ReadLine();
                     int NXw = int.Parse(NXw_txt);
-                    List<float> Xw = new List<float>(NXw);
+                    List<double> Xw = new List<double>(NXw);
                     string[] Xw_txt = reader.ReadLine().Split('|');
                     for (int i = 0; i < NXw; i++)
                     {
-                        Xw.Add(float.Parse(Xw_txt[i]));
+                        Xw.Add(double.Parse(Xw_txt[i]));
                     }
 
                     string NYw_txt = reader.ReadLine();
                     int NYw = int.Parse(NYw_txt);
-                    List<float> Yw = new List<float>(NYw);
+                    List<double> Yw = new List<double>(NYw);
                     string[] Yw_txt = reader.ReadLine().Split('|');
                     for (int i = 0; i < NYw; i++)
                     {
-                        Yw.Add(float.Parse(Yw_txt[i]));
+                        Yw.Add(double.Parse(Yw_txt[i]));
                     }
 
                     string NZw_txt = reader.ReadLine();
                     int NZw = int.Parse(NZw_txt);
-                    List<float> Zw = new List<float>(NZw);
+                    List<double> Zw = new List<double>(NZw);
                     string[] Zw_txt = reader.ReadLine().Split('|');
                     for (int i = 0; i < NZw; i++)
                     {
-                        Zw.Add(float.Parse(Zw_txt[i]));
+                        Zw.Add(double.Parse(Zw_txt[i]));
                     }
 
                     string Nmats_txt = reader.ReadLine();
@@ -350,7 +350,7 @@ namespace MakeGrid3D
                     for (int i = 0; i < Nnodes; i++)
                     {
                         string[] node_txt = reader.ReadLine().Split('|');
-                        Vector3 node = new Vector3(float.Parse(node_txt[0]), float.Parse(node_txt[1]), float.Parse(node_txt[2]));
+                        Vector3 node = new Vector3(double.Parse(node_txt[0]), double.Parse(node_txt[1]), double.Parse(node_txt[2]));
                         XYZ.Add(node);
                     }
                     reader.ReadLine();
@@ -411,7 +411,7 @@ namespace MakeGrid3D
         }
 
         // Тиражирование сечений
-        public Grid3D(Grid2D grid2D, List<float> z)
+        public Grid3D(Grid2D grid2D, List<double> z)
         {
             Area = new Area3D(grid2D.Area, z);
             Nnodes = grid2D.Nnodes * z.Count;
@@ -422,7 +422,7 @@ namespace MakeGrid3D
             Nz = z.Count;
             // Заполнение массива узлов
             XYZ = new List<Vector3>(Nnodes);
-            foreach (float zi in z)
+            foreach (double zi in z)
             {
                 foreach (Vector2 xy in grid2D.XY)
                 {
@@ -476,17 +476,17 @@ namespace MakeGrid3D
             }
         }
 
-        public static void MakeGrid1D(List<float> X_Y, float left, float right, int n, float qxy, ref int i0, ref int j)
+        public static void MakeGrid1D(List<double> X_Y, double left, double right, int n, double qxy, ref int i0, ref int j)
         {
-            float h0;
-            if (MathF.Abs(qxy - 1) < 1E-16)
+            double h0;
+            if (Math.Abs(qxy - 1) < 1E-16)
                 h0 = (right - left) / n;
             else if (qxy > 0)
-                h0 = (right - left) * (1 - qxy) / (1 - MathF.Pow(qxy, n));
+                h0 = (right - left) * (1 - qxy) / (1 - Math.Pow(qxy, n));
             else
             {
                 qxy *= -1;
-                h0 = (right - left) * (1 - qxy) / (1 - MathF.Pow(qxy, n)) * MathF.Pow(qxy, n - 1);
+                h0 = (right - left) * (1 - qxy) / (1 - Math.Pow(qxy, n)) * Math.Pow(qxy, n - 1);
                 qxy *= -1;
             }
 
@@ -498,7 +498,7 @@ namespace MakeGrid3D
                 if (qxy > 0)
                     h0 *= qxy;
                 else
-                    h0 /= MathF.Abs(qxy);
+                    h0 /= Math.Abs(qxy);
             }
             i0 = n + i0;
         }
@@ -547,17 +547,17 @@ namespace MakeGrid3D
             return new Vector3i(i, j, k);
         }
 
-        public bool FindElem(float x, float y, float z, ref int num)
+        public bool FindElem(double x, double y, double z, ref int num)
         {
             for (int i = 0; i < Nelems; i++)
             {
                 Elem3D elem = Elems[i];
-                float xElemMin = XYZ[elem.n1].X;
-                float yElemMin = XYZ[elem.n1].Y;
-                float zElemMin = XYZ[elem.n1].Z;
-                float xElemMax = XYZ[elem.n4].X;
-                float yElemMax = XYZ[elem.n4].Y;
-                float zElemMax = XYZ[elem.n8].Z;
+                double xElemMin = XYZ[elem.n1].X;
+                double yElemMin = XYZ[elem.n1].Y;
+                double zElemMin = XYZ[elem.n1].Z;
+                double xElemMax = XYZ[elem.n4].X;
+                double yElemMax = XYZ[elem.n4].Y;
+                double zElemMax = XYZ[elem.n8].Z;
                 if (x >= xElemMin && x <= xElemMax && y >= yElemMin && y <= yElemMax && z >= zElemMin && z <= zElemMax)
                 {
                     num = i;

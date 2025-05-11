@@ -27,7 +27,7 @@ namespace MakeGrid3D
 
         static public List<Color4> areaColors;
 
-        static public float indent = 0.2f;
+        static public double indent = 0.2f;
 
         // Указано направление обхода по узлам
         static public Dictionary<Quadrant, Direction[]> Directions = new Dictionary<Quadrant, Direction[]>()
