@@ -29,8 +29,10 @@ namespace MakeGrid3D
         public int wi;
         // Граничные узлы
         public int n1; public int n2; public int n3; public int n4;
-        // Терминальный узел
+        // Терминальный узел (для пятиузлового прямоугольника)
         public int n5 = -1;
+        // Список терминальных узлов (многоузловой прямоугольник)
+        public List<int> n_uc;
 
         public Elem2D(int wi, int n1, int n2, int n3, int n4)
         {
@@ -39,11 +41,13 @@ namespace MakeGrid3D
             this.n2 = n2;
             this.n3 = n3;
             this.n4 = n4;
+            n_uc = new List<int>();
         }
 
         public Elem2D(int wi, int n1, int n2, int n3, int n4, int n5) : this(wi, n1, n2, n3, n4)
         {
             this.n5 = n5;
+            n_uc = new List<int>() { n5 };
         }
     }
 
@@ -190,6 +194,9 @@ namespace MakeGrid3D
         public int Nnodes { get; }
         public int Nelems { get; private set; }
         public int Nmats { get; }
+
+        public int Nс { get; set; }
+
         public double MeanAR { get; set; } = 0;
         public double WorstAR { get; set; } = 0;
 

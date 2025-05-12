@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿global using GTree = System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<(int, double)>>;
+using System.Collections.Generic;
 
 namespace MakeGrid3D.Solver.SparseModule
 {

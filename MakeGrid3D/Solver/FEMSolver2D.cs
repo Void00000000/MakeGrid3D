@@ -1,11 +1,13 @@
 ﻿namespace MakeGrid3D.Solver
 {
+    using MakeGrid3D.Helpers;
     using MakeGrid3D.Solver.SparseModule;
+    using OpenTK.Mathematics;
     using System;
     using System.Collections.Generic;
 
     /// <summary>
-    /// Решатель метода конечных элементов двумерный. 
+    /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
     /// </summary>
     public class FEMSolver2D
     {
@@ -25,6 +27,11 @@
         /// Глобальная матрица. 
         /// </summary>
         private SparseMatrix _matrix;
+
+        /// <summary>
+        /// T матрица. 
+        /// </summary>
+        private TMatrix _tMatrix;
 
         /// <summary>
         /// Параметры краевой задачи. 
@@ -162,6 +169,8 @@
                 _b.Add(0);
 
             GeneratePortrait();
+            GTree G = GenerateGTree();
+            GenerateTMatrix(G);
         }
 
         /// <summary>
@@ -245,6 +254,139 @@
             for (int i = 1, j = 0; i < _nNodes; i++)
                 for (int k = 0; k < list[i].Count; k++, j++)
                     _matrix.Jg[j] = list[i][k];
+        }
+
+        /// <summary>
+        /// Генерирует структуру данных G для построения T матрицы.
+        /// </summary>
+        /// <returns>Дерево G, где G[i] содержит пары (j, t), где 
+        /// i - номер терминальная узла, j - номера регулярных узлов, которые лежат на ребре с узлом i,
+        /// t - значение T[i][j] матрицы. </returns>
+        private GTree GenerateGTree() 
+        {
+            // Вначале нужно построить структуру данных G.
+            GTree G = new();
+            foreach (Elem2D elem in _grid.Elems) 
+            {
+                foreach (int nc in elem.n_uc) 
+                {
+                    G.Add(nc, new List<(int, double)>(2));
+                    int n1 = elem.n1;
+                    int n2 = elem.n2;
+                    int n3 = elem.n3;
+                    int n4 = elem.n4;
+                    double xc = _grid.XY[nc].X;
+                    double yc = _grid.XY[nc].Y;
+                    double xmin = _grid.XY[n1].X;
+                    double xmax = _grid.XY[n4].X;
+                    double ymin = _grid.XY[n1].Y;
+                    double ymax = _grid.XY[n4].Y;
+                    double hx = xmax - xmin;
+                    double hy = ymax - ymin;
+
+                    // Узел лежит на нижней стороне
+                    if (MathsHelper.IsEqual(yc, ymin)) 
+                    {
+                        double Telem1 = BasicFunc1(xc, xmax, hx);
+                        double Telem2 = BasicFunc2(xc, xmin, hx);
+                        G[nc].Add((n1, Telem1));
+                        G[nc].Add((n2, Telem2));
+                    }
+                    // Узел лежит на правой стороне
+                    else if (MathsHelper.IsEqual(xc, xmax))
+                    {
+                        double Telem1 = BasicFunc1(yc, ymax, hy);
+                        double Telem2 = BasicFunc2(yc, ymin, hy);
+                        G[nc].Add((n2, Telem1));
+                        G[nc].Add((n4, Telem2));
+                    }
+                    // Узел лежит на верхней стороне
+                    else if (MathsHelper.IsEqual(yc, ymax))
+                    {
+                        double Telem1 = BasicFunc1(xc, xmax, hx);
+                        double Telem2 = BasicFunc2(xc, xmin, hx);
+                        G[nc].Add((n2, Telem1));
+                        G[nc].Add((n4, Telem2));
+                    }
+                    // Узел лежит на левой стороне
+                    else if (MathsHelper.IsEqual(xc, xmin)) 
+                    {
+                        double Telem1 = BasicFunc1(yc, ymax, hy);
+                        double Telem2 = BasicFunc2(yc, ymin, hy);
+                        G[nc].Add((n1, Telem1));
+                        G[nc].Add((n3, Telem2));
+                    }
+                }
+            }
+            return G;
+        }
+
+        /// <summary>
+        /// Генерирует T матрицу.
+        /// </summary>
+        /// <param name="G">Структура данных G</param>
+        private void GenerateTMatrix(GTree G) 
+        {
+            for (int j = _grid.Nс; j < _grid.Nnodes; j++) 
+            {
+                int elems_count = 0; // Количество элементов с столбце.
+                double m = 1;
+                GenerateTMatrixIteration(G, j, m, elems_count);
+                int igCount = _tMatrix.Ig.Count;
+                int igElem = elems_count + _tMatrix.Ig[igCount - 1];
+                _tMatrix.Ig.Add(igElem);
+            }
+        }
+
+        /// <summary>
+        /// Рекурсивная итерация генерации T матрицы.
+        /// </summary>
+        /// <param name="G">Структура данных G.</param>
+        /// <param name="j">Номер терминального узла.</param>
+        /// <param name="m">Ячейка памяти, хранящаяя произведение текущей цепочки.</param>
+        /// <param name="elems_count">Счетчик количества элементов в столбце.</param>
+        private void GenerateTMatrixIteration(GTree G, int j, double m, int elems_count) 
+        {
+            foreach ((int, double) treeNode in G[j])
+            {
+                int i = treeNode.Item1;
+                double Telem = treeNode.Item2;
+
+                if (i < _grid.Nс)
+                {
+                    _tMatrix.Jg.Add(i);
+                    _tMatrix.Gg.Add(m * Telem);
+                    elems_count++;
+                    return;
+                }
+                else
+                {
+                    m *= Telem;
+                    GenerateTMatrixIteration(G, i, m, elems_count);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Первая локальная базисная функция X1. 
+        /// </summary>
+        /// <param name="x">Переменное значение.</param>
+        /// <param name="xmax">Максимальное значение x на элементе.</param>
+        /// <param name="h">Длина значения по x</param>
+        double BasicFunc1(double x, double xmax, double h) 
+        {
+            return (xmax - x) / h;
+        }
+
+        /// <summary>
+        /// Вторая локальная базисная функция X2. 
+        /// </summary>
+        /// <param name="x">Переменное значение.</param>
+        /// <param name="xmin">Минимальное значение x на элементе.</param>
+        /// <param name="h">Длина значения по x</param>
+        double BasicFunc2(double x, double xmin, double h)
+        {
+            return (x - xmin) / h;
         }
 
         /// <summary>

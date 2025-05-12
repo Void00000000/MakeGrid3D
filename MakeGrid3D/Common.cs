@@ -70,6 +70,12 @@ namespace MakeGrid3D
     public interface IGrid
     {
         public int Nnodes { get; }
+
+        /// <summary>
+        /// Количество регулярных узлов. 
+        /// </summary>
+        public int Nс { get; }
+
         public int Nelems { get; }
         public int Nmats { get; }
         public double MeanAR { get; set; }

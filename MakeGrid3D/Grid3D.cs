@@ -152,6 +152,9 @@ namespace MakeGrid3D
     {
         public Area3D Area { get; }
         public int Nnodes { get; }
+
+        public int Nс { get; }
+
         public int Nelems { get; }
         public int Nmats { get; }
         public double MeanAR { get; set; } = 1;
