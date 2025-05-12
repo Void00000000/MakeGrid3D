@@ -24,9 +24,9 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test1 test = new Test1();
+            Test2 test = new Test2();
             test.CreateTest();
-            FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams, 
+            FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams,
                 test.Bc1, test.Bc2, test.Bc3);
             List<double> q = FEMSolver2D.Instance.Solve();
             LogService.LogVector(q);

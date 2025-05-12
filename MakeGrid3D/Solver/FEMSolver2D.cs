@@ -177,7 +177,7 @@
             ApplyBc(3);
             ApplyBc(1);
             //
-            _matrix.Di[2] = 1;
+            //_matrix.Di[2] = 1;
             //
             return LOSSolver.Instance.LOS_DI(_matrix, _b);
         } 
