@@ -155,7 +155,8 @@
         /// <param name="bc1">Список границ с первым к.у.</param>
         /// <param name="bc2">Список границ со вторым к.у.</param>
         /// <param name="bc3">Список границ с третьим к.у.</param>
-        public void Initialize(Grid2D grid, FEMParams gridParams, List<Boundary> bc1, List<Boundary> bc2, List<Boundary> bc3)
+        /// <returns>true, если успешно удалось проинициализировать решатель.</returns>
+        public bool Initialize(Grid2D grid, FEMParams gridParams, List<Boundary> bc1, List<Boundary> bc2, List<Boundary> bc3)
         {
             _grid = grid;
             _params = gridParams;
@@ -169,8 +170,12 @@
                 _b.Add(0);
 
             GeneratePortrait();
-            GTree G = GenerateGTree();
-            GenerateTMatrix(G);
+            if (_grid.Nnodes > _grid.Nс)
+            {
+                GTree G = GenerateGTree();
+                return GenerateTMatrix(G);
+            }
+            return true;
         }
 
         /// <summary>
@@ -325,17 +330,24 @@
         /// Генерирует T матрицу.
         /// </summary>
         /// <param name="G">Структура данных G</param>
-        private void GenerateTMatrix(GTree G) 
+        /// <returns>true, если удалось успено создать матрицу.</returns>
+        private bool GenerateTMatrix(GTree G) 
         {
+            // Обработанные узлы.
+            List<int> processed_nodes = new();
             for (int j = _grid.Nс; j < _grid.Nnodes; j++) 
             {
                 int elems_count = 0; // Количество элементов с столбце.
                 double m = 1;
-                GenerateTMatrixIteration(G, j, m, elems_count);
+                bool isSuccess = GenerateTMatrixChain(G, j, m, elems_count, processed_nodes);
+                if (!isSuccess)
+                    return false;
+
                 int igCount = _tMatrix.Ig.Count;
                 int igElem = elems_count + _tMatrix.Ig[igCount - 1];
                 _tMatrix.Ig.Add(igElem);
             }
+            return true;
         }
 
         /// <summary>
@@ -345,26 +357,33 @@
         /// <param name="j">Номер терминального узла.</param>
         /// <param name="m">Ячейка памяти, хранящаяя произведение текущей цепочки.</param>
         /// <param name="elems_count">Счетчик количества элементов в столбце.</param>
-        private void GenerateTMatrixIteration(GTree G, int j, double m, int elems_count) 
+        /// <param name="elems_count">Список обработанных узлов.</param>
+        /// <returns>true, если удалось успешно создать цепочку.</returns>
+        private bool GenerateTMatrixChain(GTree G, int j, double m, int elems_count, List<int> processed_nodes) 
         {
             foreach ((int, double) treeNode in G[j])
             {
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
+                if (processed_nodes.Contains(i)) 
+                    return false;
+
                 if (i < _grid.Nс)
                 {
                     _tMatrix.Jg.Add(i);
                     _tMatrix.Gg.Add(m * Telem);
+                    processed_nodes.Add(i);
                     elems_count++;
-                    return;
+                    return true;
                 }
                 else
                 {
                     m *= Telem;
-                    GenerateTMatrixIteration(G, i, m, elems_count);
+                    return GenerateTMatrixChain(G, i, m, elems_count, processed_nodes);
                 }
             }
+            return true;
         }
 
         /// <summary>

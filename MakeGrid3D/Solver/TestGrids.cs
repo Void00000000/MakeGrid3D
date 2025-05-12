@@ -342,4 +342,173 @@ namespace MakeGrid3D.Solver
             FemParams.F = Functions.f;
         }
     }
+
+    /// <summary>
+    /// Тест двумерной нерегулярной сетки рис 110.
+    /// </summary>
+    public class Test3
+    {
+        static class Functions
+        {
+            static public double chi(int wi)
+            {
+                return 0;
+            }
+
+            static public double sigma(int wi)
+            {
+                return 3;
+            }
+
+            static public double lambda(int wi)
+            {
+                return 2;
+            }
+
+            static public double f(int wi, double x, double y)
+            {
+                return 3 * x * y;
+            }
+
+            static public double u_g(int si, double x, double y)
+            {
+                switch (si)
+                {
+                    case 0:
+                        return x;
+                    case 1:
+                        return 18 * y;
+                    case 2:
+                        return x * 14;
+                    case 3:
+                        return y;
+                }
+                return 0;
+            }
+
+            static public double theta(int si, double x, double y)
+            {
+                return 0;
+            }
+
+            static public double beta(int si)
+            {
+                return 0;
+            }
+
+            static public double u_beta(int si, double x, double y)
+            {
+                return 0;
+            }
+        }
+
+        public Grid2D Grid;
+        public FEMParams FemParams;
+        public List<Boundary> Bc1;
+        public List<Boundary> Bc2;
+        public List<Boundary> Bc3;
+
+        public void CreateTest()
+        {
+            List<double> xw = new List<double> { 1, 18 };
+            List<double> yw = new List<double> { 1, 14 };
+            SubArea2D sub1 = new SubArea2D(0, 0, 1, 0, 1);
+            List<SubArea2D> subs = new List<SubArea2D> { sub1 };
+            int nmats = 1;
+            Area2D area = new Area2D(xw, yw, subs, nmats);
+            List<Vector2> XY = new List<Vector2>()
+            {
+                new Vector2(1,1), //1
+                new Vector2(3,1), //2
+                new Vector2(7,1), //3 
+                new Vector2(9.25,1), //4
+                new Vector2(13,1), //5
+                new Vector2(18,1), //6
+                new Vector2(7,6), // 7
+                new Vector2(1,9), //8
+                new Vector2(3,9), //9
+                new Vector2(13,11), //10
+                new Vector2(18,11), //11
+                new Vector2(1,14), //12
+                new Vector2(3,14), //13
+                new Vector2(13,14), //14
+                new Vector2(18,14), //15
+                new Vector2(3,6), //16
+                new Vector2(9.25,6), //17
+                new Vector2(13,6), //18
+                new Vector2(7,9), //19
+                new Vector2(3,11), //20
+                new Vector2(7,11), //21
+            };
+            List<Elem2D> elems = new List<Elem2D>()
+            {
+                new Elem2D(0,0,1,7,8, new List<int>(){ 15 }),
+                new Elem2D(0,1,2,15,6),
+                new Elem2D(0,2,3,6,16),
+                new Elem2D(0,3,4,16,17),
+                new Elem2D(0,4,5,9,10, new List<int>(){ 17 }),
+                new Elem2D(0,15,6,8,18),
+                new Elem2D(0,6,17,20,9, new List<int>() { 16,18}),
+                new Elem2D(0,7,8,11,12, new List<int>(){ 19 }),
+                new Elem2D(0,8,18,19,20),
+                new Elem2D(0,19,9,12,13, new List<int>(){ 20 }),
+                new Elem2D(0,9,10,13,14),
+            };
+            int nx = 6;
+            int ny = 5;
+            ByteMat2D IG = new ByteMat2D(nx);
+            for (int i = 0; i < nx; i++)
+            {
+                IG.Add(new List<NodeType>(ny));
+                for (int j = 0; j < ny; j++)
+                {
+                    IG[i].Add(NodeType.Regular);
+                }
+            }
+
+            IG[1][1] = NodeType.Right;
+            IG[3][1] = NodeType.Bottom;
+            IG[4][1] = NodeType.Left;
+            IG[2][2] = NodeType.Left;
+            IG[1][3] = NodeType.Right;
+            IG[2][3] = NodeType.Bottom;
+            IG[0][1] = NodeType.Removed;
+            IG[5][1] = NodeType.Removed;
+            IG[4][2] = NodeType.Removed;
+            IG[5][2] = NodeType.Removed;
+            IG[0][3] = NodeType.Removed;
+
+            Grid = new Grid2D(area, XY, elems, IG);
+            Grid.IXw = new List<int> { 0, 5 };
+            Grid.IYw = new List<int> { 0, 4 };
+
+            Bc1 = new List<Boundary>()
+            {
+                new Boundary(0,0,1,0,0),
+                new Boundary(1,1,1,0,1),
+                new Boundary(2,0,1,1,1),
+                new Boundary(3,0,0,0,1),
+            };
+
+            Bc2 = new List<Boundary>()
+            {
+
+            };
+
+            Bc3 = new List<Boundary>()
+            {
+
+            };
+
+            FemParams = new FEMParams();
+            FemParams.Lambda = Functions.lambda;
+            FemParams.Chi = Functions.chi;
+            FemParams.Sigma = Functions.sigma;
+            FemParams.Ubeta = Functions.u_beta;
+            FemParams.Theta = Functions.theta;
+            FemParams.Beta = Functions.beta;
+            FemParams.Ug = Functions.u_g;
+            FemParams.F = Functions.f;
+        }
+    }
 }

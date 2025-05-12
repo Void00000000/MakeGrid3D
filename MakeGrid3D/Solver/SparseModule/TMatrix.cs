@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MakeGrid3D.Solver.SparseModule
+﻿namespace MakeGrid3D.Solver.SparseModule
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// T матрица в разреженном столбцовом формате.
     /// Первые Nc столбцом образуют единичную подматрицу (Nc = кол-во регулряных узлов).
