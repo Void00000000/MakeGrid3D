@@ -5,6 +5,7 @@
     using OpenTK.Mathematics;
     using System;
     using System.Collections.Generic;
+    using System.Windows.Media;
 
     /// <summary>
     /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
@@ -163,18 +164,19 @@
             _bc1 = bc1;
             _bc2 = bc2;
             _bc3 = bc3;
-            _nNodes = _grid.Nnodes;
 
-            _b = new List<double>(_nNodes);
-            for (int i = 0; i < _nNodes; i++)
-                _b.Add(0);
-
-            GeneratePortrait();
             if (_grid.Nnodes > _grid.Nс)
             {
                 GTree G = GenerateGTree();
-                return GenerateTMatrix(G);
+                bool isSuccess =  GenerateTMatrix(G);
+                if (!isSuccess) return false;
             }
+
+            _nNodes = _grid.Nnodes;
+            _b = new List<double>(_nNodes);
+            for (int i = 0; i < _nNodes; i++)
+                _b.Add(0);
+            GeneratePortrait();
             return true;
         }
 
@@ -333,15 +335,28 @@
         /// <returns>true, если удалось успено создать матрицу.</returns>
         private bool GenerateTMatrix(GTree G) 
         {
+            _tMatrix = new TMatrix(_grid.Nnodes, _grid.Nс);
+            _tMatrix.Ig.Add(0);
             // Обработанные узлы.
             List<int> processed_nodes = new();
+            // Массив, содержащий пары элементов jg и gg.
+            List<(int, double)> jg_gg = new();
             for (int j = _grid.Nс; j < _grid.Nnodes; j++) 
             {
+                processed_nodes.Clear();
+                jg_gg.Clear();
                 int elems_count = 0; // Количество элементов с столбце.
                 double m = 1;
-                bool isSuccess = GenerateTMatrixChain(G, j, m, elems_count, processed_nodes);
+                bool isSuccess = GenerateTMatrixChain(G, j, m, ref elems_count, jg_gg, processed_nodes);
                 if (!isSuccess)
                     return false;
+
+                jg_gg.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+                foreach ((int, double) pair in jg_gg) 
+                {
+                    _tMatrix.Jg.Add(pair.Item1);
+                    _tMatrix.Gg.Add(pair.Item2);
+                }
 
                 int igCount = _tMatrix.Ig.Count;
                 int igElem = elems_count + _tMatrix.Ig[igCount - 1];
@@ -358,8 +373,9 @@
         /// <param name="m">Ячейка памяти, хранящаяя произведение текущей цепочки.</param>
         /// <param name="elems_count">Счетчик количества элементов в столбце.</param>
         /// <param name="elems_count">Список обработанных узлов.</param>
+        /// <param name="ig_gg">Массив, содержаший пары элементов массивов jg и gg</param>
         /// <returns>true, если удалось успешно создать цепочку.</returns>
-        private bool GenerateTMatrixChain(GTree G, int j, double m, int elems_count, List<int> processed_nodes) 
+        private bool GenerateTMatrixChain(GTree G, int j, double m, ref int elems_count, List<(int,double)> jg_gg, List<int> processed_nodes) 
         {
             foreach ((int, double) treeNode in G[j])
             {
@@ -371,16 +387,14 @@
 
                 if (i < _grid.Nс)
                 {
-                    _tMatrix.Jg.Add(i);
-                    _tMatrix.Gg.Add(m * Telem);
+                    jg_gg.Add((i, m * Telem));
                     processed_nodes.Add(i);
                     elems_count++;
-                    return true;
                 }
                 else
                 {
-                    m *= Telem;
-                    return GenerateTMatrixChain(G, i, m, elems_count, processed_nodes);
+                    bool isSuccess = GenerateTMatrixChain(G, i, m * Telem, ref elems_count, jg_gg, processed_nodes);
+                    if (!isSuccess) return false;
                 }
             }
             return true;

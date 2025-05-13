@@ -41,9 +41,6 @@
         public TMatrix(int n, int nc)
         {
             Ig = new List<int>(n - nc + 1);
-            for (int i = 0; i < n - nc + 1; i++)
-                Ig.Add(0);
-
             Jg = new List<int>();
             Gg = new List<double>();
         }

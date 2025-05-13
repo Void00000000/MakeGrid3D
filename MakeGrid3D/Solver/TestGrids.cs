@@ -481,6 +481,7 @@ namespace MakeGrid3D.Solver
             Grid = new Grid2D(area, XY, elems, IG);
             Grid.IXw = new List<int> { 0, 5 };
             Grid.IYw = new List<int> { 0, 4 };
+            Grid.Nс = Grid.Nnodes - 6;
 
             Bc1 = new List<Boundary>()
             {
