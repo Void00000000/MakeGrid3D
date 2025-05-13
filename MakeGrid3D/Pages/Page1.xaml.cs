@@ -24,7 +24,7 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test3 test = new Test3();
+            Test4 test = new Test4();
             test.CreateTest();
             bool isSuccess = FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams,
                 test.Bc1, test.Bc2, test.Bc3);
