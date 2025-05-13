@@ -582,4 +582,90 @@ namespace MakeGrid3D.Solver
             FemParams = FemParamsFactory.CreateFemParams(2);
         }
     }
+
+    /// <summary>
+    /// Тест двумерной нерегулярной сетки с перехлестами.
+    /// </summary>
+    public class Test5
+    {
+        public Grid2D Grid;
+        public FEMParams FemParams;
+        public List<Boundary> Bc1;
+        public List<Boundary> Bc2;
+        public List<Boundary> Bc3;
+
+        public void CreateTest()
+        {
+            List<double> xw = new List<double> { 1, 9 };
+            List<double> yw = new List<double> { 1, 13 };
+            SubArea2D sub1 = new SubArea2D(0, 0, 1, 0, 1);
+            List<SubArea2D> subs = new List<SubArea2D> { sub1 };
+            int nmats = 1;
+            Area2D area = new Area2D(xw, yw, subs, nmats);
+            List<Vector2> XY = new List<Vector2>()
+            {
+                new Vector2(1,1), //1
+                new Vector2(5,1), //2
+                new Vector2(9,1), //3 
+                new Vector2(1,3), //4
+                new Vector2(9,6), //5
+                new Vector2(1,7), //6
+                new Vector2(9,9), // 7
+                new Vector2(1,11), //8
+                new Vector2(1,13), //9
+                new Vector2(5,13), //10
+                new Vector2(9,13), //11
+                new Vector2(5,3), //12
+                new Vector2(5,6), //13
+                new Vector2(5,7), //14
+                new Vector2(5,9), //15
+                new Vector2(5,11) //16
+            };
+            List<Elem2D> elems = new List<Elem2D>()
+            {
+                new Elem2D(0,0,1,3,11),
+                new Elem2D(0,1,2,12,4, new List<int>() { 11}),
+                new Elem2D(0,3,11,5,13,new List<int>() { 12}),
+                new Elem2D(0,12,4,14,6,new List<int>() { 13}),
+                new Elem2D(0,5,13,7,15,new List<int>() { 14}),
+                new Elem2D(0,14,6,9,10, new List<int>() { 15}),
+                new Elem2D(0,7,15,8,9)
+            };
+            int nx = 3;
+            int ny = 7;
+            ByteMat2D IG = new ByteMat2D(nx);
+            for (int i = 0; i < nx; i++)
+            {
+                IG.Add(new List<NodeType>(ny));
+                for (int j = 0; j < ny; j++)
+                {
+                    IG[i].Add(NodeType.Regular);
+                }
+            }
+            Grid = new Grid2D(area, XY, elems, IG);
+            Grid.IXw = new List<int> { 0, 3 };
+            Grid.IYw = new List<int> { 0, 5 };
+            Grid.Nс = Grid.Nnodes - 5;
+
+            Bc1 = new List<Boundary>()
+            {
+                new Boundary(0,0,1,0,0),
+                new Boundary(1,1,1,0,1),
+                new Boundary(2,0,1,1,1),
+                new Boundary(3,0,0,0,1),
+            };
+
+            Bc2 = new List<Boundary>()
+            {
+
+            };
+
+            Bc3 = new List<Boundary>()
+            {
+
+            };
+
+            FemParams = FemParamsFactory.CreateFemParams(2);
+        }
+    }
 }
