@@ -2,10 +2,8 @@
 {
     using MakeGrid3D.Helpers;
     using MakeGrid3D.Solver.SparseModule;
-    using OpenTK.Mathematics;
     using System;
     using System.Collections.Generic;
-    using System.Windows.Media;
 
     /// <summary>
     /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
@@ -164,15 +162,14 @@
             _bc1 = bc1;
             _bc2 = bc2;
             _bc3 = bc3;
-
-            if (_grid.Nnodes > _grid.Nс)
+            if (_grid.Nnodes > _grid.Nc)
             {
                 GTree G = GenerateGTree();
                 bool isSuccess =  GenerateTMatrix(G);
                 if (!isSuccess) return false;
             }
 
-            _nNodes = _grid.Nnodes;
+            _nNodes = _grid.Nc;
             _b = new List<double>(_nNodes);
             for (int i = 0; i < _nNodes; i++)
                 _b.Add(0);
@@ -192,9 +189,9 @@
             ApplyBc(2);
             ApplyBc(3);
             ApplyBc(1);
-            //
-            //_matrix.Di[2] = 1;
-            //
+
+            _matrix.Di[2] = 1;
+
             return LOSSolver.Instance.LOS_DI(_matrix, _b);
         } 
 
@@ -215,31 +212,30 @@
             bool not_in;
             int[] global_nodes = new int[4]; // Массив глобальных узлов элемента.
             // Цикл по конечным элементам
-            for (int j = 0; j < _grid.Ny - 1; j++)
-                for (int i = 0; i < _grid.Nx - 1; i++)
-                {
-                    global_nodes[0] = _grid.global_num(i, j);
-                    global_nodes[1] = _grid.global_num(i + 1, j);
-                    global_nodes[2] = _grid.global_num(i, j + 1);
-                    global_nodes[3] = _grid.global_num(i + 1, j + 1);
-                    // Цикл по ненулевым базисным функциям
-                    for (int i_n = 0; i_n < 4; i_n++) {
-                        g1 = global_nodes[i_n];
-                        for (int j_n = i_n + 1; j_n < 4; j_n++) {
-                            // g2 > g1
-                            g2 = global_nodes[j_n];
-                            // Перед добавлением проверяем наличие элемента в списке
-                            not_in = true;
-                            for (int l = 0; l < list[g2].Count && not_in; l++)
+            foreach (Elem2D elem in _grid.Elems)
+            {
+                global_nodes[0] = elem.n1;
+                global_nodes[1] = elem.n2;
+                global_nodes[2] = elem.n3;
+                global_nodes[3] = elem.n4;
+                // Цикл по ненулевым базисным функциям
+                for (int i_n = 0; i_n < 4; i_n++) {
+                    g1 = global_nodes[i_n];
+                    for (int j_n = i_n + 1; j_n < 4; j_n++) {
+                        // g2 > g1
+                        g2 = global_nodes[j_n];
+                        // Перед добавлением проверяем наличие элемента в списке
+                        not_in = true;
+                        for (int l = 0; l < list[g2].Count && not_in; l++)
                             if (g1 == list[g2][l])
                                 not_in = false;
 
-                            // Добавляем
-                            if (not_in)
-                                list[g2].Add(g1);
-                        }
+                        // Добавляем
+                        if (not_in)
+                            list[g2].Add(g1);
                     }
                 }
+            }
 
 
             // Сортировка списков по возрастанию
@@ -335,13 +331,13 @@
         /// <returns>true, если удалось успено создать матрицу.</returns>
         private bool GenerateTMatrix(GTree G) 
         {
-            _tMatrix = new TMatrix(_grid.Nnodes, _grid.Nс);
+            _tMatrix = new TMatrix(_grid.Nnodes, _grid.Nc);
             _tMatrix.Ig.Add(0);
             // Обработанные узлы.
             List<int> processed_nodes = new();
             // Массив, содержащий пары элементов jg и gg.
             List<(int, double)> jg_gg = new();
-            for (int j = _grid.Nс; j < _grid.Nnodes; j++) 
+            for (int j = _grid.Nc; j < _grid.Nnodes; j++) 
             {
                 processed_nodes.Clear();
                 jg_gg.Clear();
@@ -385,7 +381,7 @@
                 if (processed_nodes.Contains(i)) 
                     return false;
 
-                if (i < _grid.Nс)
+                if (i < _grid.Nc)
                 {
                     jg_gg.Add((i, m * Telem));
                     processed_nodes.Add(i);

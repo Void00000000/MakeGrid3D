@@ -254,6 +254,7 @@ namespace MakeGrid3D.Solver
                 }
             }
             Grid = new Grid2D(area, XY, elems, IG);
+            Grid.Nc= Grid.Nnodes;
             Grid.IXw = new List<int> { 0, 1, 2 };
             Grid.IYw = new List<int> { 0, 1, 2, 3 };
 
@@ -344,6 +345,7 @@ namespace MakeGrid3D.Solver
                 }
             }
             Grid = new Grid2D(area, XY, elems, IG);
+            Grid.Nc = Grid.Nnodes;
             Grid.IXw = new List<int> { 0, 3 };
             Grid.IYw = new List<int> { 0, 3 };
 
@@ -366,6 +368,23 @@ namespace MakeGrid3D.Solver
             };
 
             FemParams = FemParamsFactory.CreateFemParams(2);
+            FemParams.Ug = u_g;
+        }
+
+        private double u_g(int si, double x, double y)
+        {
+            switch (si)
+            {
+                case 0:
+                    return x;
+                case 1:
+                    return 7 * y;
+                case 2:
+                    return x * 16;
+                case 3:
+                    return y;
+            }
+            return 0;
         }
     }
 
@@ -455,7 +474,7 @@ namespace MakeGrid3D.Solver
             Grid = new Grid2D(area, XY, elems, IG);
             Grid.IXw = new List<int> { 0, 5 };
             Grid.IYw = new List<int> { 0, 4 };
-            Grid.Nс = Grid.Nnodes - 6;
+            Grid.Nc = Grid.Nnodes - 6;
 
             Bc1 = new List<Boundary>()
             {
@@ -476,6 +495,23 @@ namespace MakeGrid3D.Solver
             };
 
             FemParams = FemParamsFactory.CreateFemParams(2);
+            FemParams.Ug = u_g;
+        }
+
+        private double u_g(int si, double x, double y)
+        {
+            switch (si)
+            {
+                case 0:
+                    return x;
+                case 1:
+                    return 18 * y;
+                case 2:
+                    return 14 * x;
+                case 3:
+                    return y;
+            }
+            return 0;
         }
     }
 
@@ -559,7 +595,7 @@ namespace MakeGrid3D.Solver
             Grid = new Grid2D(area, XY, elems, IG);
             Grid.IXw = new List<int> { 0, 3 };
             Grid.IYw = new List<int> { 0, 5 };
-            Grid.Nс = Grid.Nnodes - 3;
+            Grid.Nc = Grid.Nnodes - 3;
 
             Bc1 = new List<Boundary>()
             {
@@ -580,6 +616,23 @@ namespace MakeGrid3D.Solver
             };
 
             FemParams = FemParamsFactory.CreateFemParams(2);
+            FemParams.Ug = u_g;
+        }
+
+        private double u_g(int si, double x, double y)
+        {
+            switch (si)
+            {
+                case 0:
+                    return x;
+                case 1:
+                    return 9 * y;
+                case 2:
+                    return 13 * x;
+                case 3:
+                    return y;
+            }
+            return 0;
         }
     }
 
@@ -645,7 +698,7 @@ namespace MakeGrid3D.Solver
             Grid = new Grid2D(area, XY, elems, IG);
             Grid.IXw = new List<int> { 0, 3 };
             Grid.IYw = new List<int> { 0, 5 };
-            Grid.Nс = Grid.Nnodes - 5;
+            Grid.Nc = Grid.Nnodes - 5;
 
             Bc1 = new List<Boundary>()
             {

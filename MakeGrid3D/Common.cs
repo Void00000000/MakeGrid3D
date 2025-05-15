@@ -74,7 +74,7 @@ namespace MakeGrid3D
         /// <summary>
         /// Количество регулярных узлов. 
         /// </summary>
-        public int Nс { get; }
+        public int Nc { get; }
 
         public int Nelems { get; }
         public int Nmats { get; }

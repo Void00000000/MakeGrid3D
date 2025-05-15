@@ -205,7 +205,7 @@ namespace MakeGrid3D
         public int Nelems { get; private set; }
         public int Nmats { get; }
 
-        public int Nс { get; set; }
+        public int Nc { get; set; }
 
         public double MeanAR { get; set; } = 0;
         public double WorstAR { get; set; } = 0;

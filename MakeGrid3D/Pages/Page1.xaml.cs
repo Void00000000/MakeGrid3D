@@ -1,18 +1,9 @@
 ﻿using MakeGrid3D.Solver;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace MakeGrid3D.Pages
 {
@@ -24,7 +15,7 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test5 test = new Test5();
+            Test1 test = new Test1();
             test.CreateTest();
             bool isSuccess = FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams,
                 test.Bc1, test.Bc2, test.Bc3);
