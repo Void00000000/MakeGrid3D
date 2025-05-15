@@ -8,6 +8,20 @@
     /// </summary>
     public class TMatrix
     {
+        #region Private Fields
+
+        /// <summary>
+        /// Количество столбцов матрицы.
+        /// </summary>
+        private int _n;
+
+        /// <summary>
+        /// Количество строк матрицы.
+        /// </summary>
+        private int _nc;
+
+        #endregion Private Fields 
+
         #region Public Properties
 
         /// <summary>
@@ -16,18 +30,18 @@
         /// ig(k + 1) - ig(k) равна количеству ненулевых елементов в k-ом столбце 
         /// Размерность ij равна N - Nc + 1.
         /// </summary>
-        public List<int> Ig { get; private set; }
+        public List<int> Ig { get; set; }
 
         /// <summary>
         /// Целочисленный массив jg содержит номера строк ненулевых элементов
         /// Размерность jg равна размерности gl и gu.
         /// </summary>
-        public List<int> Jg { get; private set; }
+        public List<int> Jg { get; set; }
 
         /// <summary>
         /// Ненулевые элементы матрицы (единичная подматрица сюда не входит)
         /// </summary>
-        public List<double> Gg { get; private set; }
+        public List<double> Gg { get; set; }
 
         #endregion Public Properties
 
@@ -40,11 +54,58 @@
         /// <param name="nc">Количество регулярных узлов.</param>
         public TMatrix(int n, int nc)
         {
+            _n = n;
+            _nc = nc;
             Ig = new List<int>(n - nc + 1);
             Jg = new List<int>();
             Gg = new List<double>();
         }
 
         #endregion Constructors
+
+        #region Public Indexers
+
+        /// <summary>
+        /// Возвращает элемент T[i][j].
+        /// </summary>
+        public double this[int i, int j]
+        {
+            get
+            {
+                if (i >= _nc || j >= _n || i < 0 || j < 0)
+                    return 0;
+
+                if (j >= _nc)
+                {
+                    int jc = j - _nc;
+                    int jbeg = Ig[jc];
+                    int jend = Ig[jc + 1] - 1;
+                    int max_count = Ig[jc + 1] - Ig[jc];
+                    int count = 0;
+                    int med;
+                    while (jbeg < Jg.Count && Jg[jbeg] != i && count <= max_count)
+                    {
+                        count++;
+                        med = (jbeg + jend) / 2;
+                        if (Jg[med] < i)
+                            jbeg = med + 1;
+                        else
+                            jend = med;
+                    }
+
+                    if (count >= max_count || jbeg >= Jg.Count)
+                        return 0;
+                    return Gg[jbeg];
+                }
+                else 
+                {
+                    if (i == j)
+                        return 1;
+                    return 0;
+                }
+            }
+        }
+
+        #endregion Public Indexers
     }
 }

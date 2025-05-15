@@ -1,4 +1,5 @@
 ﻿using MakeGrid3D.Solver;
+using MakeGrid3D.Solver.SparseModule;
 using System;
 using System.Collections.Generic;
 using System.Windows;

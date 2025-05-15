@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Navigation;
 
 namespace MakeGrid3D
 {
@@ -210,7 +211,7 @@ namespace MakeGrid3D
         public double MeanAR { get; set; } = 0;
         public double WorstAR { get; set; } = 0;
 
-        public int Nx { get; private set; }
+        public int Nx { get; set; }
         public int Ny { get; private set; }
 
         // Хранят позиции координат границ подобластей в векторах X и Y
@@ -221,6 +222,12 @@ namespace MakeGrid3D
         public List<Vector2> XY { get; }
         public ByteMat2D IJ { get; }
         public List<int> removedNodes;
+
+        /// <summary>
+        /// Элемента массив Nxc[i] хранит суммарное количество нерегулряных и удаленных узлов, 
+        /// расположенных до i-ой строки. 
+        /// </summary>
+        public List<int> Nxc;
 
         public Grid2D(Area2D area, List<Vector2> XY, List<Elem2D> elems, ByteMat2D IJ)
         {
@@ -600,6 +607,40 @@ namespace MakeGrid3D
                 if (!removedNode && l == removedNodes[k]) return -1;
                 else if (l < removedNodes[k]) return l - k;
             return l - removedNodes.Count;   
+        }
+
+        /// <summary>
+        /// Возвращает глобальный узел по нумерации для решения краевой задачи с построением T матрицы.
+        /// То есть вначале нумеруются регулярные узлы (влево-вправо, снизу-вверх), а потом нерегулярные.
+        /// </summary>
+        public int global_num_T(int i, int j) 
+        {
+            if (IJ[i][j] == NodeType.Removed) 
+            {
+                return -1;
+            }
+
+            int l;
+            if (IJ[i][j] != NodeType.Regular && IJ[i][j] != NodeType.Removed)
+            {
+                l = Nc + Nxc[i];
+                if (i < Nx && Nxc[i] != Nxc[i + 1])
+                    for (int column = 0; column < Ny; column++)
+                        if (IJ[i][j] != NodeType.Regular)
+                            l++;
+            }
+
+            l = j * Nx + i;
+            if (Nnodes > Nc) 
+            {
+                l -= Nxc[i];
+
+                if (i < Nx && Nxc[i] != Nxc[i + 1])
+                    for (int column = 0; column < Ny; column++)
+                        if (IJ[i][j] != NodeType.Regular)
+                            l--;
+            }
+            return l;
         }
 
         public Vector2i global_ij(int node_num)

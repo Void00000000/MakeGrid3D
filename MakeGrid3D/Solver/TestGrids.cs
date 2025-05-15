@@ -465,16 +465,33 @@ namespace MakeGrid3D.Solver
             IG[2][2] = NodeType.Left;
             IG[1][3] = NodeType.Right;
             IG[2][3] = NodeType.Bottom;
+
             IG[0][1] = NodeType.Removed;
-            IG[5][1] = NodeType.Removed;
-            IG[4][2] = NodeType.Removed;
-            IG[5][2] = NodeType.Removed;
             IG[0][3] = NodeType.Removed;
+            IG[2][4] = NodeType.Removed;
+            IG[3][2] = NodeType.Removed;
+            IG[3][3] = NodeType.Removed;
+            IG[5][1] = NodeType.Removed;
+            IG[5][2] = NodeType.Removed;
+            IG[4][2] = NodeType.Removed;
 
             Grid = new Grid2D(area, XY, elems, IG);
             Grid.IXw = new List<int> { 0, 5 };
             Grid.IYw = new List<int> { 0, 4 };
             Grid.Nc = Grid.Nnodes - 6;
+
+            Grid.Nxc = new List<int>(Grid.Nx);
+            for (int i = 0; i < nx; i++)
+            {
+                if (i - 1 < 0)
+                    Grid.Nxc.Add(Grid.Nxc[i - 1]);
+                else
+                    Grid.Nxc.Add(0);
+
+                for (int j = 0; j < ny; j++)
+                    if (IG[i][j] != NodeType.Removed)
+                        Grid.Nxc[0]++;
+            }
 
             Bc1 = new List<Boundary>()
             {
@@ -585,17 +602,30 @@ namespace MakeGrid3D.Solver
                 }
             }
 
-            IG[3][2] = NodeType.Removed;
-            IG[3][3] = NodeType.Removed;
-            IG[2][2] = NodeType.Left;
-            IG[2][3] = NodeType.Left;
             IG[1][4] = NodeType.Bottom;
             IG[1][5] = NodeType.Removed;
+            IG[2][2] = NodeType.Left;
+            IG[2][3] = NodeType.Left;
+            IG[3][2] = NodeType.Removed;
+            IG[3][3] = NodeType.Removed;
 
             Grid = new Grid2D(area, XY, elems, IG);
             Grid.IXw = new List<int> { 0, 3 };
             Grid.IYw = new List<int> { 0, 5 };
             Grid.Nc = Grid.Nnodes - 3;
+
+            Grid.Nxc = new List<int>(Grid.Nx);
+            for (int i = 0; i < nx; i++)
+            {
+                if (i - 1 < 0)
+                    Grid.Nxc.Add(Grid.Nxc[i - 1]);
+                else
+                    Grid.Nxc.Add(0);
+
+                for (int j = 0; j < ny; j++)
+                    if (IG[i][j] != NodeType.Removed)
+                        Grid.Nxc[0]++;
+            }
 
             Bc1 = new List<Boundary>()
             {

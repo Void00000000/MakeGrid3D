@@ -613,7 +613,10 @@
         /// </summary>
         private void ApplyBc1Node(int i, int j, int p) 
         {
-            int l = _grid.global_num(i, j);
+            int l = _grid.global_num_T(i, j);
+            if (l < 0)
+                return;
+
             double x = _grid.XY[l].X;
             double y = _grid.XY[l].Y;
             _matrix.Di[l] = 1;
@@ -630,8 +633,13 @@
         /// </summary>
         private void ApplyBc2Node(int i, int j, int p, bool isX)
         {
-            int l1 = _grid.global_num(i, j);
-            int l2 = isX ? _grid.global_num(i + 1, j) : _grid.global_num(i, j + 1);
+            int l1 = _grid.global_num_T(i, j);
+            if (l1 < 0)
+                return;
+
+            int l2 = -1;
+            while (l2 < 0)
+                l2 = isX ? _grid.global_num_T(i + 1, j) : _grid.global_num_T(i, j + 1);
             double x1 = _grid.XY[l1].X;
             double x2 = _grid.XY[l2].X;
             double y1 = _grid.XY[l1].Y;
@@ -649,8 +657,13 @@
         /// </summary>
         private void ApplyBc3Node(int i, int j, int p, bool isX)
         {
-            int l1 = _grid.global_num(i, j);
-            int l2 = isX ? _grid.global_num(i + 1, j) : _grid.global_num(i, j + 1);
+            int l1 = _grid.global_num_T(i, j);
+            if (l1 < 0)
+                return;
+
+            int l2 = -1;
+            while (l2 < 0)
+                l2 = isX ? _grid.global_num_T(i + 1, j) : _grid.global_num_T(i, j + 1);
             double x1 = _grid.XY[l1].X;
             double x2 = _grid.XY[l2].X;
             double y1 = _grid.XY[l1].Y;
