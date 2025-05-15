@@ -2,8 +2,10 @@
 {
     using MakeGrid3D.Helpers;
     using MakeGrid3D.Solver.SparseModule;
+    using OpenTK.Graphics.ES20;
     using System;
     using System.Collections.Generic;
+    using System.Net.Http.Headers;
 
     /// <summary>
     /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
@@ -419,36 +421,56 @@
         }
 
         /// <summary>
-        /// Добавляет локальную матрицу в глобальную. 
+        /// Добавляет элемент A_ij локальной матрицы в глобальную. 
         /// </summary>
-        /// <param name="l">Локальная матрица.</param>
-        /// <param name="n">Размерность локальной матрицы.</param>
-        /// <param name="global_nodes">Массив глобальных номеров конечного элемента.</param>
-        private void AddLocalMatrix(double[][] l, int n, int[] global_nodes) 
+        /// <param name="a">Элемент локальной матрицы.</param>
+        /// <param name="ni">Глобальный элемент, соответствующей строке.</param>
+        /// <param name="ni">Глобальный элемент, соответствующей столбцу.</param>
+        private void AddLocalMatrix(double a, int ni, int nj) 
         {
-            int ibeg, iend, med;
-            for (int i = 0; i < n; i++)
-                _matrix.Di[global_nodes[i]] = _matrix.Di[global_nodes[i]] + l[i][i];
-
-            for (int i = 0; i < n; i++)
+            if (ni == nj)
             {
-                ibeg = _matrix.Ig[global_nodes[i]];
-                for (int j = 0; j <= i - 1; j++)
-                {
-                    iend = _matrix.Ig[global_nodes[i] + 1] - 1;
-                    while (_matrix.Jg[ibeg] != global_nodes[j])
-                    {
-                        med = (ibeg + iend) / 2;
-                        if (_matrix.Jg[med] < global_nodes[j])
-                            ibeg = med + 1;
-                        else
-                            iend = med;
-                    }
-                    _matrix.Gl[ibeg] += l[i][j];
-                    _matrix.Gu[ibeg] += l[j][i];
-                    ibeg++;
-                }
+                _matrix.Di[ni] += a;
+                return;
             }
+
+            int n1, n2;
+            if (ni > nj) 
+            {
+                n1 = ni;
+                n2 = nj;
+            }
+            else 
+            {
+                n1 = nj;
+                n2 = ni;
+            }
+
+            int beg = _matrix.Ig[n1];
+            int end = _matrix.Ig[n1 + 1] - 1;
+            if (end < 0)
+                return;
+
+            int max_count = _matrix.Ig[n1 + 1] - _matrix.Ig[n1];
+            int count = 0;
+            int med;
+            while (beg < _matrix.Jg.Count && _matrix.Jg[beg] != n2 && count <= max_count)
+            {
+                count++;
+                med = (beg + end) / 2;
+                if (_matrix.Jg[med] < n2)
+                    beg = med + 1;
+                else
+                    end = med;
+            }
+
+            if (count >= max_count || beg >= _matrix.Jg.Count)
+                return;
+
+            if (ni > nj)
+                _matrix.Gl[beg] += a;
+            else
+                _matrix.Gu[beg] += a;
         }
 
         /// <summary>
@@ -473,7 +495,9 @@
                     }
 
                 int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
-                AddLocalMatrix(_g, 4, global_nodes);
+                for (int i = 0; i < 4; i++)
+                    for (int j = 0; j < 4; j++)
+                        AddLocalMatrix(_g[i][j], global_nodes[i], global_nodes[j]);
             }
         }
 
@@ -498,7 +522,9 @@
                     }
 
                 int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
-                AddLocalMatrix(_m, 4, global_nodes);
+                for (int i = 0; i < 4; i++)
+                    for (int j = 0; j < 4; j++)
+                        AddLocalMatrix(_m[i][j], global_nodes[i], global_nodes[j]);
             }
         }
 
@@ -677,8 +703,10 @@
             _as3[0][0] = 2 * _as3[0][1];
             _as3[1][0] = _as3[0][1];
             _as3[1][1] = _as3[0][0];
-            int[] global_noses = new int[2] { l1, l2 };
-            AddLocalMatrix(_as3, 2, global_noses);
+            int[] global_nodes = new int[2] { l1, l2 };
+            for (int row = 0; row < 2; row++)
+                for (int column = 0; column < 2; column++)
+                    AddLocalMatrix(_as3[row][column], global_nodes[row], global_nodes[column]);
 
             _b[l1] += beta_const * h * (2 * u_beta1 + u_beta2) / 6.0;
             _b[l2] += beta_const * h * (u_beta1 + 2 * u_beta2) / 6.0;
