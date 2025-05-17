@@ -2,10 +2,8 @@
 {
     using MakeGrid3D.Helpers;
     using MakeGrid3D.Solver.SparseModule;
-    using OpenTK.Graphics.ES20;
     using System;
     using System.Collections.Generic;
-    using System.Net.Http.Headers;
 
     /// <summary>
     /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
@@ -126,8 +124,9 @@
 
         /// <summary>
         /// Размерность матрицы. 
+        /// Для нерегулярной сетки размерность матрицы равна количеству регулярных элемент.
         /// </summary>
-        private int _nNodes;
+        private int _n;
 
         #endregion Private Fields
 
@@ -171,9 +170,9 @@
                 if (!isSuccess) return false;
             }
 
-            _nNodes = _grid.Nc;
-            _b = new List<double>(_nNodes);
-            for (int i = 0; i < _nNodes; i++)
+            _n = _grid.Nc;
+            _b = new List<double>(_n);
+            for (int i = 0; i < _n; i++)
                 _b.Add(0);
             GeneratePortrait();
             return true;
@@ -192,9 +191,14 @@
             ApplyBc(3);
             ApplyBc(1);
 
-            _matrix.Di[2] = 1;
+            //_matrix.Di[2] = 1;
 
-            return LOSSolver.Instance.LOS_DI(_matrix, _b);
+            List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
+            if (_n == _grid.Nnodes)
+                return qc;
+
+            List<double> q = _tMatrix.TMultiplyByVector(qc);
+            return q;
         } 
 
         #endregion Public Methods
@@ -206,24 +210,45 @@
         /// </summary>
         private void GeneratePortrait() 
         {
-            List<List<int>> list = new List<List<int>>(_nNodes);
-            for (int i = 0; i < _nNodes; i++)
+            /// <summary>
+            /// Добавляет номера глобальных узлов в массив global_nodes. 
+            /// </summary>
+            void AddNodes(int n, List<int> global_nodes) 
+            {
+                if (n < _n)
+                {
+                    if (!global_nodes.Contains(n))
+                        global_nodes.Add(n);
+                }
+                else
+                {
+                    int k = n - _n;
+                    for (int i = _tMatrix.Ig[k]; i < _tMatrix.Ig[k + 1]; i++)
+                        if (!global_nodes.Contains(_tMatrix.Jg[i]))
+                            global_nodes.Add(_tMatrix.Jg[i]);
+                }
+            }
+
+            List<List<int>> list = new List<List<int>>(_n);
+            for (int i = 0; i < _n; i++)
                 list.Add(new List<int>());
             list[0].Add(0);
             int g1, g2;  // Глобальные номера базисных функций
             bool not_in;
-            int[] global_nodes = new int[4]; // Массив глобальных узлов элемента.
+            List<int> global_nodes = new List<int>(); // Массив глобальных узлов элемента.
             // Цикл по конечным элементам
             foreach (Elem2D elem in _grid.Elems)
             {
-                global_nodes[0] = elem.n1;
-                global_nodes[1] = elem.n2;
-                global_nodes[2] = elem.n3;
-                global_nodes[3] = elem.n4;
+                AddNodes(elem.n1, global_nodes);
+                AddNodes(elem.n2, global_nodes);
+                AddNodes(elem.n3, global_nodes);
+                AddNodes(elem.n4, global_nodes);
+                global_nodes.Sort();
+
                 // Цикл по ненулевым базисным функциям
-                for (int i_n = 0; i_n < 4; i_n++) {
+                for (int i_n = 0; i_n < global_nodes.Count; i_n++) {
                     g1 = global_nodes[i_n];
-                    for (int j_n = i_n + 1; j_n < 4; j_n++) {
+                    for (int j_n = i_n + 1; j_n < global_nodes.Count; j_n++) {
                         // g2 > g1
                         g2 = global_nodes[j_n];
                         // Перед добавлением проверяем наличие элемента в списке
@@ -237,26 +262,27 @@
                             list[g2].Add(g1);
                     }
                 }
+                global_nodes.Clear();
             }
 
 
             // Сортировка списков по возрастанию
-            for (int i = 0; i < _nNodes; i++)
+            for (int i = 0; i < _n; i++)
                 list[i].Sort();
 
-            _matrix = new SparseMatrix(_nNodes);
+            _matrix = new SparseMatrix(_n);
             // Формирование вектора ig
             _matrix.Ig[0] = 0;
             for (int i = 0; i < list.Count; i++)
                 _matrix.Ig[i + 1] = _matrix.Ig[i] + list[i].Count;
 
-            for (int i = 1; i < _nNodes + 1; i++)
+            for (int i = 1; i < _n + 1; i++)
                 _matrix.Ig[i] -= 1;
 
-            int ng = _matrix.Ig[_nNodes];
+            int ng = _matrix.Ig[_n];
             _matrix.Alloc(ng);
             // Формирование вектора jg
-            for (int i = 1, j = 0; i < _nNodes; i++)
+            for (int i = 1, j = 0; i < _n; i++)
                 for (int k = 0; k < list[i].Count; k++, j++)
                     _matrix.Jg[j] = list[i][k];
         }
@@ -421,29 +447,60 @@
         }
 
         /// <summary>
-        /// Добавляет элемент A_ij локальной матрицы в глобальную. 
+        /// Добавляет элемент локальной матрицы в глобальную с учётом T матрицы. 
         /// </summary>
         /// <param name="a">Элемент локальной матрицы.</param>
-        /// <param name="ni">Глобальный элемент, соответствующей строке.</param>
-        /// <param name="ni">Глобальный элемент, соответствующей столбцу.</param>
-        private void AddLocalMatrix(double a, int ni, int nj) 
-        {
-            if (ni == nj)
+        /// <param name="i">Глобальный номер, соответствующей строке.</param>
+        /// <param name="j">Глобальный номер, соответствующей столбцу.</param>
+        private void AddLocalMatrixElement(double a, int i, int j) 
+        { 
+            if (i < _n && j < _n) 
             {
-                _matrix.Di[ni] += a;
+                AddToGlobalMatrix(a, i, j);
+            }
+            else if (i >= _n && j < _n) 
+            {
+                i = i - _n;
+                for (int mu = _tMatrix.Ig[i]; mu < _tMatrix.Ig[i + 1]; mu++) 
+                    AddToGlobalMatrix(a * _tMatrix.Gg[mu], _tMatrix.Jg[mu], j);
+            }
+            else if (i < _n && j >= _n) 
+            {
+                j = j - _n;
+                for (int nu = _tMatrix.Ig[j]; nu < _tMatrix.Ig[j + 1]; nu++)
+                    AddToGlobalMatrix(a * _tMatrix.Gg[nu], i, _tMatrix.Jg[nu]);
+            }
+            else 
+            {
+                i = i - _n;
+                j = j - _n;
+                for (int mu = _tMatrix.Ig[i]; mu < _tMatrix.Ig[i + 1]; mu++)
+                    for (int nu = _tMatrix.Ig[j]; nu < _tMatrix.Ig[j + 1]; nu++)
+                        AddToGlobalMatrix(a * _tMatrix.Gg[nu] * _tMatrix.Gg[mu], _tMatrix.Jg[mu], _tMatrix.Jg[nu]);
+            }
+        }
+
+        /// <summary>
+        /// Добавляет значение a в элемент Aij глобальной матрицы. 
+        /// </summary>
+        private void AddToGlobalMatrix(double a, int i, int j) 
+        {
+            if (i == j)
+            {
+                _matrix.Di[i] += a;
                 return;
             }
 
             int n1, n2;
-            if (ni > nj) 
+            if (i > j) 
             {
-                n1 = ni;
-                n2 = nj;
+                n1 = i;
+                n2 = j;
             }
             else 
             {
-                n1 = nj;
-                n2 = ni;
+                n1 = j;
+                n2 = i;
             }
 
             int beg = _matrix.Ig[n1];
@@ -467,7 +524,7 @@
             if (count >= max_count || beg >= _matrix.Jg.Count)
                 return;
 
-            if (ni > nj)
+            if (i > j)
                 _matrix.Gl[beg] += a;
             else
                 _matrix.Gu[beg] += a;
@@ -497,7 +554,7 @@
                 int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
                 for (int i = 0; i < 4; i++)
                     for (int j = 0; j < 4; j++)
-                        AddLocalMatrix(_g[i][j], global_nodes[i], global_nodes[j]);
+                        AddLocalMatrixElement(_g[i][j], global_nodes[i], global_nodes[j]);
             }
         }
 
@@ -524,7 +581,7 @@
                 int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
                 for (int i = 0; i < 4; i++)
                     for (int j = 0; j < 4; j++)
-                        AddLocalMatrix(_m[i][j], global_nodes[i], global_nodes[j]);
+                        AddLocalMatrixElement(_m[i][j], global_nodes[i], global_nodes[j]);
             }
         }
 
@@ -548,8 +605,24 @@
                 double f4 = _params.F(elem.wi, x2, y2);
 
                 int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
-                for (int i = 0; i < 4; i++)
-                    _b[global_nodes[i]] += hx * hy * (_c[i][0] * f1 + _c[i][1] * f2 + _c[i][2] * f3 + _c[i][3] * f4) / 36.0;
+                for (int i_node = 0; i_node < 4; i_node++)
+                {
+                    int i;
+                    if (global_nodes[i_node] < _n)
+                    {
+                        i = global_nodes[i_node];
+                        _b[i] += hx * hy * (_c[i_node][0] * f1 + _c[i_node][1] * f2 + _c[i_node][2] * f3 + _c[i_node][3] * f4) / 36.0;
+                    }
+                    else
+                    {
+                        int k = global_nodes[i_node] - _n;
+                        for (int j = _tMatrix.Ig[k]; j < _tMatrix.Ig[k + 1]; j++)
+                        {
+                            i = _tMatrix.Jg[j];
+                            _b[i] += _tMatrix.Gg[j] * hx * hy * (_c[i_node][0] * f1 + _c[i_node][1] * f2 + _c[i_node][2] * f3 + _c[i_node][3] * f4) / 36.0;
+                        }
+                    }  
+                }
             }
         }
 
@@ -706,7 +779,7 @@
             int[] global_nodes = new int[2] { l1, l2 };
             for (int row = 0; row < 2; row++)
                 for (int column = 0; column < 2; column++)
-                    AddLocalMatrix(_as3[row][column], global_nodes[row], global_nodes[column]);
+                    AddLocalMatrixElement(_as3[row][column], global_nodes[row], global_nodes[column]);
 
             _b[l1] += beta_const * h * (2 * u_beta1 + u_beta2) / 6.0;
             _b[l2] += beta_const * h * (u_beta1 + 2 * u_beta2) / 6.0;

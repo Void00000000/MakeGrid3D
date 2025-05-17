@@ -107,5 +107,39 @@
         }
 
         #endregion Public Indexers
+
+        #region Public Methods
+
+        /// <summary>
+        /// Умножает транспонированную матрицу T на вектор v.
+        /// </summary>
+        /// <returns>Вектор размерностью равным количеству стобцов T матрицы.
+        /// Если не удалось выполнить операцию, то нулевой вектор.</returns>
+        public List<double> TMultiplyByVector(List<double> v) 
+        {
+            List<double> result = new List<double>(_n);
+            for (int i = 0; i < _n; i++)
+                result.Add(0);
+
+            if (v.Count != _nc)
+                return result;
+
+            for (int i = 0; i < _n; i++) 
+            {
+                if (i < _nc)
+                    result[i] = v[i];
+                else 
+                {
+                    for (int k = Ig[i - _nc]; k < Ig[i - _nc + 1]; k++) 
+                    {
+                        int j = Jg[k];
+                        result[i] += Gg[k] * v[j];
+                    }
+                }
+            }
+            return result;
+        }
+
+        #endregion Public Methods
     }
 }

@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Controls;
 using System.Windows.Navigation;
 
 namespace MakeGrid3D
@@ -224,10 +225,17 @@ namespace MakeGrid3D
         public List<int> removedNodes;
 
         /// <summary>
-        /// Элемента массив Nxc[i] хранит суммарное количество нерегулряных и удаленных узлов, 
+        /// Элемента массив Nxc[i] хранит суммарное количество нерегулярных и удаленных узлов, 
         /// расположенных до i-ой строки. 
         /// </summary>
-        public List<int> Nxc;
+        public List<int> Rows_uc_removed;
+
+
+        /// <summary>
+        /// Элемента массив Nxc[i] хранит суммарное количество нерегулярных узлов, 
+        /// расположенных до i-ой строки. 
+        /// </summary>
+        public List<int> Rows_uc;
 
         public Grid2D(Area2D area, List<Vector2> XY, List<Elem2D> elems, ByteMat2D IJ)
         {
@@ -610,6 +618,39 @@ namespace MakeGrid3D
         }
 
         /// <summary>
+        /// Создает массивы Nx_uc и Nx_uc_removed.
+        /// </summary>
+        public void CreateNX() 
+        {
+            Rows_uc_removed = new List<int>(Ny);
+            for (int i = 0; i < Ny; i++)
+                Rows_uc_removed.Add(0);
+
+            for (int j = 1; j < Ny; j++)
+            {
+                int count = Rows_uc_removed[j - 1];
+                for (int i = 0; i < Nx; i++)
+                    if (IJ[i][j - 1] != NodeType.Regular)
+                        count++;
+                Rows_uc_removed[j] = count;
+            }
+
+
+            Rows_uc = new List<int>(Ny);
+            for (int i = 0; i < Ny; i++)
+                Rows_uc.Add(0);
+
+            for (int j = 1; j < Ny; j++)
+            {
+                int count = Rows_uc[j - 1];
+                for (int i = 0; i < Nx; i++)
+                    if (IJ[i][j - 1] != NodeType.Regular && IJ[i][j - 1] != NodeType.Removed)
+                        count++;
+                Rows_uc[j] = count;
+            }
+        }
+
+        /// <summary>
         /// Возвращает глобальный узел по нумерации для решения краевой задачи с построением T матрицы.
         /// То есть вначале нумеруются регулярные узлы (влево-вправо, снизу-вверх), а потом нерегулярные.
         /// </summary>
@@ -623,21 +664,21 @@ namespace MakeGrid3D
             int l;
             if (IJ[i][j] != NodeType.Regular && IJ[i][j] != NodeType.Removed)
             {
-                l = Nc + Nxc[i];
-                if (i < Nx && Nxc[i] != Nxc[i + 1])
-                    for (int column = 0; column < Ny; column++)
-                        if (IJ[i][j] != NodeType.Regular)
+                l = Nc + Rows_uc[j];
+                if (j == Ny - 1 || Rows_uc[j] != Rows_uc[j + 1])
+                    for (int column = 0; column < i; column++)
+                        if (IJ[i][j] != NodeType.Regular && IJ[i][j] != NodeType.Removed)
                             l++;
             }
 
             l = j * Nx + i;
             if (Nnodes > Nc) 
             {
-                l -= Nxc[i];
+                l -= Rows_uc_removed[j];
 
-                if (i < Nx && Nxc[i] != Nxc[i + 1])
-                    for (int column = 0; column < Ny; column++)
-                        if (IJ[i][j] != NodeType.Regular)
+                if (j == Ny - 1 || Rows_uc_removed[j] != Rows_uc_removed[j + 1])
+                    for (int column = 0; column < i; column++)
+                        if (IJ[column][j] != NodeType.Regular)
                             l--;
             }
             return l;
