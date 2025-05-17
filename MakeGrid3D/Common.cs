@@ -42,6 +42,8 @@ namespace MakeGrid3D
         Right,
         Top,
         Bottom,
+        Back,
+        Front,
         Removed
     }
     public enum Direction

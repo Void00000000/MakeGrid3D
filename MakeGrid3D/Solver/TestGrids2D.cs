@@ -5,32 +5,32 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Создатель функций для МКЭ решателя.
     /// </summary>
-    static class FemParamsFactory
+    static class FemParamsFactory2D
     {
-        public static FEMParams CreateFemParams(int functions_num)
+        public static FEMParams2D CreateFemParams(int functions_num)
         {
-            var FemParams = new FEMParams();
+            var FemParams = new FEMParams2D();
             switch (functions_num)
             {
                 case 1:
-                    FemParams.Lambda = Functions1.lambda;
-                    FemParams.Chi = Functions1.chi;
-                    FemParams.Sigma = Functions1.sigma;
-                    FemParams.Ubeta = Functions1.u_beta;
-                    FemParams.Theta = Functions1.theta;
-                    FemParams.Beta = Functions1.beta;
-                    FemParams.Ug = Functions1.u_g;
-                    FemParams.F = Functions1.f;
+                    FemParams.Lambda = Functions1_2D.lambda;
+                    FemParams.Chi = Functions1_2D.chi;
+                    FemParams.Sigma = Functions1_2D.sigma;
+                    FemParams.Ubeta = Functions1_2D.u_beta;
+                    FemParams.Theta = Functions1_2D.theta;
+                    FemParams.Beta = Functions1_2D.beta;
+                    FemParams.Ug = Functions1_2D.u_g;
+                    FemParams.F = Functions1_2D.f;
                     break;
                 case 2:
-                    FemParams.Lambda = Functions2.lambda;
-                    FemParams.Chi = Functions2.chi;
-                    FemParams.Sigma = Functions2.sigma;
-                    FemParams.Ubeta = Functions2.u_beta;
-                    FemParams.Theta = Functions2.theta;
-                    FemParams.Beta = Functions2.beta;
-                    FemParams.Ug = Functions2.u_g;
-                    FemParams.F = Functions2.f;
+                    FemParams.Lambda = Functions2_2D.lambda;
+                    FemParams.Chi = Functions2_2D.chi;
+                    FemParams.Sigma = Functions2_2D.sigma;
+                    FemParams.Ubeta = Functions2_2D.u_beta;
+                    FemParams.Theta = Functions2_2D.theta;
+                    FemParams.Beta = Functions2_2D.beta;
+                    FemParams.Ug = Functions2_2D.u_g;
+                    FemParams.F = Functions2_2D.f;
                     break;
             }
             return FemParams;
@@ -40,7 +40,7 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Функция из кирпича с несколькоми подобластями.
     /// </summary>
-    static class Functions1
+    static class Functions1_2D
     {
         static public double chi(int wi)
         {
@@ -145,7 +145,7 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Функция xy.
     /// </summary>
-    static class Functions2
+    static class Functions2_2D
     {
         static public double chi(int wi)
         {
@@ -202,13 +202,13 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Тест сетки со всеми краевыми из учебника.
     /// </summary>
-    public class Test1
+    public class Test1_2D
     {
         public Grid2D Grid;
-        public FEMParams FemParams;
-        public List<Boundary> Bc1;
-        public List<Boundary> Bc2;
-        public List<Boundary> Bc3;
+        public FEMParams2D FemParams;
+        public List<Boundary2D> Bc1;
+        public List<Boundary2D> Bc2;
+        public List<Boundary2D> Bc3;
 
         public void CreateTest()
         {
@@ -258,41 +258,41 @@ namespace MakeGrid3D.Solver
             Grid.IXw = new List<int> { 0, 1, 2 };
             Grid.IYw = new List<int> { 0, 1, 2, 3 };
 
-            Bc1 = new List<Boundary>()
+            Bc1 = new List<Boundary2D>()
             {
-                new Boundary(0,1,1,0,1),
-                new Boundary(1,1,2,1,1),
+                new Boundary2D(0,1,1,0,1),
+                new Boundary2D(1,1,2,1,1),
             };
 
-            Bc2 = new List<Boundary>()
+            Bc2 = new List<Boundary2D>()
             {
-                new Boundary(0,2,2,1,2),
-                new Boundary(0,2,2,2,3),
-                new Boundary(1,0,1,0,0),
+                new Boundary2D(0,2,2,1,2),
+                new Boundary2D(0,2,2,2,3),
+                new Boundary2D(1,0,1,0,0),
             };
 
-           Bc3 = new List<Boundary>()
+           Bc3 = new List<Boundary2D>()
             {
-                new Boundary(0,0,1,3,3),
-                new Boundary(1,1,2,3,3),
-                new Boundary(2,0,0,0,3),
+                new Boundary2D(0,0,1,3,3),
+                new Boundary2D(1,1,2,3,3),
+                new Boundary2D(2,0,0,0,3),
             };
 
-            FemParams = FemParamsFactory.CreateFemParams(1);
+            FemParams = FemParamsFactory2D.CreateFemParams(1);
         }
     }
 
     /// <summary>
     /// Тест сетки 3x3 с u(x,y) = xy.
     /// </summary>
-    public class Test2
+    public class Test2_2D
     {
 
         public Grid2D Grid;
-        public FEMParams FemParams;
-        public List<Boundary> Bc1;
-        public List<Boundary> Bc2;
-        public List<Boundary> Bc3;
+        public FEMParams2D FemParams;
+        public List<Boundary2D> Bc1;
+        public List<Boundary2D> Bc2;
+        public List<Boundary2D> Bc3;
 
         public void CreateTest()
         {
@@ -349,25 +349,25 @@ namespace MakeGrid3D.Solver
             Grid.IXw = new List<int> { 0, 3 };
             Grid.IYw = new List<int> { 0, 3 };
 
-            Bc1 = new List<Boundary>()
+            Bc1 = new List<Boundary2D>()
             {
-                new Boundary(0,0,1,0,0),
-                new Boundary(1,1,1,0,1),
-                new Boundary(2,0,1,1,1),
-                new Boundary(3,0,0,0,1),
+                new Boundary2D(0,0,1,0,0),
+                new Boundary2D(1,1,1,0,1),
+                new Boundary2D(2,0,1,1,1),
+                new Boundary2D(3,0,0,0,1),
             };
 
-            Bc2 = new List<Boundary>()
+            Bc2 = new List<Boundary2D>()
             {
                
             };
 
-            Bc3 = new List<Boundary>()
+            Bc3 = new List<Boundary2D>()
             {
                 
             };
 
-            FemParams = FemParamsFactory.CreateFemParams(2);
+            FemParams = FemParamsFactory2D.CreateFemParams(2);
             FemParams.Ug = u_g;
         }
 
@@ -391,15 +391,13 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Тест двумерной нерегулярной сетки рис 110.
     /// </summary>
-    public class Test3
+    public class Test3_2D
     {
-        
-
         public Grid2D Grid;
-        public FEMParams FemParams;
-        public List<Boundary> Bc1;
-        public List<Boundary> Bc2;
-        public List<Boundary> Bc3;
+        public FEMParams2D FemParams;
+        public List<Boundary2D> Bc1;
+        public List<Boundary2D> Bc2;
+        public List<Boundary2D> Bc3;
 
         public void CreateTest()
         {
@@ -483,25 +481,25 @@ namespace MakeGrid3D.Solver
             Grid.CreateNX();
             
 
-            Bc1 = new List<Boundary>()
+            Bc1 = new List<Boundary2D>()
             {
-                new Boundary(0,0,1,0,0),
-                new Boundary(1,1,1,0,1),
-                new Boundary(2,0,1,1,1),
-                new Boundary(3,0,0,0,1),
+                new Boundary2D(0,0,1,0,0),
+                new Boundary2D(1,1,1,0,1),
+                new Boundary2D(2,0,1,1,1),
+                new Boundary2D(3,0,0,0,1),
             };
 
-            Bc2 = new List<Boundary>()
-            {
-
-            };
-
-            Bc3 = new List<Boundary>()
+            Bc2 = new List<Boundary2D>()
             {
 
             };
 
-            FemParams = FemParamsFactory.CreateFemParams(2);
+            Bc3 = new List<Boundary2D>()
+            {
+
+            };
+
+            FemParams = FemParamsFactory2D.CreateFemParams(2);
             FemParams.Ug = u_g;
         }
 
@@ -525,13 +523,13 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Тест двумерной нерегулярной сетки рис 111.
     /// </summary>
-    public class Test4
+    public class Test4_2D
     {
         public Grid2D Grid;
-        public FEMParams FemParams;
-        public List<Boundary> Bc1;
-        public List<Boundary> Bc2;
-        public List<Boundary> Bc3;
+        public FEMParams2D FemParams;
+        public List<Boundary2D> Bc1;
+        public List<Boundary2D> Bc2;
+        public List<Boundary2D> Bc3;
 
         public void CreateTest()
         {
@@ -605,25 +603,25 @@ namespace MakeGrid3D.Solver
             Grid.Nc = Grid.Nnodes - 3;
             Grid.CreateNX();
 
-            Bc1 = new List<Boundary>()
+            Bc1 = new List<Boundary2D>()
             {
-                new Boundary(0,0,1,0,0),
-                new Boundary(1,1,1,0,1),
-                new Boundary(2,0,1,1,1),
-                new Boundary(3,0,0,0,1),
+                new Boundary2D(0,0,1,0,0),
+                new Boundary2D(1,1,1,0,1),
+                new Boundary2D(2,0,1,1,1),
+                new Boundary2D(3,0,0,0,1),
             };
 
-            Bc2 = new List<Boundary>()
-            {
-
-            };
-
-            Bc3 = new List<Boundary>()
+            Bc2 = new List<Boundary2D>()
             {
 
             };
 
-            FemParams = FemParamsFactory.CreateFemParams(2);
+            Bc3 = new List<Boundary2D>()
+            {
+
+            };
+
+            FemParams = FemParamsFactory2D.CreateFemParams(2);
             FemParams.Ug = u_g;
         }
 
@@ -647,13 +645,13 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Тест двумерной нерегулярной сетки с перехлестами.
     /// </summary>
-    public class Test5
+    public class Test5_2D
     {
         public Grid2D Grid;
-        public FEMParams FemParams;
-        public List<Boundary> Bc1;
-        public List<Boundary> Bc2;
-        public List<Boundary> Bc3;
+        public FEMParams2D FemParams;
+        public List<Boundary2D> Bc1;
+        public List<Boundary2D> Bc2;
+        public List<Boundary2D> Bc3;
 
         public void CreateTest()
         {
@@ -708,25 +706,25 @@ namespace MakeGrid3D.Solver
             Grid.IYw = new List<int> { 0, 5 };
             Grid.Nc = Grid.Nnodes - 5;
 
-            Bc1 = new List<Boundary>()
+            Bc1 = new List<Boundary2D>()
             {
-                new Boundary(0,0,1,0,0),
-                new Boundary(1,1,1,0,1),
-                new Boundary(2,0,1,1,1),
-                new Boundary(3,0,0,0,1),
+                new Boundary2D(0,0,1,0,0),
+                new Boundary2D(1,1,1,0,1),
+                new Boundary2D(2,0,1,1,1),
+                new Boundary2D(3,0,0,0,1),
             };
 
-            Bc2 = new List<Boundary>()
-            {
-
-            };
-
-            Bc3 = new List<Boundary>()
+            Bc2 = new List<Boundary2D>()
             {
 
             };
 
-            FemParams = FemParamsFactory.CreateFemParams(2);
+            Bc3 = new List<Boundary2D>()
+            {
+
+            };
+
+            FemParams = FemParamsFactory2D.CreateFemParams(2);
         }
     }
 }

@@ -1,26 +1,26 @@
-﻿namespace MakeGrid3D.Solver
-{
-    using MakeGrid3D.Helpers;
-    using MakeGrid3D.Solver.SparseModule;
-    using System;
-    using System.Collections.Generic;
+﻿using MakeGrid3D.Helpers;
+using MakeGrid3D.Solver.SparseModule;
+using System;
+using System.Collections.Generic;
 
+namespace MakeGrid3D.Solver
+{
     /// <summary>
-    /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
+    /// Решатель метода конечных элементов трехмерный (с использованием T технологии). 
     /// </summary>
-    public class FEMSolver2D
+    public class FEMSolver3D
     {
         #region Private Fields
 
         /// <summary>
-        /// Единственный экземпляр ленивого синглтона <see cref="FEMSolver2D"/>. 
+        /// Единственный экземпляр ленивого синглтона <see cref="FEMSolver3D"/>. 
         /// </summary>
-        private static readonly Lazy<FEMSolver2D> _instance = new Lazy<FEMSolver2D>(() => new FEMSolver2D());
+        private static readonly Lazy<FEMSolver3D> _instance = new Lazy<FEMSolver3D>(() => new FEMSolver3D());
 
         /// <summary>
         /// Конечноэлементная сетка. 
         /// </summary>
-        private Grid2D _grid;
+        private Grid3D _grid;
 
         /// <summary>
         /// Глобальная матрица. 
@@ -35,65 +35,61 @@
         /// <summary>
         /// Параметры краевой задачи. 
         /// </summary>
-        private FEMParams2D _params;
+        private FEMParams3D _params;
 
         /// <summary>
         /// Границы первого краевого условия. 
         /// </summary>
-        private List<Boundary2D> _bc1;
+        private List<Boundary3D> _bc1;
 
         /// <summary>
         /// Границы второго краевого условия. 
         /// </summary>
-        private List<Boundary2D> _bc2;
+        private List<Boundary3D> _bc2;
 
         /// <summary>
         /// Границы третьего краевого условия. 
         /// </summary>
-        private List<Boundary2D> _bc3;
-
-        /// <summary>
-        /// Первое слагаемое локальной матрицы жесткости. 
-        /// </summary>
-        private double[][] _g1 = new double[][]
-                                { 
-                                new double[] {2, -2, 1, -1},
-                                new double[] {-2, 2, -1, 1},
-                                new double[] {1, -1, 2, -2},
-                                new double[] {-1, 1, -2, 2} 
-                                };
-
-        /// <summary>
-        /// Второе слагаемое локальной матрицы жесткости. 
-        /// </summary>
-        private double[][] _g2 = new double[][]
-                                {
-                                new double[] {2, 1, -2, -1},
-                                new double[] {1, 2, -1, -2},
-                                new double[] {-2, -1, 2, 1},
-                                new double[] {-1, -2, 1, 2}
-                                };
-
-        /// <summary>
-        /// Локальная матрицы массы без умножения на коэффициент. 
-        /// </summary>
-        private double[][] _c = new double[][]
-                                {
-                                new double[] {4, 2, 2, 1},
-                                new double[] {2, 4, 1, 2},
-                                new double[] {2, 1, 4, 2},
-                                new double[] {1, 2, 2, 4}
-                                };
+        private List<Boundary3D> _bc3;
 
         /// <summary>
         /// Локальная матрицы жесткости. 
         /// </summary>
         private double[][] _g = new double[][]
                                 {
-                                new double[] {0, 0, 0, 0},
-                                new double[] {0, 0, 0, 0},
-                                new double[] {0, 0, 0, 0},
-                                new double[] {0, 0, 0, 0 }
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0}
+                                };
+
+        private double[][] _g1 = new double[][]
+                                {
+                                new double[] {1, -1},
+                                new double[] {-1, 1}
+                                };
+
+
+        private double[][] _gx = new double[][]
+                                {
+                                new double[] {0, 0},
+                                new double[] {0, 0}
+                                };
+
+        private double[][] _gy = new double[][]
+                                {
+                                new double[] {0, 0},
+                                new double[] {0, 0}
+                                };
+
+        private double[][] _gz = new double[][]
+                                {
+                                new double[] {0, 0},
+                                new double[] {0, 0}
                                 };
 
         /// <summary>
@@ -101,20 +97,51 @@
         /// </summary>
         private double[][] _m = new double[][]
                                 {
-                                new double[] {0, 0, 0, 0},
-                                new double[] {0, 0, 0, 0},
-                                new double[] {0, 0, 0, 0},
-                                new double[] {0, 0, 0, 0 }
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0}
+                                };
+
+        
+        private double[][] _m1 = new double[][]
+                                {
+                                new double[] {2.0/6.0, 1.0/6.0},
+                                new double[] {1.0/6.0, 2.0/6.0}
                                 };
 
 
-        /// <summary>
-        /// Локальная матрица учета третьего краевого условия. 
-        /// </summary>
-        private double[][] _as3 = new double[][]
+        private double[][] _mx = new double[][]
                                 {
                                 new double[] {0, 0},
                                 new double[] {0, 0}
+                                };
+
+        private double[][] _my = new double[][]
+                                {
+                                new double[] {0, 0},
+                                new double[] {0, 0}
+                                };
+
+        private double[][] _mz = new double[][]
+                                {
+                                new double[] {0, 0},
+                                new double[] {0, 0}
+                                };
+
+        /// <summary>
+        /// Локальная матрица для учета второго и третьего краевых условий. 
+        /// </summary>
+        private double[][] _c = new double[][]
+                                {
+                                new double[] {4, 2, 2, 1},
+                                new double[] {2, 4, 1, 2},
+                                new double[] {2, 1, 4, 2},
+                                new double[] {1, 2, 2, 4},
                                 };
 
         /// <summary>
@@ -133,13 +160,13 @@
         #region Public Properties
 
         /// <inheritdoc cref="_instance"/>
-        public static FEMSolver2D Instance => _instance.Value;
+        public static FEMSolver3D Instance => _instance.Value;
 
         #endregion Public Properties 
 
         #region Constructors
 
-        private FEMSolver2D()
+        private FEMSolver3D()
         {
         }
 
@@ -156,7 +183,7 @@
         /// <param name="bc2">Список границ со вторым к.у.</param>
         /// <param name="bc3">Список границ с третьим к.у.</param>
         /// <returns>true, если успешно удалось проинициализировать решатель.</returns>
-        public bool Initialize(Grid2D grid, FEMParams2D gridParams, List<Boundary2D> bc1, List<Boundary2D> bc2, List<Boundary2D> bc3)
+        public bool Initialize(Grid3D grid, FEMParams3D gridParams, List<Boundary3D> bc1, List<Boundary3D> bc2, List<Boundary3D> bc3)
         {
             _grid = grid;
             _params = gridParams;
@@ -166,7 +193,7 @@
             if (_grid.Nnodes > _grid.Nc)
             {
                 GTree G = GenerateGTree();
-                bool isSuccess =  GenerateTMatrix(G);
+                bool isSuccess = GenerateTMatrix(G);
                 if (!isSuccess) return false;
             }
 
@@ -182,11 +209,10 @@
         /// Решает краевую задачу.
         /// </summary>
         /// <returns>Вектор решения.</returns>
-        public List<double> Solve() 
+        public List<double> Solve()
         {
             AssemblyG();
             AssemblyM();
-            AssemblyB();
             ApplyBc(2);
             ApplyBc(3);
             ApplyBc(1);
@@ -199,7 +225,7 @@
 
             List<double> q = _tMatrix.TMultiplyByVector(qc);
             return q;
-        } 
+        }
 
         #endregion Public Methods
 
@@ -208,12 +234,12 @@
         /// <summary>
         /// Создает портрет матрицы. 
         /// </summary>
-        private void GeneratePortrait() 
+        private void GeneratePortrait()
         {
             /// <summary>
             /// Добавляет номера глобальных узлов в массив global_nodes. 
             /// </summary>
-            void AddNodes(int n, List<int> global_nodes) 
+            void AddNodes(int n, List<int> global_nodes)
             {
                 if (n < _n)
                 {
@@ -237,18 +263,24 @@
             bool not_in;
             List<int> global_nodes = new List<int>(); // Массив глобальных узлов элемента.
             // Цикл по конечным элементам
-            foreach (Elem2D elem in _grid.Elems)
+            foreach (Elem3D elem in _grid.Elems)
             {
                 AddNodes(elem.n1, global_nodes);
                 AddNodes(elem.n2, global_nodes);
                 AddNodes(elem.n3, global_nodes);
                 AddNodes(elem.n4, global_nodes);
+                AddNodes(elem.n5, global_nodes);
+                AddNodes(elem.n6, global_nodes);
+                AddNodes(elem.n7, global_nodes);
+                AddNodes(elem.n8, global_nodes);
                 global_nodes.Sort();
 
                 // Цикл по ненулевым базисным функциям
-                for (int i_n = 0; i_n < global_nodes.Count; i_n++) {
+                for (int i_n = 0; i_n < global_nodes.Count; i_n++)
+                {
                     g1 = global_nodes[i_n];
-                    for (int j_n = i_n + 1; j_n < global_nodes.Count; j_n++) {
+                    for (int j_n = i_n + 1; j_n < global_nodes.Count; j_n++)
+                    {
                         // g2 > g1
                         g2 = global_nodes[j_n];
                         // Перед добавлением проверяем наличие элемента в списке
@@ -293,30 +325,30 @@
         /// <returns>Дерево G, где G[i] содержит пары (j, t), где 
         /// i - номер терминальная узла, j - номера регулярных узлов, которые лежат на ребре с узлом i,
         /// t - значение T[i][j] матрицы. </returns>
-        private GTree GenerateGTree() 
+        private GTree GenerateGTree()
         {
             // Вначале нужно построить структуру данных G.
             GTree G = new();
-            foreach (Elem2D elem in _grid.Elems) 
+            foreach (Elem3D elem in _grid.Elems)
             {
-                foreach (int nc in elem.n_uc) 
+                foreach (int nc in elem.n_uc)
                 {
                     G.Add(nc, new List<(int, double)>(2));
                     int n1 = elem.n1;
                     int n2 = elem.n2;
                     int n3 = elem.n3;
                     int n4 = elem.n4;
-                    double xc = _grid.XY[nc].X;
-                    double yc = _grid.XY[nc].Y;
-                    double xmin = _grid.XY[n1].X;
-                    double xmax = _grid.XY[n4].X;
-                    double ymin = _grid.XY[n1].Y;
-                    double ymax = _grid.XY[n4].Y;
+                    double xc = _grid.XYZ[nc].X;
+                    double yc = _grid.XYZ[nc].Y;
+                    double xmin = _grid.XYZ[n1].X;
+                    double xmax = _grid.XYZ[n4].X;
+                    double ymin = _grid.XYZ[n1].Y;
+                    double ymax = _grid.XYZ[n4].Y;
                     double hx = xmax - xmin;
                     double hy = ymax - ymin;
 
                     // Узел лежит на нижней стороне
-                    if (MathsHelper.IsEqual(yc, ymin)) 
+                    if (MathsHelper.IsEqual(yc, ymin))
                     {
                         double Telem1 = BasicFunc1(xc, xmax, hx);
                         double Telem2 = BasicFunc2(xc, xmin, hx);
@@ -340,7 +372,7 @@
                         G[nc].Add((n4, Telem2));
                     }
                     // Узел лежит на левой стороне
-                    else if (MathsHelper.IsEqual(xc, xmin)) 
+                    else if (MathsHelper.IsEqual(xc, xmin))
                     {
                         double Telem1 = BasicFunc1(yc, ymax, hy);
                         double Telem2 = BasicFunc2(yc, ymin, hy);
@@ -357,7 +389,7 @@
         /// </summary>
         /// <param name="G">Структура данных G</param>
         /// <returns>true, если удалось успено создать матрицу.</returns>
-        private bool GenerateTMatrix(GTree G) 
+        private bool GenerateTMatrix(GTree G)
         {
             _tMatrix = new TMatrix(_grid.Nnodes, _grid.Nc);
             _tMatrix.Ig.Add(0);
@@ -365,7 +397,7 @@
             List<int> processed_nodes = new();
             // Массив, содержащий пары элементов jg и gg.
             List<(int, double)> jg_gg = new();
-            for (int j = _grid.Nc; j < _grid.Nnodes; j++) 
+            for (int j = _grid.Nc; j < _grid.Nnodes; j++)
             {
                 processed_nodes.Clear();
                 jg_gg.Clear();
@@ -376,7 +408,7 @@
                     return false;
 
                 jg_gg.Sort((x, y) => x.Item1.CompareTo(y.Item1));
-                foreach ((int, double) pair in jg_gg) 
+                foreach ((int, double) pair in jg_gg)
                 {
                     _tMatrix.Jg.Add(pair.Item1);
                     _tMatrix.Gg.Add(pair.Item2);
@@ -399,14 +431,14 @@
         /// <param name="elems_count">Список обработанных узлов.</param>
         /// <param name="ig_gg">Массив, содержаший пары элементов массивов jg и gg</param>
         /// <returns>true, если удалось успешно создать цепочку.</returns>
-        private bool GenerateTMatrixChain(GTree G, int j, double m, ref int elems_count, List<(int,double)> jg_gg, List<int> processed_nodes) 
+        private bool GenerateTMatrixChain(GTree G, int j, double m, ref int elems_count, List<(int, double)> jg_gg, List<int> processed_nodes)
         {
             foreach ((int, double) treeNode in G[j])
             {
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                if (processed_nodes.Contains(i)) 
+                if (processed_nodes.Contains(i))
                     return false;
 
                 if (i < _grid.Nc)
@@ -430,7 +462,7 @@
         /// <param name="x">Переменное значение.</param>
         /// <param name="xmax">Максимальное значение x на элементе.</param>
         /// <param name="h">Длина значения по x</param>
-        double BasicFunc1(double x, double xmax, double h) 
+        private double BasicFunc1(double x, double xmax, double h)
         {
             return (xmax - x) / h;
         }
@@ -441,9 +473,25 @@
         /// <param name="x">Переменное значение.</param>
         /// <param name="xmin">Минимальное значение x на элементе.</param>
         /// <param name="h">Длина значения по x</param>
-        double BasicFunc2(double x, double xmin, double h)
+        private double BasicFunc2(double x, double xmin, double h)
         {
             return (x - xmin) / h;
+        }
+
+        private int mu(int i)
+        {
+            i++;
+            return ((i - 1) % 2) + 1 - 1;
+        }
+        private int nu(int i)
+        {
+            i++;
+            return (((i - 1) / 2) % 2) + 1 - 1;
+        }
+        private int v(int i)
+        {
+            i++;
+            return (i - 1) / 4 + 1 - 1;
         }
 
         /// <summary>
@@ -452,25 +500,25 @@
         /// <param name="a">Элемент локальной матрицы.</param>
         /// <param name="i">Глобальный номер, соответствующей строке.</param>
         /// <param name="j">Глобальный номер, соответствующей столбцу.</param>
-        private void AddLocalMatrixElement(double a, int i, int j) 
-        { 
-            if (i < _n && j < _n) 
+        private void AddLocalMatrixElement(double a, int i, int j)
+        {
+            if (i < _n && j < _n)
             {
                 AddToGlobalMatrix(a, i, j);
             }
-            else if (i >= _n && j < _n) 
+            else if (i >= _n && j < _n)
             {
                 i = i - _n;
-                for (int mu = _tMatrix.Ig[i]; mu < _tMatrix.Ig[i + 1]; mu++) 
+                for (int mu = _tMatrix.Ig[i]; mu < _tMatrix.Ig[i + 1]; mu++)
                     AddToGlobalMatrix(a * _tMatrix.Gg[mu], _tMatrix.Jg[mu], j);
             }
-            else if (i < _n && j >= _n) 
+            else if (i < _n && j >= _n)
             {
                 j = j - _n;
                 for (int nu = _tMatrix.Ig[j]; nu < _tMatrix.Ig[j + 1]; nu++)
                     AddToGlobalMatrix(a * _tMatrix.Gg[nu], i, _tMatrix.Jg[nu]);
             }
-            else 
+            else
             {
                 i = i - _n;
                 j = j - _n;
@@ -483,7 +531,7 @@
         /// <summary>
         /// Добавляет значение a в элемент Aij глобальной матрицы. 
         /// </summary>
-        private void AddToGlobalMatrix(double a, int i, int j) 
+        private void AddToGlobalMatrix(double a, int i, int j)
         {
             if (i == j)
             {
@@ -492,12 +540,12 @@
             }
 
             int n1, n2;
-            if (i > j) 
+            if (i > j)
             {
                 n1 = i;
                 n2 = j;
             }
-            else 
+            else
             {
                 n1 = j;
                 n2 = i;
@@ -533,27 +581,43 @@
         /// <summary>
         /// Собирает матрицу жесткости и добавляет её в глобальную матрицу. 
         /// </summary>
-        private void AssemblyG() 
+        private void AssemblyG()
         {
-            foreach (Elem2D elem in _grid.Elems) 
+            foreach (Elem3D elem in _grid.Elems)
             {
-                double x1 = _grid.XY[elem.n1].X;
-                double x2 = _grid.XY[elem.n4].X;
-                double y1 = _grid.XY[elem.n1].Y;
-                double y2 = _grid.XY[elem.n4].Y;
+                double x1 = _grid.XYZ[elem.n1].X;
+                double x2 = _grid.XYZ[elem.n8].X;
+                double y1 = _grid.XYZ[elem.n1].Y;
+                double y2 = _grid.XYZ[elem.n8].Y;
+                double z1 = _grid.XYZ[elem.n1].Z;
+                double z2 = _grid.XYZ[elem.n8].Z;
                 double hx = x2 - x1;
                 double hy = y2 - y1;
+                double hz = z2 - z1;
                 double lambda = _params.Lambda(elem.wi);
-                for (int i = 0; i < 4; i++)
-                    for (int j = 0; j < 4; j++)
+
+                for (int il = 0; il < 2; il++)
+                    for (int jl = 0; jl < 2; jl++)
                     {
-                        _g[i][j] = _g1[i][j] * hy / hx + _g2[i][j] * hx / hy;
-                        _g[i][j] *= lambda / 6;
+                        _gx[il][jl] = _g1[il][jl] / hx;
+                        _gy[il][jl] = _g1[il][jl] / hy;
+                        _gz[il][jl] = _g1[il][jl] / hz;
+                        _mx[il][jl] = _m1[il][jl] * hx;
+                        _my[il][jl] = _m1[il][jl] * hy;
+                        _mz[il][jl] = _m1[il][jl] * hz;
                     }
 
-                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
-                for (int i = 0; i < 4; i++)
-                    for (int j = 0; j < 4; j++)
+                for (int il = 0; il < 8; il++)
+                    for (int jl = 0; jl < 8; jl++)
+                    {
+                        _g[il][jl] = lambda * (_gx[mu(il)][mu(jl)] * _my[nu(il)][nu(jl)] * _mz[v(il)][v(jl)] +
+                                            _mx[mu(il)][mu(jl)] * _gy[nu(il)][nu(jl)] * _mz[v(il)][v(jl)] +
+                                            _mx[mu(il)][mu(jl)] * _my[nu(il)][nu(jl)] * _gz[v(il)][v(jl)]);
+                    }
+
+                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4, elem.n5, elem.n6, elem.n7, elem.n8 };
+                for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
                         AddLocalMatrixElement(_g[i][j], global_nodes[i], global_nodes[j]);
             }
         }
@@ -561,57 +625,56 @@
         /// <summary>
         /// Собирает матрицу масс и добавляет её в глобальную матрицу. 
         /// </summary>
-        private void AssemblyM() 
+        private void AssemblyM()
         {
-            foreach (Elem2D elem in _grid.Elems)
+            foreach (Elem3D elem in _grid.Elems)
             {
-                double x1 = _grid.XY[elem.n1].X;
-                double x2 = _grid.XY[elem.n4].X;
-                double y1 = _grid.XY[elem.n1].Y;
-                double y2 = _grid.XY[elem.n4].Y;
+                double x1 = _grid.XYZ[elem.n1].X;
+                double x2 = _grid.XYZ[elem.n8].X;
+                double y1 = _grid.XYZ[elem.n1].Y;
+                double y2 = _grid.XYZ[elem.n8].Y;
+                double z1 = _grid.XYZ[elem.n1].Z;
+                double z2 = _grid.XYZ[elem.n8].Z;
                 double hx = x2 - x1;
                 double hy = y2 - y1;
+                double hz = z2 - z1;
                 double sigma = _params.Sigma(elem.wi);
-                for (int i = 0; i < 4; i++)
-                    for (int j = 0; j < 4; j++)
+
+                for (int il = 0; il < 2; il++)
+                    for (int jl = 0; jl < 2; jl++)
                     {
-                        _m[i][j] = sigma * hx * hy * _c[i][j] / 36.0;
+                        _mx[il][jl] = _m1[il][jl] * hx;
+                        _my[il][jl] = _m1[il][jl] * hy;
+                        _mz[il][jl] = _m1[il][jl] * hz;
                     }
 
-                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
-                for (int i = 0; i < 4; i++)
-                    for (int j = 0; j < 4; j++)
+                for (int il = 0; il < 8; il++)
+                    for (int jl = 0; jl < 8; jl++)
+                    {
+                        _m[il][jl] = sigma * (_mx[mu(il)][mu(jl)] * _my[nu(il)][nu(jl)] * _mz[v(il)][v(jl)]);
+                    }
+
+                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4, elem.n5, elem.n6, elem.n7, elem.n8 };
+                for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
                         AddLocalMatrixElement(_m[i][j], global_nodes[i], global_nodes[j]);
-            }
-        }
 
-        /// <summary>
-        /// Собирает вектор правой части. 
-        /// </summary>
-        private void AssemblyB()
-        {
-            foreach (Elem2D elem in _grid.Elems)
-            {
-                double x1 = _grid.XY[elem.n1].X;
-                double x2 = _grid.XY[elem.n4].X;
-                double y1 = _grid.XY[elem.n1].Y;
-                double y2 = _grid.XY[elem.n4].Y;
-                double hx = x2 - x1;
-                double hy = y2 - y1;
-                
-                double f1 = _params.F(elem.wi, x1, y1);
-                double f2 = _params.F(elem.wi, x2, y1);
-                double f3 = _params.F(elem.wi, x1, y2);
-                double f4 = _params.F(elem.wi, x2, y2);
+                double f1 = _params.F(elem.wi, x1, y1, z1);
+                double f2 = _params.F(elem.wi, x2, y1, z1);
+                double f3 = _params.F(elem.wi, x1, y2, z1);
+                double f4 = _params.F(elem.wi, x2, y2, z1);
+                double f5 = _params.F(elem.wi, x1, y1, z2);
+                double f6 = _params.F(elem.wi, x2, y1, z2);
+                double f7 = _params.F(elem.wi, x1, y2, z2);
+                double f8 = _params.F(elem.wi, x2, y2, z2);
 
-                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
-                for (int i_node = 0; i_node < 4; i_node++)
+                for (int i_node = 0; i_node < 8; i_node++)
                 {
                     int i;
                     if (global_nodes[i_node] < _n)
                     {
                         i = global_nodes[i_node];
-                        _b[i] += hx * hy * (_c[i_node][0] * f1 + _c[i_node][1] * f2 + _c[i_node][2] * f3 + _c[i_node][3] * f4) / 36.0;
+                        _b[i] += (_m[i_node][0] * f1 + _m[i_node][1] * f2 +_m[i_node][2] * f3 + _m[i_node][3] * f4 + _m[i_node][4] * f5 + _m[i_node][5] * f6 + _m[i_node][6] * f7 + _m[i_node][7] * f8) / sigma;
                     }
                     else
                     {
@@ -619,24 +682,25 @@
                         for (int j = _tMatrix.Ig[k]; j < _tMatrix.Ig[k + 1]; j++)
                         {
                             i = _tMatrix.Jg[j];
-                            _b[i] += _tMatrix.Gg[j] * hx * hy * (_c[i_node][0] * f1 + _c[i_node][1] * f2 + _c[i_node][2] * f3 + _c[i_node][3] * f4) / 36.0;
+                            _b[i] += (_m[i_node][0] * f1 + _m[i_node][1] * f2 + _m[i_node][2] * f3 + _m[i_node][3] * f4 + _m[i_node][4] * f5 + _m[i_node][5] * f6 + _m[i_node][6] * f7 + _m[i_node][7] * f8) / sigma;
                         }
-                    }  
+                    }
                 }
             }
         }
+
 
         /// <summary>
         /// Применяет краевое условие. 
         /// </summary>
         /// <param name="bc">Номер краевого услоивя (1,2,3).</param>
-        private void ApplyBc(int bcNum) 
+        private void ApplyBc(int bcNum)
         {
             int p;
-            int i_beg, i_end, j_beg, j_end;
+            int i_beg, i_end, j_beg, j_end, z_beg, z_end;
             int end = 0;
-            List<Boundary2D> bc;
-            switch (bcNum) 
+            List<Boundary3D> bc;
+            switch (bcNum)
             {
                 case 1:
                     bc = _bc1;
@@ -650,7 +714,7 @@
                     end = 1;
                     break;
                 default:
-                    bc = new List<Boundary2D>();
+                    bc = new List<Boundary3D>();
                     break;
             }
 
@@ -660,22 +724,29 @@
                 i_end = _grid.IXw[bc[s].Nx2];
                 j_beg = _grid.IYw[bc[s].Ny1];
                 j_end = _grid.IYw[bc[s].Ny2];
+                z_beg = _grid.IYw[bc[s].Nz1];
+                z_end = _grid.IYw[bc[s].Nz2];
                 p = bc[s].Si;
                 if (i_beg == i_end)
                 {
                     int i = i_beg;
-                    for (int j = j_beg; j <= j_end - end; j++)
-                    {
-                        ApplyBcNode(bcNum, i, j, p, false);
-                    }
+                    for (int k = z_beg; k <= z_end - end; k++)
+                        for (int j = j_beg; j <= j_end - end; j++)
+                            ApplyBcNode(bcNum, i, j, k, p, Plane.YZ);
                 }
-                else
+                else if (j_beg == j_end)
                 {
                     int j = j_beg;
-                    for (int i = i_beg; i <= i_end - end; i++)
-                    {
-                        ApplyBcNode(bcNum, i, j, p, true);
-                    }
+                    for (int k = z_beg; k <= z_end - end; k++)
+                        for (int i = i_beg; i <= i_end - end; i++)
+                            ApplyBcNode(bcNum, i, j, k, p, Plane.XZ);
+                }
+                else 
+                {
+                    int k = z_beg;
+                    for (int j = j_beg; j <= j_end - end; j++)
+                        for (int i = i_beg; i <= i_end - end; i++)
+                            ApplyBcNode(bcNum, i, j, k, p, Plane.XY);
                 }
             }
         }
@@ -687,19 +758,19 @@
         /// <param name="i">Порядкой номер узла по горизонтали (нумерация с 0).</param>
         /// <param name="j">Порядкой номер узла по горизонтали (нумерация с 0).</param>
         /// <param name="p">Номер границы.</param>
-        /// <param name="isX">true, если граница горизонтальная, вертикальная иначе.</param>
-        private void ApplyBcNode(int bcNum, int i, int j, int p, bool isX) 
+        /// <param name="plane">На каких осях лежит граница.</param>
+        private void ApplyBcNode(int bcNum, int i, int j, int k, int p, Plane plane)
         {
-            switch (bcNum) 
+            switch (bcNum)
             {
                 case 1:
-                    ApplyBc1Node(i, j, p);
+                    ApplyBc1Node(i, j, k, p);
                     break;
                 case 2:
-                    ApplyBc2Node(i, j, p, isX);
+                    ApplyBc2Node(i, j, k, p, plane);
                     break;
                 case 3:
-                    ApplyBc3Node(i, j, p, isX);
+                    ApplyBc3Node(i, j, k, p, plane);
                     break;
                 default:
                     LogService.LogWarning("Указано неверное краевое условие");
@@ -710,79 +781,238 @@
         /// <summary>
         /// Применяет первое краевое условие для узла. 
         /// </summary>
-        private void ApplyBc1Node(int i, int j, int p) 
+        private void ApplyBc1Node(int i, int j, int k, int p)
         {
-            int l = _grid.global_num_T(i, j);
+            int l = _grid.global_num_T(i, j, k);
             if (l < 0)
                 return;
 
-            double x = _grid.XY[l].X;
-            double y = _grid.XY[l].Y;
+            if (l == 3) 
+            { 
+            }
+
+            double x = _grid.XYZ[l].X;
+            double y = _grid.XYZ[l].Y;
+            double z = _grid.XYZ[l].Z;
             _matrix.Di[l] = 1;
-            for (int k = _matrix.Ig[l]; k < _matrix.Ig[l + 1]; k++)
-                _matrix.Gl[k] = 0;
-            for (int k = 0; k < _matrix.Ng; k++)
-                if (_matrix.Jg[k] == l)
-                    _matrix.Gu[k] = 0;
-            _b[l] = _params.Ug(p, x, y);
+            for (int s = _matrix.Ig[l]; s < _matrix.Ig[l + 1]; s++)
+                _matrix.Gl[s] = 0;
+            for (int s = 0; s < _matrix.Ng; s++)
+                if (_matrix.Jg[s] == l)
+                    _matrix.Gu[s] = 0;
+            _b[l] = _params.Ug(p, x, y, z);
         }
 
         /// <summary>
         /// Применяет второе краевое условие для узла. 
         /// </summary>
-        private void ApplyBc2Node(int i, int j, int p, bool isX)
+        private void ApplyBc2Node(int i, int j, int k, int p, Plane plane)
         {
-            int l1 = _grid.global_num_T(i, j);
+            int l1 = _grid.global_num_T(i, j, k);
             if (l1 < 0)
                 return;
 
             int l2 = -1;
             while (l2 < 0)
-                l2 = isX ? _grid.global_num_T(i + 1, j) : _grid.global_num_T(i, j + 1);
-            double x1 = _grid.XY[l1].X;
-            double x2 = _grid.XY[l2].X;
-            double y1 = _grid.XY[l1].Y;
-            double y2 = _grid.XY[l2].Y;
+            {
+                switch (plane)
+                {
+                    case Plane.XY:
+                        l2 = _grid.global_num_T(i + 1, j, k);
+                        break;
+                    case Plane.XZ:
+                        l2 = _grid.global_num_T(i + 1, j, k);
+                        break;
+                    case Plane.YZ:
+                        l2 = _grid.global_num_T(i, j + 1, k);
+                        break;
+                }
+            }
 
-            double theta1 = _params.Theta(p, x1, y1);
-            double theta2 = _params.Theta(p, x2, y2);
-            double h = isX ? x2 - x1 : y2 - y1;
-            _b[l1] += h * (2 * theta1 + theta2) / 6.0;
-            _b[l2] += h * (theta1 + 2 * theta2) / 6.0;
+            int l3 = -1;
+            while (l3 < 0)
+            {
+                switch (plane)
+                {
+                    case Plane.XY:
+                        l3 = _grid.global_num_T(i, j + 1, k);
+                        break;
+                    case Plane.XZ:
+                        l3 = _grid.global_num_T(i, j, k + 1);
+                        break;
+                    case Plane.YZ:
+                        l3 = _grid.global_num_T(i, j, k + 1);
+                        break;
+                }
+            }
+
+            int l4 = -1;
+            while (l4 < 0)
+            {
+                switch (plane)
+                {
+                    case Plane.XY:
+                        l4 = _grid.global_num_T(i + 1, j + 1, k);
+                        break;
+                    case Plane.XZ:
+                        l4 = _grid.global_num_T(i + 1, j, k + 1);
+                        break;
+                    case Plane.YZ:
+                        l4 = _grid.global_num_T(i, j + 1, k + 1);
+                        break;
+                }
+            }
+
+            double x1 = _grid.XYZ[l1].X;
+            double x2 = _grid.XYZ[l4].X;
+            double y1 = _grid.XYZ[l1].Y;
+            double y2 = _grid.XYZ[l4].Y;
+            double z1 = _grid.XYZ[l1].Z;
+            double z2 = _grid.XYZ[l4].Z;
+
+            double theta1 = 0;
+            double theta2 = 0;
+            double theta3 = 0;
+            double theta4 = 0;
+            double area = 0;
+            switch (plane) 
+            {
+                case Plane.XY:
+                    theta1 = _params.Theta(p, x1, y1, z1);
+                    theta2 = _params.Theta(p, x2, y1, z1);
+                    theta3 = _params.Theta(p, x1, y2, z1);
+                    theta4 = _params.Theta(p, x2, y2, z1);
+                    area = (x2 - x1) * (y2 - y1);
+                    break;
+                case Plane.YZ:
+                    theta1 = _params.Theta(p, x1, y1, z1);
+                    theta2 = _params.Theta(p, x1, y2, z1);
+                    theta3 = _params.Theta(p, x1, y1, z2);
+                    theta4 = _params.Theta(p, x1, y2, z2);
+                    area = (y2 - y1) * (z2 - z1);
+                    break;
+                case Plane.XZ:
+                    theta1 = _params.Theta(p, x1, y1, z1);
+                    theta2 = _params.Theta(p, x2, y1, z1);
+                    theta3 = _params.Theta(p, x1, y1, z2);
+                    theta4 = _params.Theta(p, x2, y1, z2);
+                    area = (x2 - x1) * (z2 - z1);
+                    break;
+
+            } 
+
+            int[] global_nodes = new int[4] {l1,l2,l3,l4 };
+            for (int i_node = 0; i_node < 4; i_node++)
+                _b[global_nodes[i_node]] += area * (theta1 * _c[i_node][0] + theta2 * _c[i_node][1] + theta3 * _c[i_node][2] + theta4 * _c[i_node][3]) / 36.0;
         }
 
         /// <summary>
         /// Применяет третье краевое условие для узла. 
         /// </summary>
-        private void ApplyBc3Node(int i, int j, int p, bool isX)
+        private void ApplyBc3Node(int i, int j, int k, int p, Plane plane)
         {
-            int l1 = _grid.global_num_T(i, j);
+            int l1 = _grid.global_num_T(i, j, k);
             if (l1 < 0)
                 return;
 
             int l2 = -1;
             while (l2 < 0)
-                l2 = isX ? _grid.global_num_T(i + 1, j) : _grid.global_num_T(i, j + 1);
-            double x1 = _grid.XY[l1].X;
-            double x2 = _grid.XY[l2].X;
-            double y1 = _grid.XY[l1].Y;
-            double y2 = _grid.XY[l2].Y;
-            double beta_const = _params.Beta(p);
-            double u_beta1 = _params.Ubeta(p, x1, y1);
-            double u_beta2 = _params.Ubeta(p, x2, y2);
-            double h = isX ? x2 - x1 : y2 - y1;
+            {
+                switch (plane)
+                {
+                    case Plane.XY:
+                        l2 = _grid.global_num_T(i + 1, j, k);
+                        break;
+                    case Plane.XZ:
+                        l2 = _grid.global_num_T(i + 1, j, k);
+                        break;
+                    case Plane.YZ:
+                        l2 = _grid.global_num_T(i, j + 1, k);
+                        break;
+                }
+            }
 
-            _as3[0][1] = beta_const * h / 6.0;
-            _as3[0][0] = 2 * _as3[0][1];
-            _as3[1][0] = _as3[0][1];
-            _as3[1][1] = _as3[0][0];
-            int[] global_nodes = new int[2] { l1, l2 };
-            for (int row = 0; row < 2; row++)
-                for (int column = 0; column < 2; column++)
-                    AddLocalMatrixElement(_as3[row][column], global_nodes[row], global_nodes[column]);
+            int l3 = -1;
+            while (l3 < 0)
+            {
+                switch (plane)
+                {
+                    case Plane.XY:
+                        l3 = _grid.global_num_T(i, j + 1, k);
+                        break;
+                    case Plane.XZ:
+                        l3 = _grid.global_num_T(i, j, k + 1);
+                        break;
+                    case Plane.YZ:
+                        l3 = _grid.global_num_T(i, j, k + 1);
+                        break;
+                }
+            }
 
-            _b[l1] += beta_const * h * (2 * u_beta1 + u_beta2) / 6.0;
-            _b[l2] += beta_const * h * (u_beta1 + 2 * u_beta2) / 6.0;
+            int l4 = -1;
+            while (l4 < 0)
+            {
+                switch (plane)
+                {
+                    case Plane.XY:
+                        l4 = _grid.global_num_T(i + 1, j + 1, k);
+                        break;
+                    case Plane.XZ:
+                        l4 = _grid.global_num_T(i + 1, j, k + 1);
+                        break;
+                    case Plane.YZ:
+                        l4 = _grid.global_num_T(i, j + 1, k + 1);
+                        break;
+                }
+            }
+
+            double x1 = _grid.XYZ[l1].X;
+            double x2 = _grid.XYZ[l4].X;
+            double y1 = _grid.XYZ[l1].Y;
+            double y2 = _grid.XYZ[l4].Y;
+            double z1 = _grid.XYZ[l1].Z;
+            double z2 = _grid.XYZ[l4].Z;
+
+            double beta = _params.Beta(p);
+            double ubeta1 = 0;
+            double ubeta2 = 0;
+            double ubeta3 = 0;
+            double ubeta4 = 0;
+            double area = 0;
+            switch (plane)
+            {
+                case Plane.XY:
+                    ubeta1 = _params.Ubeta(p, x1, y1, z1);
+                    ubeta2 = _params.Ubeta(p, x2, y1, z1);
+                    ubeta3 = _params.Ubeta(p, x1, y2, z1);
+                    ubeta4 = _params.Ubeta(p, x2, y2, z1);
+                    area = (x2 - x1) * (y2 - y1);
+                    break;
+                case Plane.YZ:
+                    ubeta1 = _params.Ubeta(p, x1, y1, z1);
+                    ubeta2 = _params.Ubeta(p, x1, y2, z1);
+                    ubeta3 = _params.Ubeta(p, x1, y1, z2);
+                    ubeta4 = _params.Ubeta(p, x1, y2, z2);
+                    area = (y2 - y1) * (z2 - z1);
+                    break;
+                case Plane.XZ:
+                    ubeta1 = _params.Ubeta(p, x1, y1, z1);
+                    ubeta2 = _params.Ubeta(p, x2, y1, z1);
+                    ubeta3 = _params.Ubeta(p, x1, y1, z2);
+                    ubeta4 = _params.Ubeta(p, x2, y1, z2);
+                    area = (x2 - x1) * (z2 - z1);
+                    break;
+
+            }
+            int[] global_nodes = new int[4] { l1, l2, l3, l4 };
+
+            for (int ic = 0; ic < 4; ic++)
+                for (int jc = 0; jc < 4; jc++)
+                    AddLocalMatrixElement(_c[ic][jc] * area * beta / 36.0, global_nodes[ic], global_nodes[jc]);
+
+           
+            for (int i_node = 0; i_node < 4; i_node++)
+                _b[global_nodes[i_node]] += beta * area * (ubeta1 * _c[i_node][0] + ubeta2 * _c[i_node][1] + ubeta3 * _c[i_node][2] + ubeta4 * _c[i_node][3]) / 36.0;
         }
 
         #endregion Private Methods

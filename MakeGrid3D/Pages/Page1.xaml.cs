@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
+using static MakeGrid3D.Solver.Functions1_3D;
 
 namespace MakeGrid3D.Pages
 {
@@ -16,9 +17,9 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test3 test = new Test3();
+            Test1_3D test = new Test1_3D();
             test.CreateTest();
-            bool isSuccess = FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams,
+            bool isSuccess = FEMSolver3D.Instance.Initialize(test.Grid, test.FemParams,
                 test.Bc1, test.Bc2, test.Bc3);
             if (!isSuccess)
             {
@@ -26,7 +27,7 @@ namespace MakeGrid3D.Pages
             }
             else
             {
-                List<double> q = FEMSolver2D.Instance.Solve();
+                List<double> q = FEMSolver3D.Instance.Solve();
                 LogService.LogVector(q);
             }
         }

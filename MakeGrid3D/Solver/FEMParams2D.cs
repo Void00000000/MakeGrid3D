@@ -6,7 +6,7 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Параметры краевой задачи (лямбда, гамма, сигма, хи, параметры краевых условий). 
     /// </summary>
-    public class FEMParams
+    public class FEMParams2D
     {
         /// <summary>
         /// Параметр лямбда. 
@@ -52,7 +52,7 @@ namespace MakeGrid3D.Solver
     /// <summary>
     /// Граница сетки. 
     /// </summary>
-    public struct Boundary
+    public struct Boundary2D
     {
         /// <summary>
         /// Номер границы. 
@@ -83,7 +83,7 @@ namespace MakeGrid3D.Solver
         /// </summary>
         public int Ny2 { get; set; }
 
-        public Boundary(int si, int nx1, int nx2, int ny1, int ny2) 
+        public Boundary2D(int si, int nx1, int nx2, int ny1, int ny2) 
         {
             Si = si;
             Nx1 = nx1;

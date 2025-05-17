@@ -1,14 +1,12 @@
-﻿using OpenTK.Mathematics;
+﻿global using ByteMat3D = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<MakeGrid3D.NodeType>>>;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 
 namespace MakeGrid3D
 {
-    using ByteMat3D = List<List<List<NodeType>>>;
-    using ByteMat2D = List<List<NodeType>>;
     public struct SubArea3D
     {
         public int wi; // Номер подобласти
@@ -36,8 +34,10 @@ namespace MakeGrid3D
         // Граничные узлы
         public int n1; public int n2; public int n3; public int n4;
         public int n5; public int n6; public int n7; public int n8;
-        // Терминальные узлы
+        // Терминальные узлы (для 13-реберного параллелепипеда)
         public int n9 = -1; public int n10 = -1;
+        // Терминальные узлы (для многоузлового параллелепипеда)
+        public List<int> n_uc;
 
         public Elem3D(int wi, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8)
         {
@@ -57,6 +57,12 @@ namespace MakeGrid3D
         {
             this.n9 = n9;
             this.n10 = n10;
+        }
+
+        public Elem3D(int wi, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, List<int> n_uc)
+            : this(wi, n1, n2, n3, n4, n5, n6, n7, n8)
+        {
+            this.n_uc = n_uc;
         }
     }
 
@@ -153,7 +159,7 @@ namespace MakeGrid3D
         public Area3D Area { get; }
         public int Nnodes { get; }
 
-        public int Nc { get; }
+        public int Nc { get; set; }
 
         public int Nelems { get; }
         public int Nmats { get; }
@@ -163,10 +169,27 @@ namespace MakeGrid3D
         public int Ny { get; private set; }
         public int Nz { get; private set; }
 
+        // Хранят позиции координат границ подобластей в векторах X, Y и Z
+        public List<int> IXw { get; set; }
+        public List<int> IYw { get; set; }
+        public List<int> IZw { get; set; }
+
         public List<Elem3D> Elems { get; }
         public List<Vector3> XYZ { get; }
         public ByteMat3D IJK { get; }
         public List<int> removedNodes;
+
+        /// <summary>
+        /// Элемент массива [i][j] хранит суммарное количество нерегулярных и удаленных узлов, 
+        /// расположенных до i-ой z-слоя и до j-ой строки. 
+        /// </summary>
+        public List<List<int>> LayersRows_uc_removed;
+
+        /// <summary>
+        /// Элемент массива [i][j] хранит суммарное количество нерегулярных, 
+        /// расположенных до i-ой z-слоя и до j-ой строки. 
+        /// </summary>
+        public List<List<int>> LayersRows_uc;
 
         public Grid3D(Area3D area, List<Vector3> XYZ, List<Elem3D> elems, ByteMat3D IJK)
         {
@@ -516,6 +539,120 @@ namespace MakeGrid3D
                 if (!removedNode && l == removedNodes[s]) return -1;
                 else if (l < removedNodes[s]) return l - s;
             return l - removedNodes.Count;
+        }
+
+        /// <summary>
+        /// Создает массивы LayersRows_uc и LayerRows_uc_removed.
+        /// </summary>
+        public void CreateNXZ()
+        {
+            LayersRows_uc_removed = new List<List<int>>(Nz);
+            for (int i = 0; i < Nz; i++)
+            {
+                LayersRows_uc_removed.Add(new List<int>(Ny));
+                for (int j = 0; j < Ny; j++)
+                    LayersRows_uc_removed[i].Add(0);
+            }
+
+            for (int k = 0; k < Nz; k++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    int count = 0;
+                    int jj = 0;
+                    int kk = 0;
+                    if (j - 1 < 0 && k - 1 >= 0)
+                    {
+                        count = LayersRows_uc_removed[k - 1][Ny - 1];
+                        jj = Ny - 1;
+                        kk = k - 1;
+                    }
+                    else if (j - 1 >= 0 && k - 1 >= 0)
+                    {
+                        count = LayersRows_uc_removed[k][j - 1];
+                        jj = j - 1;
+                        kk = j;
+                    }
+                    else 
+
+                    for (int i = 0; i < Nx; i++)
+                        if (IJK[i][jj][kk] != NodeType.Regular)
+                            count++;
+                    LayersRows_uc_removed[k][j] = count;
+                }
+            }
+
+            // ------------------------
+
+            LayersRows_uc = new List<List<int>>(Nz);
+            for (int i = 0; i < Nz; i++)
+            {
+                LayersRows_uc.Add(new List<int>(Ny));
+                for (int j = 0; j < Ny; j++)
+                    LayersRows_uc[i].Add(0);
+            }
+
+            for (int k = 0; k < Nz; k++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    int count = 0;
+                    int jj = 0;
+                    int kk = 0;
+                    if (j - 1 < 0 && k - 1 >= 0)
+                    {
+                        count = LayersRows_uc[k - 1][Ny - 1];
+                        jj = Ny - 1;
+                        kk = k - 1;
+                    }
+                    else if (j - 1 >= 0 && k - 1 >= 0)
+                    {
+                        count = LayersRows_uc[k][j - 1];
+                        jj = j - 1;
+                        kk = j;
+                    }
+                    else
+
+                        for (int i = 0; i < Nx; i++)
+                            if (IJK[i][jj][kk] != NodeType.Regular && IJK[i][jj][kk] != NodeType.Removed)
+                                count++;
+                    LayersRows_uc[k][j] = count;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Возвращает глобальный узел по нумерации для решения краевой задачи с построением T матрицы.
+        /// То есть вначале нумеруются регулярные узлы (влево-вправо, снизу-вверх), а потом нерегулярные.
+        /// </summary>
+        public int global_num_T(int i, int j, int k)
+        {
+            if (IJK[i][j][k] == NodeType.Removed)
+            {
+                return -1;
+            }
+
+            int l;
+            if (IJK[i][j][k] != NodeType.Regular && IJK[i][j][k] != NodeType.Removed)
+            {
+                l = Nc + LayersRows_uc[k][j];
+                if (j == Ny - 1 || LayersRows_uc[k][j] != LayersRows_uc[k][j + 1])
+                    for (int column = 0; column < i; column++)
+                        if (IJK[column][j][k] != NodeType.Regular && IJK[column][j][k] != NodeType.Removed)
+                            l++;
+            }
+
+            l = j * Nx + i + k * Nx * Ny;
+            if (Nnodes > Nc)
+            {
+                l -= LayersRows_uc_removed[k][j];
+
+                if (j == Ny - 1 || LayersRows_uc_removed[k][j] != LayersRows_uc_removed[k][j + 1])
+                    for (int column = 0; column < i; column++)
+                        if (IJK[column][j][k] != NodeType.Regular)
+                            l--;
+            }
+            return l;
         }
 
         // TODO: Доделать

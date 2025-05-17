@@ -225,14 +225,13 @@ namespace MakeGrid3D
         public List<int> removedNodes;
 
         /// <summary>
-        /// Элемента массив Nxc[i] хранит суммарное количество нерегулярных и удаленных узлов, 
+        /// Элемента массива [i] хранит суммарное количество нерегулярных и удаленных узлов, 
         /// расположенных до i-ой строки. 
         /// </summary>
         public List<int> Rows_uc_removed;
 
-
         /// <summary>
-        /// Элемента массив Nxc[i] хранит суммарное количество нерегулярных узлов, 
+        /// Элемента массива [i] хранит суммарное количество нерегулярных узлов, 
         /// расположенных до i-ой строки. 
         /// </summary>
         public List<int> Rows_uc;
@@ -618,7 +617,7 @@ namespace MakeGrid3D
         }
 
         /// <summary>
-        /// Создает массивы Nx_uc и Nx_uc_removed.
+        /// Создает массивы rows_uc и rows_uc_removed.
         /// </summary>
         public void CreateNX() 
         {
@@ -667,7 +666,7 @@ namespace MakeGrid3D
                 l = Nc + Rows_uc[j];
                 if (j == Ny - 1 || Rows_uc[j] != Rows_uc[j + 1])
                     for (int column = 0; column < i; column++)
-                        if (IJ[i][j] != NodeType.Regular && IJ[i][j] != NodeType.Removed)
+                        if (IJ[column][j] != NodeType.Regular && IJ[column][j] != NodeType.Removed)
                             l++;
             }
 
