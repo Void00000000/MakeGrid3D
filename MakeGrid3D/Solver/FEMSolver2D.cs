@@ -357,15 +357,15 @@
         /// </summary>
         /// <param name="G">Структура данных G</param>
         /// <returns>true, если удалось успено создать матрицу.</returns>
-        private bool GenerateTMatrix(GTree G) 
+        private bool GenerateTMatrix(GTree G)
         {
             _tMatrix = new TMatrix(_grid.Nnodes, _grid.Nc);
             _tMatrix.Ig.Add(0);
             // Обработанные узлы.
-            List<int> processed_nodes = new();
+            HashSet<int> processed_nodes = new();
             // Массив, содержащий пары элементов jg и gg.
             List<(int, double)> jg_gg = new();
-            for (int j = _grid.Nc; j < _grid.Nnodes; j++) 
+            for (int j = _grid.Nc; j < _grid.Nnodes; j++)
             {
                 processed_nodes.Clear();
                 jg_gg.Clear();
@@ -376,7 +376,7 @@
                     return false;
 
                 jg_gg.Sort((x, y) => x.Item1.CompareTo(y.Item1));
-                foreach ((int, double) pair in jg_gg) 
+                foreach ((int, double) pair in jg_gg)
                 {
                     _tMatrix.Jg.Add(pair.Item1);
                     _tMatrix.Gg.Add(pair.Item2);
@@ -399,24 +399,27 @@
         /// <param name="elems_count">Список обработанных узлов.</param>
         /// <param name="ig_gg">Массив, содержаший пары элементов массивов jg и gg</param>
         /// <returns>true, если удалось успешно создать цепочку.</returns>
-        private bool GenerateTMatrixChain(GTree G, int j, double m, ref int elems_count, List<(int,double)> jg_gg, List<int> processed_nodes) 
+        private bool GenerateTMatrixChain(GTree G, int j, double m, ref int elems_count, List<(int, double)> jg_gg, HashSet<int> processed_nodes)
         {
             foreach ((int, double) treeNode in G[j])
             {
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                if (processed_nodes.Contains(i)) 
-                    return false;
-
                 if (i < _grid.Nc)
                 {
-                    jg_gg.Add((i, m * Telem));
+                    if (!processed_nodes.Contains(i))
+                    {
+                        jg_gg.Add((i, m * Telem));
+                        elems_count++;
+                    }
                     processed_nodes.Add(i);
-                    elems_count++;
                 }
                 else
                 {
+                    if (processed_nodes.Contains(i))
+                        return false;
+                    processed_nodes.Add(i);
                     bool isSuccess = GenerateTMatrixChain(G, i, m * Telem, ref elems_count, jg_gg, processed_nodes);
                     if (!isSuccess) return false;
                 }

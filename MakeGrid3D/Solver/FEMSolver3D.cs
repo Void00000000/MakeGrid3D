@@ -558,7 +558,7 @@ namespace MakeGrid3D.Solver
             _tMatrix = new TMatrix(_grid.Nnodes, _grid.Nc);
             _tMatrix.Ig.Add(0);
             // Обработанные узлы.
-            List<int> processed_nodes = new();
+            HashSet<int> processed_nodes = new();
             // Массив, содержащий пары элементов jg и gg.
             List<(int, double)> jg_gg = new();
             for (int j = _grid.Nc; j < _grid.Nnodes; j++)
@@ -595,27 +595,27 @@ namespace MakeGrid3D.Solver
         /// <param name="elems_count">Список обработанных узлов.</param>
         /// <param name="ig_gg">Массив, содержаший пары элементов массивов jg и gg</param>
         /// <returns>true, если удалось успешно создать цепочку.</returns>
-        private bool GenerateTMatrixChain(GTree G, int j, double m, ref int elems_count, List<(int, double)> jg_gg, List<int> processed_nodes)
+        private bool GenerateTMatrixChain(GTree G, int j, double m, ref int elems_count, List<(int, double)> jg_gg, HashSet<int> processed_nodes)
         {
             foreach ((int, double) treeNode in G[j])
             {
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                //if (processed_nodes.Contains(i))
-                //    return false;
-
                 if (i < _grid.Nc)
                 {
                     if (!processed_nodes.Contains(i))
                     {
                         jg_gg.Add((i, m * Telem));
-                        processed_nodes.Add(i);
                         elems_count++;
                     }
+                    processed_nodes.Add(i);
                 }
                 else
                 {
+                    if (processed_nodes.Contains(i))
+                        return false;
+                    processed_nodes.Add(i);
                     bool isSuccess = GenerateTMatrixChain(G, i, m * Telem, ref elems_count, jg_gg, processed_nodes);
                     if (!isSuccess) return false;
                 }

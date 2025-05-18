@@ -17,9 +17,9 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test2_3D test = new Test2_3D();
+            Test5_2D test = new Test5_2D();
             test.CreateTest();
-            bool isSuccess = FEMSolver3D.Instance.Initialize(test.Grid, test.FemParams,
+            bool isSuccess = FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams,
                 test.Bc1, test.Bc2, test.Bc3);
             if (!isSuccess)
             {
@@ -27,7 +27,7 @@ namespace MakeGrid3D.Pages
             }
             else
             {
-                List<double> q = FEMSolver3D.Instance.Solve();
+                List<double> q = FEMSolver2D.Instance.Solve();
                 LogService.LogVector(q);
             }
         }
