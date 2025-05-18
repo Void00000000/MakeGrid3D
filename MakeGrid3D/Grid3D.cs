@@ -1,4 +1,7 @@
 ﻿global using ByteMat3D = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<MakeGrid3D.NodeType>>>;
+using MakeGrid3D.Helpers;
+using MakeGrid3D.Solver;
+using OpenTK.Graphics.ES20;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -50,6 +53,7 @@ namespace MakeGrid3D
             this.n6 = n6;
             this.n7 = n7;
             this.n8 = n8;
+            n_uc = new List<int>();
         }
 
         public Elem3D(int wi, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10)
@@ -57,6 +61,8 @@ namespace MakeGrid3D
         {
             this.n9 = n9;
             this.n10 = n10;
+            n_uc.Add(n9);
+            n_uc.Add(10);
         }
 
         public Elem3D(int wi, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, List<int> n_uc)
@@ -169,27 +175,10 @@ namespace MakeGrid3D
         public int Ny { get; private set; }
         public int Nz { get; private set; }
 
-        // Хранят позиции координат границ подобластей в векторах X, Y и Z
-        public List<int> IXw { get; set; }
-        public List<int> IYw { get; set; }
-        public List<int> IZw { get; set; }
-
         public List<Elem3D> Elems { get; }
         public List<Vector3> XYZ { get; }
         public ByteMat3D IJK { get; }
         public List<int> removedNodes;
-
-        /// <summary>
-        /// Элемент массива [i][j] хранит суммарное количество нерегулярных и удаленных узлов, 
-        /// расположенных до i-ой z-слоя и до j-ой строки. 
-        /// </summary>
-        public List<List<int>> LayersRows_uc_removed;
-
-        /// <summary>
-        /// Элемент массива [i][j] хранит суммарное количество нерегулярных, 
-        /// расположенных до i-ой z-слоя и до j-ой строки. 
-        /// </summary>
-        public List<List<int>> LayersRows_uc;
 
         public Grid3D(Area3D area, List<Vector3> XYZ, List<Elem3D> elems, ByteMat3D IJK)
         {
@@ -542,117 +531,84 @@ namespace MakeGrid3D
         }
 
         /// <summary>
-        /// Создает массивы LayersRows_uc и LayerRows_uc_removed.
+        /// Возвращает массив всех внутренних граней границ подобласти.
         /// </summary>
-        public void CreateNXZ()
+        public List<Boundary3D> GetBoundaries()
         {
-            LayersRows_uc_removed = new List<List<int>>(Nz);
-            for (int i = 0; i < Nz; i++)
-            {
-                LayersRows_uc_removed.Add(new List<int>(Ny));
-                for (int j = 0; j < Ny; j++)
-                    LayersRows_uc_removed[i].Add(0);
-            }
+            double xmin = Area.Xw[0];
+            double xmax = Area.Xw[Area.NXw - 1];
+            double ymin = Area.Yw[0];
+            double ymax = Area.Yw[Area.NYw - 1];
+            double zmin = Area.Zw[0];
+            double zmax = Area.Zw[Area.NZw - 1];
+            List<Boundary3D> boundaries = new List<Boundary3D>();
 
-            for (int k = 0; k < Nz; k++)
+            foreach (Elem3D elem in Elems) 
             {
-                for (int j = 0; j < Ny; j++)
+                double x1 = XYZ[elem.n1].X;
+                double x2 = XYZ[elem.n2].X;
+                double x3 = XYZ[elem.n3].X;
+                double x4 = XYZ[elem.n4].X;
+                double x5 = XYZ[elem.n5].X;
+                double x6 = XYZ[elem.n6].X;
+                double x7 = XYZ[elem.n7].X;
+                double x8 = XYZ[elem.n8].X;
+
+                double y1 = XYZ[elem.n1].Y;
+                double y2 = XYZ[elem.n2].Y;
+                double y3 = XYZ[elem.n3].Y;
+                double y4 = XYZ[elem.n4].Y;
+                double y5 = XYZ[elem.n5].Y;
+                double y6 = XYZ[elem.n6].Y;
+                double y7 = XYZ[elem.n7].Y;
+                double y8 = XYZ[elem.n8].Y;
+
+                double z1 = XYZ[elem.n1].Z;
+                double z2 = XYZ[elem.n2].Z;
+                double z3 = XYZ[elem.n3].Z;
+                double z4 = XYZ[elem.n4].Z;
+                double z5 = XYZ[elem.n5].Z;
+                double z6 = XYZ[elem.n6].Z;
+                double z7 = XYZ[elem.n7].Z;
+                double z8 = XYZ[elem.n8].Z;
+                // Передняя грань
+                if (MathsHelper.IsEqual(y1, ymin) && MathsHelper.IsEqual(y2, ymin) &&
+                    MathsHelper.IsEqual(y5, ymin) && MathsHelper.IsEqual(y6, ymin)) 
                 {
-                    int count = 0;
-                    int jj = 0;
-                    int kk = 0;
-                    if (j - 1 < 0 && k - 1 >= 0)
-                    {
-                        count = LayersRows_uc_removed[k - 1][Ny - 1];
-                        jj = Ny - 1;
-                        kk = k - 1;
-                    }
-                    else if (j - 1 >= 0 && k - 1 >= 0)
-                    {
-                        count = LayersRows_uc_removed[k][j - 1];
-                        jj = j - 1;
-                        kk = j;
-                    }
-                    else 
-
-                    for (int i = 0; i < Nx; i++)
-                        if (IJK[i][jj][kk] != NodeType.Regular)
-                            count++;
-                    LayersRows_uc_removed[k][j] = count;
+                    boundaries.Add(new Boundary3D(0, elem.n1, elem.n2, elem.n5, elem.n6));
+                }
+                // Правая грань
+                if (MathsHelper.IsEqual(x2, xmax) && MathsHelper.IsEqual(x4, xmax) &&
+                    MathsHelper.IsEqual(x6, xmax) && MathsHelper.IsEqual(x8, xmax))
+                {
+                    boundaries.Add(new Boundary3D(1, elem.n2, elem.n4, elem.n6, elem.n8));
+                }
+                // Задняя грань
+                if (MathsHelper.IsEqual(y3, ymax) && MathsHelper.IsEqual(y4, ymax) &&
+                    MathsHelper.IsEqual(y7, ymax) && MathsHelper.IsEqual(y8, ymax))
+                {
+                    boundaries.Add(new Boundary3D(2, elem.n3, elem.n4, elem.n7, elem.n8));
+                }
+                // Левая грань
+                if (MathsHelper.IsEqual(x1, xmin) && MathsHelper.IsEqual(x3, xmin) &&
+                    MathsHelper.IsEqual(x5, xmin) && MathsHelper.IsEqual(x7, xmin))
+                {
+                    boundaries.Add(new Boundary3D(3, elem.n1, elem.n3, elem.n5, elem.n7));
+                }
+                // Нижняя грань
+                if (MathsHelper.IsEqual(z1, zmin) && MathsHelper.IsEqual(z2, zmin) &&
+                    MathsHelper.IsEqual(z3, zmin) && MathsHelper.IsEqual(z4, zmin))
+                {
+                    boundaries.Add(new Boundary3D(4, elem.n1, elem.n2, elem.n3, elem.n4));
+                }
+                // Верхня грань
+                if (MathsHelper.IsEqual(z5, zmax) && MathsHelper.IsEqual(z6, zmax) &&
+                    MathsHelper.IsEqual(z7, zmax) && MathsHelper.IsEqual(z8, zmax))
+                {
+                    boundaries.Add(new Boundary3D(5, elem.n5, elem.n6, elem.n7, elem.n8));
                 }
             }
-
-            // ------------------------
-
-            LayersRows_uc = new List<List<int>>(Nz);
-            for (int i = 0; i < Nz; i++)
-            {
-                LayersRows_uc.Add(new List<int>(Ny));
-                for (int j = 0; j < Ny; j++)
-                    LayersRows_uc[i].Add(0);
-            }
-
-            for (int k = 0; k < Nz; k++)
-            {
-                for (int j = 0; j < Ny; j++)
-                {
-                    int count = 0;
-                    int jj = 0;
-                    int kk = 0;
-                    if (j - 1 < 0 && k - 1 >= 0)
-                    {
-                        count = LayersRows_uc[k - 1][Ny - 1];
-                        jj = Ny - 1;
-                        kk = k - 1;
-                    }
-                    else if (j - 1 >= 0 && k - 1 >= 0)
-                    {
-                        count = LayersRows_uc[k][j - 1];
-                        jj = j - 1;
-                        kk = j;
-                    }
-                    else
-
-                        for (int i = 0; i < Nx; i++)
-                            if (IJK[i][jj][kk] != NodeType.Regular && IJK[i][jj][kk] != NodeType.Removed)
-                                count++;
-                    LayersRows_uc[k][j] = count;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Возвращает глобальный узел по нумерации для решения краевой задачи с построением T матрицы.
-        /// То есть вначале нумеруются регулярные узлы (влево-вправо, снизу-вверх), а потом нерегулярные.
-        /// </summary>
-        public int global_num_T(int i, int j, int k)
-        {
-            if (IJK[i][j][k] == NodeType.Removed)
-            {
-                return -1;
-            }
-
-            int l;
-            if (IJK[i][j][k] != NodeType.Regular && IJK[i][j][k] != NodeType.Removed)
-            {
-                l = Nc + LayersRows_uc[k][j];
-                if (j == Ny - 1 || LayersRows_uc[k][j] != LayersRows_uc[k][j + 1])
-                    for (int column = 0; column < i; column++)
-                        if (IJK[column][j][k] != NodeType.Regular && IJK[column][j][k] != NodeType.Removed)
-                            l++;
-            }
-
-            l = j * Nx + i + k * Nx * Ny;
-            if (Nnodes > Nc)
-            {
-                l -= LayersRows_uc_removed[k][j];
-
-                if (j == Ny - 1 || LayersRows_uc_removed[k][j] != LayersRows_uc_removed[k][j + 1])
-                    for (int column = 0; column < i; column++)
-                        if (IJK[column][j][k] != NodeType.Regular)
-                            l--;
-            }
-            return l;
+            return boundaries;
         }
 
         // TODO: Доделать

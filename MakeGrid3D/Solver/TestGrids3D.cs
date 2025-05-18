@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace MakeGrid3D.Solver
 {
@@ -178,20 +179,9 @@ namespace MakeGrid3D.Solver
 
                 Grid = new Grid3D(area, XYZ, elems, IJK);
                 Grid.Nc = Grid.Nnodes;
-                Grid.IXw = new List<int> { 0, 2 };
-                Grid.IYw = new List<int> { 0, 2 };
-                Grid.IZw = new List<int> { 0, 2 };
-                Grid.CreateNXZ();
+                List<Boundary3D> boundaries = Grid.GetBoundaries();
 
-                Bc1 = new List<Boundary3D>()
-                {
-                    new Boundary3D(0,0,1,0,0,0,1),
-                    new Boundary3D(1,1,1,0,1,0,1),
-                    new Boundary3D(2,0,1,1,1,0,1),
-                    new Boundary3D(3,0,0,0,1,0,1),
-                    new Boundary3D(4,0,1,0,1,0,0),
-                    new Boundary3D(5,0,1,0,1,1,1),
-                };
+                Bc1 = boundaries;
 
                 Bc2 = new List<Boundary3D>()
                 {
@@ -204,6 +194,118 @@ namespace MakeGrid3D.Solver
                 };
 
                 FemParams = FemParamsFactory3D.CreateFemParams(1);
+            }
+        }
+
+        /// <summary>
+        /// Тест нерегулярной сетки из кирпича.
+        /// </summary>
+        public class Test2_3D
+        {
+            public Grid3D Grid;
+            public FEMParams3D FemParams;
+            public List<Boundary3D> Bc1;
+            public List<Boundary3D> Bc2;
+            public List<Boundary3D> Bc3;
+
+            public void CreateTest()
+            {
+                double x1 = 0;
+                double x2 = 3;
+                double x3 = 5;
+                List<double> xw = new List<double> {x1, x3 };
+                List<double> yw = new List<double> { 0, 5 };
+                List<double> zw = new List<double> { 0, 4 };
+                SubArea3D sub1 = new SubArea3D(0, 0, 1, 0, 1, 0, 1);
+                List<SubArea3D> subs = new List<SubArea3D> { sub1 };
+                int nmats = 1;
+                Area3D area = new Area3D(xw, yw, zw, subs, nmats);
+                List<Vector3> XYZ = new List<Vector3>()
+                {
+                    new Vector3(x1,0,0), //0
+                    new Vector3(x2,0,0), //1
+                    new Vector3(x3,0,0), //2
+                    new Vector3(x3,3,0), //3
+                    new Vector3(x1,5,0), //4
+                    new Vector3(x2,5,0), //5
+                    new Vector3(x3,5,0), //6
+                    new Vector3(x3,0,1), //7
+                    new Vector3(x1,0,4), //8
+                    new Vector3(x2,0,4), //9
+                    new Vector3(x3,0,4), //10
+                    new Vector3(x3,3,4), //11
+                    new Vector3(x1,5,4), //12
+                    new Vector3(x2,5,4), //13
+                    new Vector3(x3,5,4), //14
+                    new Vector3(x2,3,0), //15
+                    new Vector3(x2,0,1), //16
+                    new Vector3(x2,3,1), //17
+                    new Vector3(x3,3,1), //18
+                    new Vector3(x2,3,4), //19
+                };
+                List<Elem3D> elems = new List<Elem3D>()
+                {
+                    new Elem3D(0,0,1,4,5,8,9,12,13, new List<int>{15,16,17,19}),
+                    new Elem3D(0,1,2,15,3,16,7,17,18),
+                    new Elem3D(0,16,7,17,18,9,10,19,11),
+                    new Elem3D(0,15,3,5,6,19,11,13,14, new List<int>{17,18})
+                };
+                int nx = 3;
+                int ny = 3;
+                int nz = 3;
+
+                ByteMat3D IJK = new ByteMat3D(nx);
+                for (int i = 0; i < nx; i++)
+                {
+                    IJK.Add(new ByteMat2D(ny));
+                    for (int j = 0; j < ny; j++)
+                    {
+                        IJK[i].Add(new List<NodeType>(nz));
+                        for (int k = 0; k < nz; k++)
+                            IJK[i][j].Add(NodeType.Regular);
+                    }
+                }
+
+                Grid = new Grid3D(area, XYZ, elems, IJK);
+                Grid.Nc = Grid.Nnodes - 5;
+                List<Boundary3D> boundaries = Grid.GetBoundaries();
+
+                Bc1 = boundaries;
+
+                Bc2 = new List<Boundary3D>()
+                {
+
+                };
+
+                Bc3 = new List<Boundary3D>()
+                {
+
+                };
+
+                FemParams = FemParamsFactory3D.CreateFemParams(1);
+                FemParams.Ug = ug;
+            }
+
+            private double ug(int si, double x, double y, double z) 
+            {
+                double xmin = 0;
+                double xmax = 5;
+                switch (si)
+                {
+                    case 0:
+                        return 0;
+                    case 1:
+                        return xmax * y * z;
+                    case 2:
+                        return 5 * x * z;
+                    case 3:
+                        return xmin * y * z;
+                    case 4:
+                        return 0;
+                    case 5:
+                        return 4 * x * y;
+                }
+                return 0;
             }
         }
     }

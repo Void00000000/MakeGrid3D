@@ -2,6 +2,8 @@
 using MakeGrid3D.Solver.SparseModule;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Input;
 
 namespace MakeGrid3D.Solver
 {
@@ -333,51 +335,213 @@ namespace MakeGrid3D.Solver
             {
                 foreach (int nc in elem.n_uc)
                 {
-                    G.Add(nc, new List<(int, double)>(2));
+                    // В 3D ключ может повторяться.
+                    if (!G.ContainsKey(nc))
+                    {
+                        G.Add(nc, new List<(int, double)>());
+                    }
                     int n1 = elem.n1;
                     int n2 = elem.n2;
                     int n3 = elem.n3;
                     int n4 = elem.n4;
+                    int n5 = elem.n5;
+                    int n6 = elem.n6;
+                    int n7 = elem.n7;
+                    int n8 = elem.n8;
+
                     double xc = _grid.XYZ[nc].X;
                     double yc = _grid.XYZ[nc].Y;
+                    double zc = _grid.XYZ[nc].Z;
                     double xmin = _grid.XYZ[n1].X;
-                    double xmax = _grid.XYZ[n4].X;
+                    double xmax = _grid.XYZ[n8].X;
                     double ymin = _grid.XYZ[n1].Y;
-                    double ymax = _grid.XYZ[n4].Y;
+                    double ymax = _grid.XYZ[n8].Y;
+                    double zmin = _grid.XYZ[n1].Z;
+                    double zmax = _grid.XYZ[n8].Z;
                     double hx = xmax - xmin;
                     double hy = ymax - ymin;
+                    double hz = zmax - zmin;
 
-                    // Узел лежит на нижней стороне
+                    // NOTE: В 3D терминальный узел может лежат на нескольких граней
+
+                    // Узел лежит на передней грани.
                     if (MathsHelper.IsEqual(yc, ymin))
                     {
-                        double Telem1 = BasicFunc1(xc, xmax, hx);
-                        double Telem2 = BasicFunc2(xc, xmin, hx);
-                        G[nc].Add((n1, Telem1));
-                        G[nc].Add((n2, Telem2));
+                        double psiX1 = BasicFunc1(xc, xmax, hx);
+                        double psiX2 = BasicFunc2(xc, xmin, hx);
+                        double psiZ1 = BasicFunc1(zc, zmax, hz);
+                        double psiZ2 = BasicFunc2(zc, zmin, hz);
+                        double Telem1 = psiX1 * psiZ1;
+                        double Telem2 = psiX2 * psiZ1;
+                        double Telem3 = psiX1 * psiZ2;
+                        double Telem4 = psiX2 * psiZ2;
+
+                        if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n1))
+                        {
+                            G[nc].Add((n1, Telem1));
+                        }
+                        if (!MathsHelper.IsEqual(Telem2, 0) && !G[nc].Any(tuple => tuple.Item1 == n2))
+                        {
+                            G[nc].Add((n2, Telem2));
+                        }
+                        if (!MathsHelper.IsEqual(Telem3, 0) && !G[nc].Any(tuple => tuple.Item1 == n5))
+                        {
+                            G[nc].Add((n5, Telem3));
+                        }
+                        if (!MathsHelper.IsEqual(Telem4, 0) && !G[nc].Any(tuple => tuple.Item1 == n6))
+                        {
+                            G[nc].Add((n6, Telem4));
+                        }
                     }
-                    // Узел лежит на правой стороне
-                    else if (MathsHelper.IsEqual(xc, xmax))
+
+                    // Узел лежит на правой грани.
+                    if (MathsHelper.IsEqual(xc, xmax))
                     {
-                        double Telem1 = BasicFunc1(yc, ymax, hy);
-                        double Telem2 = BasicFunc2(yc, ymin, hy);
-                        G[nc].Add((n2, Telem1));
-                        G[nc].Add((n4, Telem2));
+                        double psiY1 = BasicFunc1(yc, ymax, hy);
+                        double psiY2 = BasicFunc2(yc, ymin, hy);
+                        double psiZ1 = BasicFunc1(zc, zmax, hz);
+                        double psiZ2 = BasicFunc2(zc, zmin, hz);
+                        double Telem1 = psiY1 * psiZ1;
+                        double Telem2 = psiY2 * psiZ1;
+                        double Telem3 = psiY1 * psiZ2;
+                        double Telem4 = psiY2 * psiZ2;
+
+                        if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n2))
+                        {
+                            G[nc].Add((n2, Telem1));
+                        }
+                        if (!MathsHelper.IsEqual(Telem2, 0) && !G[nc].Any(tuple => tuple.Item1 == n4))
+                        {
+                            G[nc].Add((n4, Telem2));
+                        }
+                        if (!MathsHelper.IsEqual(Telem3, 0) && !G[nc].Any(tuple => tuple.Item1 == n6))
+                        {
+                            G[nc].Add((n6, Telem3));
+                        }
+                        if (!MathsHelper.IsEqual(Telem4, 0) && !G[nc].Any(tuple => tuple.Item1 == n8))
+                        {
+                            G[nc].Add((n8, Telem4));
+                        }
                     }
-                    // Узел лежит на верхней стороне
-                    else if (MathsHelper.IsEqual(yc, ymax))
+
+                    // Узел лежит на задней грани.
+                    if (MathsHelper.IsEqual(yc, ymax))
                     {
-                        double Telem1 = BasicFunc1(xc, xmax, hx);
-                        double Telem2 = BasicFunc2(xc, xmin, hx);
-                        G[nc].Add((n2, Telem1));
-                        G[nc].Add((n4, Telem2));
+                        double psiX1 = BasicFunc1(xc, xmax, hx);
+                        double psiX2 = BasicFunc2(xc, xmin, hx);
+                        double psiZ1 = BasicFunc1(zc, zmax, hz);
+                        double psiZ2 = BasicFunc2(zc, zmin, hz);
+                        double Telem1 = psiX1 * psiZ1;
+                        double Telem2 = psiX2 * psiZ1;
+                        double Telem3 = psiZ1 * psiZ2;
+                        double Telem4 = psiZ2 * psiZ2;
+
+                        if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n2))
+                        {
+                            G[nc].Add((n2, Telem1));
+                        }
+                        if (!MathsHelper.IsEqual(Telem2, 0) && !G[nc].Any(tuple => tuple.Item1 == n3))
+                        {
+                            G[nc].Add((n3, Telem2));
+                        }
+                        if (!MathsHelper.IsEqual(Telem3, 0) && !G[nc].Any(tuple => tuple.Item1 == n7))
+                        {
+                            G[nc].Add((n7, Telem3));
+                        }
+                        if (!MathsHelper.IsEqual(Telem4, 0) && !G[nc].Any(tuple => tuple.Item1 == n8))
+                        {
+                            G[nc].Add((n8, Telem4));
+                        }
                     }
-                    // Узел лежит на левой стороне
-                    else if (MathsHelper.IsEqual(xc, xmin))
+
+                    // Узел лежит на левой грани.
+                    if (MathsHelper.IsEqual(xc, xmin))
                     {
-                        double Telem1 = BasicFunc1(yc, ymax, hy);
-                        double Telem2 = BasicFunc2(yc, ymin, hy);
-                        G[nc].Add((n1, Telem1));
-                        G[nc].Add((n3, Telem2));
+                        double psiY1 = BasicFunc1(yc, ymax, hy);
+                        double psiY2 = BasicFunc2(yc, ymin, hy);
+                        double psiZ1 = BasicFunc1(zc, zmax, hz);
+                        double psiZ2 = BasicFunc2(zc, zmin, hz);
+                        double Telem1 = psiY1 * psiZ1;
+                        double Telem2 = psiY2 * psiZ1;
+                        double Telem3 = psiZ1 * psiZ2;
+                        double Telem4 = psiZ2 * psiZ2;
+
+                        if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n1))
+                        {
+                            G[nc].Add((n1, Telem1));
+                        }
+                        if (!MathsHelper.IsEqual(Telem2, 0) && !G[nc].Any(tuple => tuple.Item1 == n3))
+                        {
+                            G[nc].Add((n3, Telem2));
+                        }
+                        if (!MathsHelper.IsEqual(Telem3, 0) && !G[nc].Any(tuple => tuple.Item1 == n5))
+                        {
+                            G[nc].Add((n5, Telem3));
+                        }
+                        if (!MathsHelper.IsEqual(Telem4, 0) && !G[nc].Any(tuple => tuple.Item1 == n7))
+                        {
+                            G[nc].Add((n7, Telem4));
+                        }
+                    }
+
+                    // Узел лежит на нижней грани.
+                    if (MathsHelper.IsEqual(zc, zmin))
+                    {
+                        double psiX1 = BasicFunc1(xc, xmax, hx);
+                        double psiX2 = BasicFunc2(xc, xmin, hx);
+                        double psiY1 = BasicFunc1(yc, ymax, hy);
+                        double psiY2 = BasicFunc2(yc, ymin, hy);
+                        double Telem1 = psiX1 * psiY1;
+                        double Telem2 = psiX2 * psiY1;
+                        double Telem3 = psiX1 * psiY2;
+                        double Telem4 = psiX2 * psiY2;
+
+                        if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n1))
+                        {
+                            G[nc].Add((n1, Telem1));
+                        }
+                        if (!MathsHelper.IsEqual(Telem2, 0) && !G[nc].Any(tuple => tuple.Item1 == n2))
+                        {
+                            G[nc].Add((n2, Telem2));
+                        }
+                        if (!MathsHelper.IsEqual(Telem3, 0) && !G[nc].Any(tuple => tuple.Item1 == n3))
+                        {
+                            G[nc].Add((n3, Telem3));
+                        }
+                        if (!MathsHelper.IsEqual(Telem4, 0) && !G[nc].Any(tuple => tuple.Item1 == n4))
+                        {
+                            G[nc].Add((n4, Telem4));
+                        }
+                    }
+
+                    // Узел лежит на верхней грани.
+                    if (MathsHelper.IsEqual(zc, zmax))
+                    {
+                        double psiX1 = BasicFunc1(xc, xmax, hx);
+                        double psiX2 = BasicFunc2(xc, xmin, hx);
+                        double psiY1 = BasicFunc1(yc, ymax, hy);
+                        double psiY2 = BasicFunc2(yc, ymin, hy);
+                        double Telem1 = psiX1 * psiY1;
+                        double Telem2 = psiX2 * psiY1;
+                        double Telem3 = psiX1 * psiY2;
+                        double Telem4 = psiX2 * psiY2;
+
+                        if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n5))
+                        {
+                            G[nc].Add((n5, Telem1));
+                        }
+                        if (!MathsHelper.IsEqual(Telem2, 0) && !G[nc].Any(tuple => tuple.Item1 == n6))
+                        {
+                            G[nc].Add((n6, Telem2));
+                        }
+                        if (!MathsHelper.IsEqual(Telem3, 0) && !G[nc].Any(tuple => tuple.Item1 == n7))
+                        {
+                            G[nc].Add((n7, Telem3));
+                        }
+                        if (!MathsHelper.IsEqual(Telem4, 0) && !G[nc].Any(tuple => tuple.Item1 == n8))
+                        {
+                            G[nc].Add((n8, Telem4));
+                        }
                     }
                 }
             }
@@ -438,14 +602,17 @@ namespace MakeGrid3D.Solver
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                if (processed_nodes.Contains(i))
-                    return false;
+                //if (processed_nodes.Contains(i))
+                //    return false;
 
                 if (i < _grid.Nc)
                 {
-                    jg_gg.Add((i, m * Telem));
-                    processed_nodes.Add(i);
-                    elems_count++;
+                    if (!processed_nodes.Contains(i))
+                    {
+                        jg_gg.Add((i, m * Telem));
+                        processed_nodes.Add(i);
+                        elems_count++;
+                    }
                 }
                 else
                 {
@@ -689,88 +856,25 @@ namespace MakeGrid3D.Solver
             }
         }
 
-
-        /// <summary>
-        /// Применяет краевое условие. 
-        /// </summary>
-        /// <param name="bc">Номер краевого услоивя (1,2,3).</param>
-        private void ApplyBc(int bcNum)
-        {
-            int p;
-            int i_beg, i_end, j_beg, j_end, z_beg, z_end;
-            int end = 0;
-            List<Boundary3D> bc;
-            switch (bcNum)
-            {
-                case 1:
-                    bc = _bc1;
-                    break;
-                case 2:
-                    bc = _bc2;
-                    end = 1;
-                    break;
-                case 3:
-                    bc = _bc3;
-                    end = 1;
-                    break;
-                default:
-                    bc = new List<Boundary3D>();
-                    break;
-            }
-
-            for (int s = 0; s < bc.Count; s++)
-            {
-                i_beg = _grid.IXw[bc[s].Nx1];
-                i_end = _grid.IXw[bc[s].Nx2];
-                j_beg = _grid.IYw[bc[s].Ny1];
-                j_end = _grid.IYw[bc[s].Ny2];
-                z_beg = _grid.IYw[bc[s].Nz1];
-                z_end = _grid.IYw[bc[s].Nz2];
-                p = bc[s].Si;
-                if (i_beg == i_end)
-                {
-                    int i = i_beg;
-                    for (int k = z_beg; k <= z_end - end; k++)
-                        for (int j = j_beg; j <= j_end - end; j++)
-                            ApplyBcNode(bcNum, i, j, k, p, Plane.YZ);
-                }
-                else if (j_beg == j_end)
-                {
-                    int j = j_beg;
-                    for (int k = z_beg; k <= z_end - end; k++)
-                        for (int i = i_beg; i <= i_end - end; i++)
-                            ApplyBcNode(bcNum, i, j, k, p, Plane.XZ);
-                }
-                else 
-                {
-                    int k = z_beg;
-                    for (int j = j_beg; j <= j_end - end; j++)
-                        for (int i = i_beg; i <= i_end - end; i++)
-                            ApplyBcNode(bcNum, i, j, k, p, Plane.XY);
-                }
-            }
-        }
-
         /// <summary>
         /// Применяет краевое условие для узла. 
         /// </summary>
         /// <param name="bcNum">Номер краевого условия (1,2,3).</param>
-        /// <param name="i">Порядкой номер узла по горизонтали (нумерация с 0).</param>
-        /// <param name="j">Порядкой номер узла по горизонтали (нумерация с 0).</param>
-        /// <param name="p">Номер границы.</param>
-        /// <param name="plane">На каких осях лежит граница.</param>
-        private void ApplyBcNode(int bcNum, int i, int j, int k, int p, Plane plane)
+        private void ApplyBc(int bcNum)
         {
             switch (bcNum)
             {
                 case 1:
-                    ApplyBc1Node(i, j, k, p);
+                    foreach (Boundary3D boundary in _bc1)
+                        ApplyBc1(boundary);
                     break;
                 case 2:
-                    ApplyBc2Node(i, j, k, p, plane);
+                    foreach (Boundary3D boundary in _bc2)
+                        ApplyBc2Node(boundary);
                     break;
                 case 3:
-                    ApplyBc3Node(i, j, k, p, plane);
+                    foreach (Boundary3D boundary in _bc3)
+                        ApplyBc3Node(boundary);
                     break;
                 default:
                     LogService.LogWarning("Указано неверное краевое условие");
@@ -779,89 +883,39 @@ namespace MakeGrid3D.Solver
         }
 
         /// <summary>
-        /// Применяет первое краевое условие для узла. 
+        /// Применяет первое краевое условие. 
         /// </summary>
-        private void ApplyBc1Node(int i, int j, int k, int p)
+        private void ApplyBc1(Boundary3D boundary)
         {
-            int l = _grid.global_num_T(i, j, k);
-            if (l < 0)
-                return;
-
-            if (l == 3) 
-            { 
+            int p = boundary.Si;
+            List<int> global_nodes = new List<int>() { boundary.N1, boundary.N2, boundary.N3, boundary.N4};
+            foreach (int l in global_nodes)
+            {
+                if (l >= _n)
+                    continue;
+                double x = _grid.XYZ[l].X;
+                double y = _grid.XYZ[l].Y;
+                double z = _grid.XYZ[l].Z;
+                _matrix.Di[l] = 1;
+                for (int s = _matrix.Ig[l]; s < _matrix.Ig[l + 1]; s++)
+                    _matrix.Gl[s] = 0;
+                for (int s = 0; s < _matrix.Ng; s++)
+                    if (_matrix.Jg[s] == l)
+                        _matrix.Gu[s] = 0;
+                _b[l] = _params.Ug(p, x, y, z);
             }
-
-            double x = _grid.XYZ[l].X;
-            double y = _grid.XYZ[l].Y;
-            double z = _grid.XYZ[l].Z;
-            _matrix.Di[l] = 1;
-            for (int s = _matrix.Ig[l]; s < _matrix.Ig[l + 1]; s++)
-                _matrix.Gl[s] = 0;
-            for (int s = 0; s < _matrix.Ng; s++)
-                if (_matrix.Jg[s] == l)
-                    _matrix.Gu[s] = 0;
-            _b[l] = _params.Ug(p, x, y, z);
         }
 
         /// <summary>
-        /// Применяет второе краевое условие для узла. 
+        /// Применяет второе краевое условие. 
         /// </summary>
-        private void ApplyBc2Node(int i, int j, int k, int p, Plane plane)
+        private void ApplyBc2Node(Boundary3D boundary)
         {
-            int l1 = _grid.global_num_T(i, j, k);
-            if (l1 < 0)
-                return;
-
-            int l2 = -1;
-            while (l2 < 0)
-            {
-                switch (plane)
-                {
-                    case Plane.XY:
-                        l2 = _grid.global_num_T(i + 1, j, k);
-                        break;
-                    case Plane.XZ:
-                        l2 = _grid.global_num_T(i + 1, j, k);
-                        break;
-                    case Plane.YZ:
-                        l2 = _grid.global_num_T(i, j + 1, k);
-                        break;
-                }
-            }
-
-            int l3 = -1;
-            while (l3 < 0)
-            {
-                switch (plane)
-                {
-                    case Plane.XY:
-                        l3 = _grid.global_num_T(i, j + 1, k);
-                        break;
-                    case Plane.XZ:
-                        l3 = _grid.global_num_T(i, j, k + 1);
-                        break;
-                    case Plane.YZ:
-                        l3 = _grid.global_num_T(i, j, k + 1);
-                        break;
-                }
-            }
-
-            int l4 = -1;
-            while (l4 < 0)
-            {
-                switch (plane)
-                {
-                    case Plane.XY:
-                        l4 = _grid.global_num_T(i + 1, j + 1, k);
-                        break;
-                    case Plane.XZ:
-                        l4 = _grid.global_num_T(i + 1, j, k + 1);
-                        break;
-                    case Plane.YZ:
-                        l4 = _grid.global_num_T(i, j + 1, k + 1);
-                        break;
-                }
-            }
+            int p = boundary.Si;
+            int l1 = boundary.N1;
+            int l2 = boundary.N2;
+            int l3 = boundary.N3;
+            int l4 = boundary.N4;
 
             double x1 = _grid.XYZ[l1].X;
             double x2 = _grid.XYZ[l4].X;
@@ -875,96 +929,47 @@ namespace MakeGrid3D.Solver
             double theta3 = 0;
             double theta4 = 0;
             double area = 0;
-            switch (plane) 
-            {
-                case Plane.XY:
-                    theta1 = _params.Theta(p, x1, y1, z1);
-                    theta2 = _params.Theta(p, x2, y1, z1);
-                    theta3 = _params.Theta(p, x1, y2, z1);
-                    theta4 = _params.Theta(p, x2, y2, z1);
-                    area = (x2 - x1) * (y2 - y1);
-                    break;
-                case Plane.YZ:
-                    theta1 = _params.Theta(p, x1, y1, z1);
-                    theta2 = _params.Theta(p, x1, y2, z1);
-                    theta3 = _params.Theta(p, x1, y1, z2);
-                    theta4 = _params.Theta(p, x1, y2, z2);
-                    area = (y2 - y1) * (z2 - z1);
-                    break;
-                case Plane.XZ:
-                    theta1 = _params.Theta(p, x1, y1, z1);
-                    theta2 = _params.Theta(p, x2, y1, z1);
-                    theta3 = _params.Theta(p, x1, y1, z2);
-                    theta4 = _params.Theta(p, x2, y1, z2);
-                    area = (x2 - x1) * (z2 - z1);
-                    break;
 
-            } 
+            if (MathsHelper.IsEqual(x1, x2))
+            {
+                theta1 = _params.Theta(p, x1, y1, z1);
+                theta2 = _params.Theta(p, x2, y1, z1);
+                theta3 = _params.Theta(p, x1, y2, z1);
+                theta4 = _params.Theta(p, x2, y2, z1);
+                area = (x2 - x1) * (y2 - y1);
+            }
+            else if (MathsHelper.IsEqual(y1, y2))
+            {
+                theta1 = _params.Theta(p, x1, y1, z1);
+                theta2 = _params.Theta(p, x1, y2, z1);
+                theta3 = _params.Theta(p, x1, y1, z2);
+                theta4 = _params.Theta(p, x1, y2, z2);
+                area = (y2 - y1) * (z2 - z1);
+            }
+            else
+            {
+                theta1 = _params.Theta(p, x1, y1, z1);
+                theta2 = _params.Theta(p, x2, y1, z1);
+                theta3 = _params.Theta(p, x1, y1, z2);
+                theta4 = _params.Theta(p, x2, y1, z2);
+                area = (x2 - x1) * (z2 - z1);
+            }
 
             int[] global_nodes = new int[4] {l1,l2,l3,l4 };
-            for (int i_node = 0; i_node < 4; i_node++)
-                _b[global_nodes[i_node]] += area * (theta1 * _c[i_node][0] + theta2 * _c[i_node][1] + theta3 * _c[i_node][2] + theta4 * _c[i_node][3]) / 36.0;
+            for (int l = 0; l < 4; l++)
+                _b[global_nodes[l]] += area * (theta1 * _c[l][0] + theta2 * _c[l][1] + theta3 * _c[l][2] + theta4 * _c[l][3]) / 36.0;
         }
 
         /// <summary>
-        /// Применяет третье краевое условие для узла. 
+        /// Применяет третье краевое условие. 
         /// </summary>
-        private void ApplyBc3Node(int i, int j, int k, int p, Plane plane)
+        private void ApplyBc3Node(Boundary3D boundary)
         {
-            int l1 = _grid.global_num_T(i, j, k);
-            if (l1 < 0)
-                return;
-
-            int l2 = -1;
-            while (l2 < 0)
-            {
-                switch (plane)
-                {
-                    case Plane.XY:
-                        l2 = _grid.global_num_T(i + 1, j, k);
-                        break;
-                    case Plane.XZ:
-                        l2 = _grid.global_num_T(i + 1, j, k);
-                        break;
-                    case Plane.YZ:
-                        l2 = _grid.global_num_T(i, j + 1, k);
-                        break;
-                }
-            }
-
-            int l3 = -1;
-            while (l3 < 0)
-            {
-                switch (plane)
-                {
-                    case Plane.XY:
-                        l3 = _grid.global_num_T(i, j + 1, k);
-                        break;
-                    case Plane.XZ:
-                        l3 = _grid.global_num_T(i, j, k + 1);
-                        break;
-                    case Plane.YZ:
-                        l3 = _grid.global_num_T(i, j, k + 1);
-                        break;
-                }
-            }
-
-            int l4 = -1;
-            while (l4 < 0)
-            {
-                switch (plane)
-                {
-                    case Plane.XY:
-                        l4 = _grid.global_num_T(i + 1, j + 1, k);
-                        break;
-                    case Plane.XZ:
-                        l4 = _grid.global_num_T(i + 1, j, k + 1);
-                        break;
-                    case Plane.YZ:
-                        l4 = _grid.global_num_T(i, j + 1, k + 1);
-                        break;
-                }
-            }
+            int p = boundary.Si;
+            int l1 = boundary.N1;
+            int l2 = boundary.N2;
+            int l3 = boundary.N3;
+            int l4 = boundary.N4;
 
             double x1 = _grid.XYZ[l1].X;
             double x2 = _grid.XYZ[l4].X;
@@ -973,37 +978,38 @@ namespace MakeGrid3D.Solver
             double z1 = _grid.XYZ[l1].Z;
             double z2 = _grid.XYZ[l4].Z;
 
-            double beta = _params.Beta(p);
             double ubeta1 = 0;
             double ubeta2 = 0;
             double ubeta3 = 0;
             double ubeta4 = 0;
             double area = 0;
-            switch (plane)
-            {
-                case Plane.XY:
-                    ubeta1 = _params.Ubeta(p, x1, y1, z1);
-                    ubeta2 = _params.Ubeta(p, x2, y1, z1);
-                    ubeta3 = _params.Ubeta(p, x1, y2, z1);
-                    ubeta4 = _params.Ubeta(p, x2, y2, z1);
-                    area = (x2 - x1) * (y2 - y1);
-                    break;
-                case Plane.YZ:
-                    ubeta1 = _params.Ubeta(p, x1, y1, z1);
-                    ubeta2 = _params.Ubeta(p, x1, y2, z1);
-                    ubeta3 = _params.Ubeta(p, x1, y1, z2);
-                    ubeta4 = _params.Ubeta(p, x1, y2, z2);
-                    area = (y2 - y1) * (z2 - z1);
-                    break;
-                case Plane.XZ:
-                    ubeta1 = _params.Ubeta(p, x1, y1, z1);
-                    ubeta2 = _params.Ubeta(p, x2, y1, z1);
-                    ubeta3 = _params.Ubeta(p, x1, y1, z2);
-                    ubeta4 = _params.Ubeta(p, x2, y1, z2);
-                    area = (x2 - x1) * (z2 - z1);
-                    break;
+            double beta = _params.Beta(p);
 
+            if (MathsHelper.IsEqual(x1, x2))
+            {
+                ubeta1 = _params.Theta(p, x1, y1, z1);
+                ubeta2 = _params.Theta(p, x2, y1, z1);
+                ubeta3 = _params.Theta(p, x1, y2, z1);
+                ubeta4 = _params.Theta(p, x2, y2, z1);
+                area = (x2 - x1) * (y2 - y1);
             }
+            else if (MathsHelper.IsEqual(y1, y2))
+            {
+                ubeta1 = _params.Theta(p, x1, y1, z1);
+                ubeta2 = _params.Theta(p, x1, y2, z1);
+                ubeta3 = _params.Theta(p, x1, y1, z2);
+                ubeta4 = _params.Theta(p, x1, y2, z2);
+                area = (y2 - y1) * (z2 - z1);
+            }
+            else
+            {
+                ubeta1 = _params.Theta(p, x1, y1, z1);
+                ubeta2 = _params.Theta(p, x2, y1, z1);
+                ubeta3 = _params.Theta(p, x1, y1, z2);
+                ubeta4 = _params.Theta(p, x2, y1, z2);
+                area = (x2 - x1) * (z2 - z1);
+            }
+
             int[] global_nodes = new int[4] { l1, l2, l3, l4 };
 
             for (int ic = 0; ic < 4; ic++)
@@ -1011,8 +1017,8 @@ namespace MakeGrid3D.Solver
                     AddLocalMatrixElement(_c[ic][jc] * area * beta / 36.0, global_nodes[ic], global_nodes[jc]);
 
            
-            for (int i_node = 0; i_node < 4; i_node++)
-                _b[global_nodes[i_node]] += beta * area * (ubeta1 * _c[i_node][0] + ubeta2 * _c[i_node][1] + ubeta3 * _c[i_node][2] + ubeta4 * _c[i_node][3]) / 36.0;
+            for (int l = 0; l < 4; l++)
+                _b[global_nodes[l]] += beta * area * (ubeta1 * _c[l][0] + ubeta2 * _c[l][1] + ubeta3 * _c[l][2] + ubeta4 * _c[l][3]) / 36.0;
         }
 
         #endregion Private Methods
