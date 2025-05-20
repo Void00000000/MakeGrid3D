@@ -1,5 +1,6 @@
 ﻿global using Function = System.Func<int, double>;
 global using FunctionXY = System.Func<int, double, double, double>;
+global using FunctionXYT = System.Func<int, double, double, double, double>;
 
 namespace MakeGrid3D.Solver
 {
@@ -26,17 +27,17 @@ namespace MakeGrid3D.Solver
         /// <summary>
         /// Функция правой части. 
         /// </summary>
-        public FunctionXY F { get; set; }
+        public FunctionXYT F { get; set; }
 
         /// <summary>
         /// Функция первого краевого условия. 
         /// </summary>
-        public FunctionXY Ug { get; set; }
+        public FunctionXYT Ug { get; set; }
 
         /// <summary>
         /// Функция второго краевого условия. 
         /// </summary>
-        public FunctionXY Theta { get; set; }
+        public FunctionXYT Theta { get; set; }
 
         /// <summary>
         /// Параметр бета 3-го краевого условия. 
@@ -46,7 +47,22 @@ namespace MakeGrid3D.Solver
         /// <summary>
         /// Функция третьего краевого условия. 
         /// </summary>
-        public FunctionXY Ubeta { get; set; }
+        public FunctionXYT Ubeta { get; set; }
+
+        /// <summary>
+        /// Первое начальное условие (значение функции на нулевом слое). 
+        /// </summary>
+        public FunctionXY U0 { get; set; }
+
+        /// <summary>
+        /// Второе начальное условие (значение производной функции на нулевом слое). 
+        /// </summary>
+        public FunctionXY DU0 { get; set; }
+
+        /// <summary>
+        /// Второе начальное условие (значение функции на первом слое). 
+        /// </summary>
+        public FunctionXY U1 { get; set; }
     }
 
     /// <summary>

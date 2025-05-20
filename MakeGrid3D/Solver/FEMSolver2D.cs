@@ -4,9 +4,11 @@
     using MakeGrid3D.Solver.SparseModule;
     using System;
     using System.Collections.Generic;
+    using System.Windows.Controls;
 
     /// <summary>
     /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
+    /// Для решения гиперболическиз задач с 4-ех слойной неявной схемой.
     /// </summary>
     public class FEMSolver2D
     {
@@ -123,6 +125,29 @@
         private List<double> _b;
 
         /// <summary>
+        /// Список временных слоев. 
+        /// </summary>
+        private List<double> _t;
+
+        /// <summary>
+        /// Вектор решения на (i - 3) временном слое.
+        /// Размерность равна кол-во регулярных узлов.
+        /// </summary>
+        private List<double> q_3;
+
+        /// <summary>
+        /// Вектор решения на (i - 2) временном слое. 
+        /// Размерность равна кол-во регулярных узлов.
+        /// </summary>
+        private List<double> q_2;
+
+        /// <summary>
+        /// Вектор решения на (i - 1) временном слое. 
+        /// Размерность равна кол-во регулярных узлов.
+        /// </summary>
+        private List<double> q_1;
+
+        /// <summary>
         /// Размерность матрицы. 
         /// Для нерегулярной сетки размерность матрицы равна количеству регулярных элемент.
         /// </summary>
@@ -155,14 +180,21 @@
         /// <param name="bc1">Список границ с первым к.у.</param>
         /// <param name="bc2">Список границ со вторым к.у.</param>
         /// <param name="bc3">Список границ с третьим к.у.</param>
+        /// <param name="t">Список временных слоев.</param>
         /// <returns>true, если успешно удалось проинициализировать решатель.</returns>
-        public bool Initialize(Grid2D grid, FEMParams2D gridParams, List<Boundary2D> bc1, List<Boundary2D> bc2, List<Boundary2D> bc3)
+        public bool Initialize(Grid2D grid, FEMParams2D gridParams, List<Boundary2D> bc1, List<Boundary2D> bc2, List<Boundary2D> bc3, List<double> t)
         {
             _grid = grid;
             _params = gridParams;
             _bc1 = bc1;
             _bc2 = bc2;
             _bc3 = bc3;
+            _t = t;
+            _n = _grid.Nc;
+            _b = new List<double>(_n);
+            for (int i = 0; i < _n; i++)
+                _b.Add(0);
+
             if (_grid.Nnodes > _grid.Nc)
             {
                 GTree G = GenerateGTree();
@@ -170,10 +202,8 @@
                 if (!isSuccess) return false;
             }
 
-            _n = _grid.Nc;
-            _b = new List<double>(_n);
-            for (int i = 0; i < _n; i++)
-                _b.Add(0);
+            InitPrevQ_3_2();
+            q_1 = SolveBy3Layers(_t[0], _t[1], _t[2]);
             GeneratePortrait();
             return true;
         }
@@ -181,29 +211,121 @@
         /// <summary>
         /// Решает краевую задачу.
         /// </summary>
-        /// <returns>Вектор решения.</returns>
-        public List<double> Solve() 
+        /// <returns>Список векторов решения для каждого временного слоя.</returns>
+        public List<List<double>> Solve() 
         {
-            AssemblyG();
-            AssemblyM();
-            AssemblyB();
-            ApplyBc(2);
-            ApplyBc(3);
-            ApplyBc(1);
+            List<List<double>> Q = new List<List<double>>(_t.Count);
+            for (int i = 3; i < _t.Count; i++)
+            {
+                double t_3 = _t[i - 3];
+                double t_2 = _t[i - 2];
+                double t_1 = _t[i - 1];
+                double t = _t[i];
 
-            //_matrix.Di[2] = 1;
+                double delta_t = t - t_2;
+                double delta_t1 = t_1 - t_2;
+                double delta_t0 = t - t_1;
+                double delta_t2 = t_2 - t_3;
+                double delta_t3 = t_1 - t_3;
+                double delta_t4 = t - t_3;
+                double d1_eta3 = -(delta_t0 * delta_t) / (delta_t2 * delta_t3 * delta_t4);
+                double d1_eta2 = (delta_t0 * delta_t4) / (delta_t * delta_t1 * delta_t2);
+                double d1_eta1 = -(delta_t4 * delta_t) / (delta_t0 * delta_t1 * delta_t3);
+                double d1_eta0 = (delta_t * delta_t4 + delta_t0 * delta_t4 + delta_t0 * delta_t) / (delta_t * delta_t0 * delta_t4);
+                double d2_eta3 = -2 * (2 * t - t_2 - t_1) / (delta_t2 * delta_t3 * delta_t4);
+                double d2_eta2 = 2 * (2 * t - t_3 - t_1) / (delta_t * delta_t1 * delta_t2);
+                double d2_eta1 = -2 * (2 * t - t_3 - t_2) / (delta_t0 * delta_t1 * delta_t3);
+                double d2_eta0 = 2 * (3 * t - t_3 - t_2 - t_1) / (delta_t * delta_t0 * delta_t4);
 
-            List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
-            if (_n == _grid.Nnodes)
-                return qc;
+                AssemblyG();
+                AssemblyM(d1_eta0, isChi:false);
+                AssemblyM(d2_eta0, isChi:true);
+                AssemblyB(t, true);
+                AssemblyB(t, false, -d1_eta1, isChi:false, q_1);
+                AssemblyB(t, false, -d1_eta2, isChi:false, q_2);
+                AssemblyB(t, false, -d1_eta3, isChi:false, q_3);
+                AssemblyB(t, false, -d2_eta1, isChi:true, q_1);
+                AssemblyB(t, false, -d2_eta2, isChi:true, q_2);
+                AssemblyB(t, false, -d2_eta3, isChi:true, q_3);
 
-            List<double> q = _tMatrix.TMultiplyByVector(qc);
-            return q;
-        } 
+                ApplyBc(2, t);
+                ApplyBc(3, t);
+                ApplyBc(1, t);
+                //_matrix.Di[2] = 1;
+
+                List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
+                q_3 = new List<double>(q_2);
+                q_2 = new List<double>(q_1);
+                q_1 = new List<double>(qc);
+                if (_n == _grid.Nnodes)
+                {
+                    Q.Add(qc);
+                }
+                else
+                {
+                    List<double> q = _tMatrix.TMultiplyByVector(qc);
+                    Q.Add(q);
+                }
+            }
+            return Q;
+        }
 
         #endregion Public Methods
 
         #region Private Methods
+
+        /// <summary>
+        /// Вычисляет значения на предыдущих двух временных слоях (для 1-ой итерации). 
+        /// </summary>
+        private void InitPrevQ_3_2() 
+        { 
+            q_3 = new List<double>();
+            q_2 = new List<double>();
+            for (int i = 0; i < _n; i++)
+            {
+                double x = _grid.XY[i].X;
+                double y = _grid.XY[i].Y;
+                int p = _grid.Area.FindSubArea(x, x, y, y);
+
+                double u0 = _params.U0(p, x, y);
+                q_3.Add(u0);
+
+                if (_params.U1 != null) 
+                { 
+                    double u1 = _params.U1(p, x, y);
+                    q_2.Add(u1);
+                }
+                else 
+                {
+                    double d_u1 = _params.DU0(p, x, y);
+                    q_2.Add(d_u1);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Вычисляет вектор решения через трехслойную схему.
+        /// </summary>
+        private List<double> SolveBy3Layers(double t_2, double t_1, double t) 
+        {
+            double delta_t = t - t_2;
+            double delta_t1 = t_1 - t_2;
+            double delta_t0 = t - t_1;
+
+            AssemblyG();
+            AssemblyM(2 / (delta_t * delta_t0), isChi:true);
+            AssemblyM((delta_t + delta_t0) / (delta_t * delta_t0), isChi:false);
+            AssemblyB(t, true);
+            AssemblyB(t, false, -2 / (delta_t1 * delta_t), isChi:true, q_2);
+            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), isChi:true, q_1);
+            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), isChi:false, q_2);
+            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), isChi:false, q_1);
+            ApplyBc(2, t);
+            ApplyBc(3, t);
+            ApplyBc(1, t);
+
+            return LOSSolver.Instance.LOS_DI(_matrix, _b);
+        }
 
         /// <summary>
         /// Создает портрет матрицы. 
@@ -564,7 +686,9 @@
         /// <summary>
         /// Собирает матрицу масс и добавляет её в глобальную матрицу. 
         /// </summary>
-        private void AssemblyM() 
+        /// <param name="m">Множитель.</param>
+        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
+        private void AssemblyM(double m, bool isChi) 
         {
             foreach (Elem2D elem in _grid.Elems)
             {
@@ -574,11 +698,11 @@
                 double y2 = _grid.XY[elem.n4].Y;
                 double hx = x2 - x1;
                 double hy = y2 - y1;
-                double sigma = _params.Sigma(elem.wi);
+                double gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
                 for (int i = 0; i < 4; i++)
                     for (int j = 0; j < 4; j++)
                     {
-                        _m[i][j] = sigma * hx * hy * _c[i][j] / 36.0;
+                        _m[i][j] = m * gamma * hx * hy * _c[i][j] / 36.0;
                     }
 
                 int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
@@ -591,7 +715,12 @@
         /// <summary>
         /// Собирает вектор правой части. 
         /// </summary>
-        private void AssemblyB()
+        /// <param name="t">Значение на текущем временном слое.</param>
+        /// <param name="isF">Сборка происходит через вектор f, иначе через q_i. Если isF = true, то умножается на 1</param>
+        /// <param name="m">Множитель.</param>
+        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
+        /// <param name="q_i">Вектор значений на i-ом временном слое.</param>
+        private void AssemblyB(double t, bool isF, double m = 1, bool isChi = false, List<double> q_i = null)
         {
             foreach (Elem2D elem in _grid.Elems)
             {
@@ -601,39 +730,58 @@
                 double y2 = _grid.XY[elem.n4].Y;
                 double hx = x2 - x1;
                 double hy = y2 - y1;
-                
-                double f1 = _params.F(elem.wi, x1, y1);
-                double f2 = _params.F(elem.wi, x2, y1);
-                double f3 = _params.F(elem.wi, x1, y2);
-                double f4 = _params.F(elem.wi, x2, y2);
 
-                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
-                for (int i_node = 0; i_node < 4; i_node++)
+                double f1, f2, f3, f4;
+                double gamma = 0;
+                f1 = f2 = f3 = f4 = 0;
+                if (isF)
                 {
-                    int i;
-                    if (global_nodes[i_node] < _n)
+                    f1 = _params.F(elem.wi, x1, y1, t);
+                    f2 = _params.F(elem.wi, x2, y1, t);
+                    f3 = _params.F(elem.wi, x1, y2, t);
+                    f4 = _params.F(elem.wi, x2, y2, t);
+                    gamma = 1;
+                }
+                else if (q_i != null)
+                {
+                    f1 = q_i[elem.n1];
+                    f2 = q_i[elem.n2];
+                    f3 = q_i[elem.n3];
+                    f4 = q_i[elem.n4];
+                    gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
+                }
+
+                
+                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4 };
+                for (int i = 0; i < 4; i++)
+                {
+                    if (global_nodes[i] < _n)
                     {
-                        i = global_nodes[i_node];
-                        _b[i] += hx * hy * (_c[i_node][0] * f1 + _c[i_node][1] * f2 + _c[i_node][2] * f3 + _c[i_node][3] * f4) / 36.0;
+                        CalcB(m * gamma, global_nodes[i], i, hx, hy, f1, f2, f3, f4);
                     }
                     else
                     {
-                        int k = global_nodes[i_node] - _n;
+                        int k = global_nodes[i] - _n;
                         for (int j = _tMatrix.Ig[k]; j < _tMatrix.Ig[k + 1]; j++)
                         {
-                            i = _tMatrix.Jg[j];
-                            _b[i] += _tMatrix.Gg[j] * hx * hy * (_c[i_node][0] * f1 + _c[i_node][1] * f2 + _c[i_node][2] * f3 + _c[i_node][3] * f4) / 36.0;
+                            CalcB(m * gamma * _tMatrix.Gg[j], _tMatrix.Jg[j], i, hx, hy, f1, f2, f3, f4);
                         }
                     }  
                 }
             }
+
+            void CalcB(double mult, int l, int i, double hx, double hy, double f1, double f2, double f3, double f4) 
+            {
+                _b[l] += mult * hx * hy * (_c[i][0] * f1 + _c[i][1] * f2 + _c[i][2] * f3 + _c[i][3] * f4) / 36.0;
+            }
         }
+
 
         /// <summary>
         /// Применяет краевое условие. 
         /// </summary>
         /// <param name="bc">Номер краевого услоивя (1,2,3).</param>
-        private void ApplyBc(int bcNum) 
+        private void ApplyBc(int bcNum, double t) 
         {
             int p;
             int i_beg, i_end, j_beg, j_end;
@@ -669,7 +817,7 @@
                     int i = i_beg;
                     for (int j = j_beg; j <= j_end - end; j++)
                     {
-                        ApplyBcNode(bcNum, i, j, p, false);
+                        ApplyBcNode(bcNum, i, j, p, false, t);
                     }
                 }
                 else
@@ -677,7 +825,7 @@
                     int j = j_beg;
                     for (int i = i_beg; i <= i_end - end; i++)
                     {
-                        ApplyBcNode(bcNum, i, j, p, true);
+                        ApplyBcNode(bcNum, i, j, p, true, t);
                     }
                 }
             }
@@ -691,18 +839,18 @@
         /// <param name="j">Порядкой номер узла по горизонтали (нумерация с 0).</param>
         /// <param name="p">Номер границы.</param>
         /// <param name="isX">true, если граница горизонтальная, вертикальная иначе.</param>
-        private void ApplyBcNode(int bcNum, int i, int j, int p, bool isX) 
+        private void ApplyBcNode(int bcNum, int i, int j, int p, bool isX, double t) 
         {
             switch (bcNum) 
             {
                 case 1:
-                    ApplyBc1Node(i, j, p);
+                    ApplyBc1Node(i, j, p, t);
                     break;
                 case 2:
-                    ApplyBc2Node(i, j, p, isX);
+                    ApplyBc2Node(i, j, p, isX, t);
                     break;
                 case 3:
-                    ApplyBc3Node(i, j, p, isX);
+                    ApplyBc3Node(i, j, p, isX, t);
                     break;
                 default:
                     LogService.LogWarning("Указано неверное краевое условие");
@@ -713,7 +861,7 @@
         /// <summary>
         /// Применяет первое краевое условие для узла. 
         /// </summary>
-        private void ApplyBc1Node(int i, int j, int p) 
+        private void ApplyBc1Node(int i, int j, int p, double t) 
         {
             int l = _grid.global_num_T(i, j);
             if (l < 0)
@@ -727,13 +875,13 @@
             for (int k = 0; k < _matrix.Ng; k++)
                 if (_matrix.Jg[k] == l)
                     _matrix.Gu[k] = 0;
-            _b[l] = _params.Ug(p, x, y);
+            _b[l] = _params.Ug(p, x, y, t);
         }
 
         /// <summary>
         /// Применяет второе краевое условие для узла. 
         /// </summary>
-        private void ApplyBc2Node(int i, int j, int p, bool isX)
+        private void ApplyBc2Node(int i, int j, int p, bool isX, double t)
         {
             int l1 = _grid.global_num_T(i, j);
             if (l1 < 0)
@@ -747,8 +895,8 @@
             double y1 = _grid.XY[l1].Y;
             double y2 = _grid.XY[l2].Y;
 
-            double theta1 = _params.Theta(p, x1, y1);
-            double theta2 = _params.Theta(p, x2, y2);
+            double theta1 = _params.Theta(p, x1, y1, t);
+            double theta2 = _params.Theta(p, x2, y2, t);
             double h = isX ? x2 - x1 : y2 - y1;
             _b[l1] += h * (2 * theta1 + theta2) / 6.0;
             _b[l2] += h * (theta1 + 2 * theta2) / 6.0;
@@ -757,7 +905,7 @@
         /// <summary>
         /// Применяет третье краевое условие для узла. 
         /// </summary>
-        private void ApplyBc3Node(int i, int j, int p, bool isX)
+        private void ApplyBc3Node(int i, int j, int p, bool isX, double t)
         {
             int l1 = _grid.global_num_T(i, j);
             if (l1 < 0)
@@ -771,8 +919,8 @@
             double y1 = _grid.XY[l1].Y;
             double y2 = _grid.XY[l2].Y;
             double beta_const = _params.Beta(p);
-            double u_beta1 = _params.Ubeta(p, x1, y1);
-            double u_beta2 = _params.Ubeta(p, x2, y2);
+            double u_beta1 = _params.Ubeta(p, x1, y1, t);
+            double u_beta2 = _params.Ubeta(p, x2, y2, t);
             double h = isX ? x2 - x1 : y2 - y1;
 
             _as3[0][1] = beta_const * h / 6.0;
