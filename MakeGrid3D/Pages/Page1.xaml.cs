@@ -1,11 +1,8 @@
 ﻿using MakeGrid3D.Solver;
-using MakeGrid3D.Solver.SparseModule;
 using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
-using static MakeGrid3D.Solver.Functions1_3D;
 
 namespace MakeGrid3D.Pages
 {

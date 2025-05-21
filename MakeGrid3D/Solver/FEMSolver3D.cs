@@ -3,7 +3,6 @@ using MakeGrid3D.Solver.SparseModule;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Input;
 
 namespace MakeGrid3D.Solver
 {
@@ -95,7 +94,12 @@ namespace MakeGrid3D.Solver
                                 };
 
         /// <summary>
-        /// Локальная матрицы массы. 
+        /// Список локальный матриц масс. 
+        /// </summary>
+        private List<double[][]> _allM;
+
+        /// <summary>
+        /// Локальная матрицы масс. 
         /// </summary>
         private double[][] _m = new double[][]
                                 {
@@ -109,7 +113,6 @@ namespace MakeGrid3D.Solver
                                 new double[] {0, 0, 0, 0, 0, 0, 0, 0}
                                 };
 
-        
         private double[][] _m1 = new double[][]
                                 {
                                 new double[] {2.0/6.0, 1.0/6.0},
@@ -152,6 +155,29 @@ namespace MakeGrid3D.Solver
         private List<double> _b;
 
         /// <summary>
+        /// Список временных слоев. 
+        /// </summary>
+        private List<double> _t;
+
+        /// <summary>
+        /// Вектор решения на (i - 3) временном слое.
+        /// Размерность равна кол-во регулярных узлов.
+        /// </summary>
+        private List<double> q_3;
+
+        /// <summary>
+        /// Вектор решения на (i - 2) временном слое. 
+        /// Размерность равна кол-во регулярных узлов.
+        /// </summary>
+        private List<double> q_2;
+
+        /// <summary>
+        /// Вектор решения на (i - 1) временном слое. 
+        /// Размерность равна кол-во регулярных узлов.
+        /// </summary>
+        private List<double> q_1;
+
+        /// <summary>
         /// Размерность матрицы. 
         /// Для нерегулярной сетки размерность матрицы равна количеству регулярных элемент.
         /// </summary>
@@ -184,26 +210,32 @@ namespace MakeGrid3D.Solver
         /// <param name="bc1">Список границ с первым к.у.</param>
         /// <param name="bc2">Список границ со вторым к.у.</param>
         /// <param name="bc3">Список границ с третьим к.у.</param>
+        /// <param name="t">Список временных слоев.</param>
         /// <returns>true, если успешно удалось проинициализировать решатель.</returns>
-        public bool Initialize(Grid3D grid, FEMParams3D gridParams, List<Boundary3D> bc1, List<Boundary3D> bc2, List<Boundary3D> bc3)
+        public bool Initialize(Grid3D grid, FEMParams3D gridParams, List<Boundary3D> bc1, List<Boundary3D> bc2, List<Boundary3D> bc3, List<double> t)
         {
             _grid = grid;
             _params = gridParams;
             _bc1 = bc1;
             _bc2 = bc2;
             _bc3 = bc3;
-            if (_grid.Nnodes > _grid.Nc)
+            _t = t;
+            _n = _grid.Nc;
+            _b = new List<double>(_n);
+            for (int i = 0; i < _n; i++)
+                _b.Add(0);
+
+            if (_grid.Nnodes > _n)
             {
                 GTree G = GenerateGTree();
                 bool isSuccess = GenerateTMatrix(G);
                 if (!isSuccess) return false;
             }
 
-            _n = _grid.Nc;
-            _b = new List<double>(_n);
-            for (int i = 0; i < _n; i++)
-                _b.Add(0);
             GeneratePortrait();
+
+            InitPrevQ_3_2();
+            q_1 = SolveBy3Layers(_t[0], _t[1], _t[2]);
             return true;
         }
 
@@ -211,27 +243,166 @@ namespace MakeGrid3D.Solver
         /// Решает краевую задачу.
         /// </summary>
         /// <returns>Вектор решения.</returns>
-        public List<double> Solve()
+        public List<List<double>> Solve()
         {
+            List<List<double>> Q = new List<List<double>>(_t.Count)
+            {
+                q_3,
+                q_2,
+                q_1
+            };
+
+            for (int i = 3; i < _t.Count; i++)
+            {
+                ResetToZero();
+                double t_3 = _t[i - 3];
+                double t_2 = _t[i - 2];
+                double t_1 = _t[i - 1];
+                double t = _t[i];
+
+                double delta_t = t - t_2;
+                double delta_t1 = t_1 - t_2;
+                double delta_t0 = t - t_1;
+                double delta_t2 = t_2 - t_3;
+                double delta_t3 = t_1 - t_3;
+                double delta_t4 = t - t_3;
+                double d1_eta3 = -(delta_t0 * delta_t) / (delta_t2 * delta_t3 * delta_t4);
+                double d1_eta2 = (delta_t0 * delta_t4) / (delta_t * delta_t1 * delta_t2);
+                double d1_eta1 = -(delta_t4 * delta_t) / (delta_t0 * delta_t1 * delta_t3);
+                double d1_eta0 = (delta_t * delta_t4 + delta_t0 * delta_t4 + delta_t0 * delta_t) / (delta_t * delta_t0 * delta_t4);
+                double d2_eta3 = -2 * (2 * t - t_2 - t_1) / (delta_t2 * delta_t3 * delta_t4);
+                double d2_eta2 = 2 * (2 * t - t_3 - t_1) / (delta_t * delta_t1 * delta_t2);
+                double d2_eta1 = -2 * (2 * t - t_3 - t_2) / (delta_t0 * delta_t1 * delta_t3);
+                double d2_eta0 = 2 * (3 * t - t_3 - t_2 - t_1) / (delta_t * delta_t0 * delta_t4);
+
+                AssemblyG();
+                AssemblyM(d1_eta0, isChi: false);
+                AssemblyM(d2_eta0, isChi: true);
+                AssemblyB(t, true);
+                AssemblyB(t, false, -d1_eta1, isChi: false, q_1);
+                AssemblyB(t, false, -d1_eta2, isChi: false, q_2);
+                AssemblyB(t, false, -d1_eta3, isChi: false, q_3);
+                AssemblyB(t, false, -d2_eta1, isChi: true, q_1);
+                AssemblyB(t, false, -d2_eta2, isChi: true, q_2);
+                AssemblyB(t, false, -d2_eta3, isChi: true, q_3);
+
+                ApplyBc(2, t);
+                ApplyBc(3, t);
+                ApplyBc(1, t);
+
+                //_matrix.Di[2] = 1;
+
+                List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
+                List<double> q;
+                if (_n == _grid.Nnodes)
+                {
+                    Q.Add(qc);
+                    q = qc;
+                }
+                else
+                {
+                    q = _tMatrix.TMultiplyByVector(qc);
+                    Q.Add(q);
+                }
+
+                if (i < _t.Count - 1)
+                {
+                    q_3 = new List<double>(q_2);
+                    q_2 = new List<double>(q_1);
+                    q_1 = new List<double>(q);
+                }
+            }
+            return Q;
+        }
+
+        #endregion Public Methods
+
+        #region Private Methods
+
+        /// <summary>
+        /// Вычисляет значения на предыдущих двух временных слоях (для 1-ой итерации). 
+        /// </summary>
+        private void InitPrevQ_3_2()
+        {
+            q_3 = new List<double>(_grid.Nnodes);
+            q_2 = new List<double>(_grid.Nnodes);
+            for (int i = 0; i < _grid.Nnodes; i++)
+            {
+                q_3.Add(0);
+                q_2.Add(0);
+            }
+
+            for (int i = 0; i < _grid.Nnodes; i++)
+            {
+                double x = _grid.XYZ[i].X;
+                double y = _grid.XYZ[i].Y;
+                double z = _grid.XYZ[i].Z;
+                int p = _grid.Area.FindSubArea(x, x, y, y, z, z);
+                if (p < -1)
+                    continue;
+
+                double u0 = _params.U0(p, x, y, z);
+                q_3[i] = u0;
+
+                if (_params.U1 != null)
+                {
+                    double u1 = _params.U1(p, x, y, z);
+                    q_2[i] = u1;
+                }
+                else
+                {
+                    double d_u1 = _params.DU0(p, x, y, z);
+                    q_2[i] = d_u1;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Вычисляет вектор решения через трехслойную схему.
+        /// </summary>
+        private List<double> SolveBy3Layers(double t_2, double t_1, double t)
+        {
+            double delta_t = t - t_2;
+            double delta_t1 = t_1 - t_2;
+            double delta_t0 = t - t_1;
+
             AssemblyG();
-            AssemblyM();
-            ApplyBc(2);
-            ApplyBc(3);
-            ApplyBc(1);
+            AssemblyM(2 / (delta_t * delta_t0), isChi: true);
+            AssemblyM((delta_t + delta_t0) / (delta_t * delta_t0), isChi: false);
+            AssemblyB(t, true);
+            AssemblyB(t, false, -2 / (delta_t1 * delta_t), isChi: true, q_3);
+            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), isChi: true, q_2);
+            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), isChi: false, q_3);
+            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), isChi: false, q_2);
+            ApplyBc(2, t);
+            ApplyBc(3, t);
+            ApplyBc(1, t);
 
             //_matrix.Di[2] = 1;
 
             List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
             if (_n == _grid.Nnodes)
                 return qc;
-
-            List<double> q = _tMatrix.TMultiplyByVector(qc);
-            return q;
+            else
+                return _tMatrix.TMultiplyByVector(qc);
         }
 
-        #endregion Public Methods
-
-        #region Private Methods
+        /// <summary>
+        /// Обнуляет значение матрицы и вектора правой части. 
+        /// </summary>
+        private void ResetToZero()
+        {
+            for (int i = 0; i < _n; i++)
+            {
+                _b[i] = 0;
+                _matrix.Di[i] = 0;
+            }
+            for (int i = 0; i < _matrix.Ng; i++)
+            {
+                _matrix.Gl[i] = 0;
+                _matrix.Gu[i] = 0;
+            }
+        }
 
         /// <summary>
         /// Создает портрет матрицы. 
@@ -790,10 +961,11 @@ namespace MakeGrid3D.Solver
         }
 
         /// <summary>
-        /// Собирает матрицу масс и добавляет её в глобальную матрицу. 
+        /// Собирает глобальную матрицу масс. 
         /// </summary>
-        private void AssemblyM()
+        private void GenerateMmatrices() 
         {
+            _allM = new List<double[][]>(_grid.Nelems);
             foreach (Elem3D elem in _grid.Elems)
             {
                 double x1 = _grid.XYZ[elem.n1].X;
@@ -805,7 +977,6 @@ namespace MakeGrid3D.Solver
                 double hx = x2 - x1;
                 double hy = y2 - y1;
                 double hz = z2 - z1;
-                double sigma = _params.Sigma(elem.wi);
 
                 for (int il = 0; il < 2; il++)
                     for (int jl = 0; jl < 2; jl++)
@@ -815,43 +986,127 @@ namespace MakeGrid3D.Solver
                         _mz[il][jl] = _m1[il][jl] * hz;
                     }
 
+                double[][] m = new double[][]
+                                {
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0},
+                                new double[] {0, 0, 0, 0, 0, 0, 0, 0}
+                                };
+
                 for (int il = 0; il < 8; il++)
                     for (int jl = 0; jl < 8; jl++)
                     {
-                        _m[il][jl] = sigma * (_mx[mu(il)][mu(jl)] * _my[nu(il)][nu(jl)] * _mz[v(il)][v(jl)]);
+                        m[il][jl] = _mx[mu(il)][mu(jl)] * _my[nu(il)][nu(jl)] * _mz[v(il)][v(jl)];
+                    }
+                _allM.Add(m);
+            }
+        }
+
+        /// <summary>
+        /// Собирает матрицу масс и добавляет её в глобальную матрицу. 
+        /// </summary>
+        /// <param name="m">Множитель.</param>
+        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
+        private void AssemblyM(double m, bool isChi)
+        {
+            for (int k = 0; k < _grid.Nelems; k++)
+            {
+                Elem3D elem = _grid.Elems[k];
+                double gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
+                for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
+                    {
+                        _m[i][j] = m * gamma * _allM[k][i][j];
                     }
 
                 int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4, elem.n5, elem.n6, elem.n7, elem.n8 };
                 for (int i = 0; i < 8; i++)
                     for (int j = 0; j < 8; j++)
                         AddLocalMatrixElement(_m[i][j], global_nodes[i], global_nodes[j]);
+            }
+        }
 
-                double f1 = _params.F(elem.wi, x1, y1, z1);
-                double f2 = _params.F(elem.wi, x2, y1, z1);
-                double f3 = _params.F(elem.wi, x1, y2, z1);
-                double f4 = _params.F(elem.wi, x2, y2, z1);
-                double f5 = _params.F(elem.wi, x1, y1, z2);
-                double f6 = _params.F(elem.wi, x2, y1, z2);
-                double f7 = _params.F(elem.wi, x1, y2, z2);
-                double f8 = _params.F(elem.wi, x2, y2, z2);
+        /// <summary>
+        /// Собирает вектор правой части. 
+        /// </summary>
+        /// <param name="t">Значение на текущем временном слое.</param>
+        /// <param name="isF">Сборка происходит через вектор f, иначе через q_i. Если isF = true, то умножается на 1</param>
+        /// <param name="m">Множитель.</param>
+        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
+        /// <param name="q_i">Вектор значений на i-ом временном слое.</param>
+        private void AssemblyB(double t, bool isF, double m = 1, bool isChi = false, List<double> q_i = null) 
+        {
+            for (int k = 0; k < _grid.Nelems; k++)
+            {
+                Elem3D elem = _grid.Elems[k];
+                double x1 = _grid.XYZ[elem.n1].X;
+                double x2 = _grid.XYZ[elem.n8].X;
+                double y1 = _grid.XYZ[elem.n1].Y;
+                double y2 = _grid.XYZ[elem.n8].Y;
+                double z1 = _grid.XYZ[elem.n1].Z;
+                double z2 = _grid.XYZ[elem.n8].Z;
 
-                for (int i_node = 0; i_node < 8; i_node++)
+                double f1, f2, f3, f4, f5, f6, f7, f8;
+                double gamma = 0;
+                f1 = f2 = f3 = f4 = f5 = f6 = f7 = f8 = 0;
+
+                if (isF)
                 {
-                    int i;
-                    if (global_nodes[i_node] < _n)
+                    f1 = _params.F(elem.wi, x1, y1, z1, t);
+                    f2 = _params.F(elem.wi, x2, y1, z1, t);
+                    f3 = _params.F(elem.wi, x1, y2, z1, t);
+                    f4 = _params.F(elem.wi, x2, y2, z1, t);
+                    f5 = _params.F(elem.wi, x1, y1, z2, t);
+                    f6 = _params.F(elem.wi, x2, y1, z2, t);
+                    f7 = _params.F(elem.wi, x1, y2, z2, t);
+                    f8 = _params.F(elem.wi, x2, y2, z2, t);
+                    gamma = 1;
+                }
+                else 
+                {
+                    f1 = q_i[elem.n1];
+                    f2 = q_i[elem.n2];
+                    f3 = q_i[elem.n3];
+                    f4 = q_i[elem.n4];
+                    f5 = q_i[elem.n5];
+                    f6 = q_i[elem.n6];
+                    f7 = q_i[elem.n7];
+                    f8 = q_i[elem.n8];
+                    gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
+                }
+
+                for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
                     {
-                        i = global_nodes[i_node];
-                        _b[i] += (_m[i_node][0] * f1 + _m[i_node][1] * f2 +_m[i_node][2] * f3 + _m[i_node][3] * f4 + _m[i_node][4] * f5 + _m[i_node][5] * f6 + _m[i_node][6] * f7 + _m[i_node][7] * f8) / sigma;
+                        _m[i][j] = m * _allM[k][i][j];
+                    }
+
+                int[] global_nodes = { elem.n1, elem.n2, elem.n3, elem.n4, elem.n5, elem.n6, elem.n7, elem.n8 };
+
+                for (int i = 0; i < 8; i++)
+                {
+                    if (global_nodes[i] < _n)
+                    {
+                        CalcB(gamma, global_nodes[i], i, gamma, f1, f2, f3, f4, f5, f6, f7, f8);
                     }
                     else
                     {
-                        int k = global_nodes[i_node] - _n;
-                        for (int j = _tMatrix.Ig[k]; j < _tMatrix.Ig[k + 1]; j++)
+                        int d = global_nodes[i] - _n;
+                        for (int j = _tMatrix.Ig[d]; j < _tMatrix.Ig[d + 1]; j++)
                         {
-                            i = _tMatrix.Jg[j];
-                            _b[i] += (_m[i_node][0] * f1 + _m[i_node][1] * f2 + _m[i_node][2] * f3 + _m[i_node][3] * f4 + _m[i_node][4] * f5 + _m[i_node][5] * f6 + _m[i_node][6] * f7 + _m[i_node][7] * f8) / sigma;
+                            CalcB(gamma * _tMatrix.Gg[j], _tMatrix.Jg[j], i, gamma, f1, f2, f3, f4, f5, f6, f7, f8);
                         }
                     }
+                }
+
+                void CalcB(double mult, int l, int i, double gamma, double f1, double f2, double f3, double f4, double f5, double f6, double f7, double f8)
+                {
+                    _b[l] += mult * (_m[i][0] * f1 + _m[i][1] * f2 + _m[i][2] * f3 + _m[i][3] * f4 + _m[i][4] * f5 + _m[i][5] * f6 + _m[i][6] * f7 + _m[i][7] * f8);
                 }
             }
         }
@@ -860,21 +1115,21 @@ namespace MakeGrid3D.Solver
         /// Применяет краевое условие для узла. 
         /// </summary>
         /// <param name="bcNum">Номер краевого условия (1,2,3).</param>
-        private void ApplyBc(int bcNum)
+        private void ApplyBc(int bcNum, double t)
         {
             switch (bcNum)
             {
                 case 1:
                     foreach (Boundary3D boundary in _bc1)
-                        ApplyBc1(boundary);
+                        ApplyBc1(boundary, t);
                     break;
                 case 2:
                     foreach (Boundary3D boundary in _bc2)
-                        ApplyBc2Node(boundary);
+                        ApplyBc2Node(boundary, t);
                     break;
                 case 3:
                     foreach (Boundary3D boundary in _bc3)
-                        ApplyBc3Node(boundary);
+                        ApplyBc3Node(boundary, t);
                     break;
                 default:
                     LogService.LogWarning("Указано неверное краевое условие");
@@ -885,7 +1140,7 @@ namespace MakeGrid3D.Solver
         /// <summary>
         /// Применяет первое краевое условие. 
         /// </summary>
-        private void ApplyBc1(Boundary3D boundary)
+        private void ApplyBc1(Boundary3D boundary, double t)
         {
             int p = boundary.Si;
             List<int> global_nodes = new List<int>() { boundary.N1, boundary.N2, boundary.N3, boundary.N4};
@@ -902,14 +1157,14 @@ namespace MakeGrid3D.Solver
                 for (int s = 0; s < _matrix.Ng; s++)
                     if (_matrix.Jg[s] == l)
                         _matrix.Gu[s] = 0;
-                _b[l] = _params.Ug(p, x, y, z);
+                _b[l] = _params.Ug(p, x, y, z, t);
             }
         }
 
         /// <summary>
         /// Применяет второе краевое условие. 
         /// </summary>
-        private void ApplyBc2Node(Boundary3D boundary)
+        private void ApplyBc2Node(Boundary3D boundary, double t)
         {
             int p = boundary.Si;
             int l1 = boundary.N1;
@@ -932,26 +1187,26 @@ namespace MakeGrid3D.Solver
 
             if (MathsHelper.IsEqual(x1, x2))
             {
-                theta1 = _params.Theta(p, x1, y1, z1);
-                theta2 = _params.Theta(p, x2, y1, z1);
-                theta3 = _params.Theta(p, x1, y2, z1);
-                theta4 = _params.Theta(p, x2, y2, z1);
+                theta1 = _params.Theta(p, x1, y1, z1, t);
+                theta2 = _params.Theta(p, x2, y1, z1, t);
+                theta3 = _params.Theta(p, x1, y2, z1, t);
+                theta4 = _params.Theta(p, x2, y2, z1, t);
                 area = (x2 - x1) * (y2 - y1);
             }
             else if (MathsHelper.IsEqual(y1, y2))
             {
-                theta1 = _params.Theta(p, x1, y1, z1);
-                theta2 = _params.Theta(p, x1, y2, z1);
-                theta3 = _params.Theta(p, x1, y1, z2);
-                theta4 = _params.Theta(p, x1, y2, z2);
+                theta1 = _params.Theta(p, x1, y1, z1, t);
+                theta2 = _params.Theta(p, x1, y2, z1, t);
+                theta3 = _params.Theta(p, x1, y1, z2, t);
+                theta4 = _params.Theta(p, x1, y2, z2, t);
                 area = (y2 - y1) * (z2 - z1);
             }
             else
             {
-                theta1 = _params.Theta(p, x1, y1, z1);
-                theta2 = _params.Theta(p, x2, y1, z1);
-                theta3 = _params.Theta(p, x1, y1, z2);
-                theta4 = _params.Theta(p, x2, y1, z2);
+                theta1 = _params.Theta(p, x1, y1, z1, t);
+                theta2 = _params.Theta(p, x2, y1, z1, t);
+                theta3 = _params.Theta(p, x1, y1, z2, t);
+                theta4 = _params.Theta(p, x2, y1, z2, t);
                 area = (x2 - x1) * (z2 - z1);
             }
 
@@ -963,7 +1218,7 @@ namespace MakeGrid3D.Solver
         /// <summary>
         /// Применяет третье краевое условие. 
         /// </summary>
-        private void ApplyBc3Node(Boundary3D boundary)
+        private void ApplyBc3Node(Boundary3D boundary, double t)
         {
             int p = boundary.Si;
             int l1 = boundary.N1;
@@ -987,26 +1242,26 @@ namespace MakeGrid3D.Solver
 
             if (MathsHelper.IsEqual(x1, x2))
             {
-                ubeta1 = _params.Theta(p, x1, y1, z1);
-                ubeta2 = _params.Theta(p, x2, y1, z1);
-                ubeta3 = _params.Theta(p, x1, y2, z1);
-                ubeta4 = _params.Theta(p, x2, y2, z1);
+                ubeta1 = _params.Theta(p, x1, y1, z1, t);
+                ubeta2 = _params.Theta(p, x2, y1, z1, t);
+                ubeta3 = _params.Theta(p, x1, y2, z1, t);
+                ubeta4 = _params.Theta(p, x2, y2, z1, t);
                 area = (x2 - x1) * (y2 - y1);
             }
             else if (MathsHelper.IsEqual(y1, y2))
             {
-                ubeta1 = _params.Theta(p, x1, y1, z1);
-                ubeta2 = _params.Theta(p, x1, y2, z1);
-                ubeta3 = _params.Theta(p, x1, y1, z2);
-                ubeta4 = _params.Theta(p, x1, y2, z2);
+                ubeta1 = _params.Theta(p, x1, y1, z1, t);
+                ubeta2 = _params.Theta(p, x1, y2, z1, t);
+                ubeta3 = _params.Theta(p, x1, y1, z2, t);
+                ubeta4 = _params.Theta(p, x1, y2, z2, t);
                 area = (y2 - y1) * (z2 - z1);
             }
             else
             {
-                ubeta1 = _params.Theta(p, x1, y1, z1);
-                ubeta2 = _params.Theta(p, x2, y1, z1);
-                ubeta3 = _params.Theta(p, x1, y1, z2);
-                ubeta4 = _params.Theta(p, x2, y1, z2);
+                ubeta1 = _params.Theta(p, x1, y1, z1, t);
+                ubeta2 = _params.Theta(p, x2, y1, z1, t);
+                ubeta3 = _params.Theta(p, x1, y1, z2, t);
+                ubeta4 = _params.Theta(p, x2, y1, z2, t);
                 area = (x2 - x1) * (z2 - z1);
             }
 
