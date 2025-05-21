@@ -21,6 +21,9 @@ namespace MakeGrid3D.Solver
                     FemParams.Beta = Functions1_2D.beta;
                     FemParams.Ug = Functions1_2D.u_g;
                     FemParams.F = Functions1_2D.f;
+                    FemParams.U0 = Functions1_2D.u0;
+                    FemParams.U1 = Functions1_2D.u1;
+                    FemParams.DU0 = Functions1_2D.u0;
                     break;
                 case 2:
                     FemParams.Lambda = Functions2_2D.lambda;
@@ -31,6 +34,9 @@ namespace MakeGrid3D.Solver
                     FemParams.Beta = Functions2_2D.beta;
                     FemParams.Ug = Functions2_2D.u_g;
                     FemParams.F = Functions2_2D.f;
+                    FemParams.U0 = Functions2_2D.u0;
+                    FemParams.U1 = Functions2_2D.u1;
+                    FemParams.DU0 = Functions2_2D.u0;
                     break;
             }
             return FemParams;
@@ -38,26 +44,26 @@ namespace MakeGrid3D.Solver
     }
 
     /// <summary>
-    /// Функция из кирпича с несколькоми подобластями.
+    /// Функция из кирпича с несколькоми подобластями (с надбавкой +4*t*t).
     /// </summary>
     static class Functions1_2D
     {
         static public double chi(int wi)
         {
+            switch (wi)
+            {
+                case 0:
+                    return 3;
+                case 1:
+                    return 2;
+                case 2:
+                    return 1;
+            }
             return 0;
         }
 
         static public double sigma(int wi)
         {
-            switch (wi)
-            {
-                case 0:
-                    return 2;
-                case 1:
-                    return 1;
-                case 2:
-                    return 0;
-            }
             return 0;
         }
 
@@ -75,33 +81,33 @@ namespace MakeGrid3D.Solver
             return 0;
         }
 
-        static public double f(int wi, double x, double y)
+        static public double f(int wi, double x, double y, double t)
         {
             switch (wi)
             {
                 case 0:
-                    return 2 * x;
+                    return 24;
                 case 1:
-                    return 1.8 + 0.1 * x;
+                    return 16;
                 case 2:
-                    return 0;
+                    return 8;
             }
             return 0;
         }
 
-        static public double u_g(int si, double x, double y)
+        static public double u_g(int si, double x, double y, double t)
         {
             switch (si)
             {
                 case 0:
-                    return 2;
+                    return 2 + 4 * t * t;
                 case 1:
-                    return 1.8 + 0.1 * x;
+                    return 1.8 + 0.1 * x + 4 * t * t; ;
             }
             return 0;
         }
 
-        static public double theta(int si, double x, double y)
+        static public double theta(int si, double x, double y, double t)
         {
             switch (si)
             {
@@ -127,29 +133,57 @@ namespace MakeGrid3D.Solver
             return 0;
         }
 
-        static public double u_beta(int si, double x, double y)
+        static public double u_beta(int si, double x, double y, double t)
         {
             switch (si)
+            {
+                case 0:
+                    return x + 4 * t * t;
+                case 1:
+                    return 1.8 + 0.1 * x + 4 * t * t;
+                case 2:
+                    return -1 + 4 * t * t;
+            }
+            return 0;
+        }
+
+        static public double u0(int wi, double x, double y)
+        {
+            switch (wi)
             {
                 case 0:
                     return x;
                 case 1:
                     return 1.8 + 0.1 * x;
                 case 2:
-                    return -1;
+                    return 1.8 + 0.1 * x;
+            }
+            return 0;
+        }
+
+        static public double u1(int wi, double x, double y)
+        {
+            switch (wi)
+            {
+                case 0:
+                    return x + 1;
+                case 1:
+                    return 1.8 + 0.1 * x + 1;
+                case 2:
+                    return 1.8 + 0.1 * x + 1;
             }
             return 0;
         }
     }
 
     /// <summary>
-    /// Функция xy.
+    /// Функция xy*t*t.
     /// </summary>
     static class Functions2_2D
     {
         static public double chi(int wi)
         {
-            return 0;
+            return 2;
         }
 
         static public double sigma(int wi)
@@ -162,28 +196,28 @@ namespace MakeGrid3D.Solver
             return 2;
         }
 
-        static public double f(int wi, double x, double y)
+        static public double f(int wi, double x, double y, double t)
         {
-            return 3 * x * y;
+            return sigma(wi) * 2 * x * y * t + chi(wi) * 2 * x * y;
         }
 
-        static public double u_g(int si, double x, double y)
+        static public double u_g(int si, double x, double y, double t)
         {
             switch (si)
             {
                 case 0:
-                    return x;
+                    return x * t * t;
                 case 1:
-                    return 18 * y;
+                    return 18 * y * t * t;
                 case 2:
-                    return x * 14;
+                    return x * 14 * t * t;
                 case 3:
-                    return y;
+                    return y * t * t;
             }
             return 0;
         }
 
-        static public double theta(int si, double x, double y)
+        static public double theta(int si, double x, double y, double t)
         {
             return 0;
         }
@@ -193,9 +227,21 @@ namespace MakeGrid3D.Solver
             return 0;
         }
 
-        static public double u_beta(int si, double x, double y)
+        static public double u_beta(int si, double x, double y, double t)
         {
             return 0;
+        }
+
+        static public double u0(int wi, double x, double y)
+        {
+            double t0 = 1;
+            return x * y * t0 * t0;
+        }
+
+        static public double u1(int wi, double x, double y)
+        {
+            double t1 = 2;
+            return x * y * t1 * t1;
         }
     }
 
@@ -206,6 +252,7 @@ namespace MakeGrid3D.Solver
     {
         public Grid2D Grid;
         public FEMParams2D FemParams;
+        public List<double> T;
         public List<Boundary2D> Bc1;
         public List<Boundary2D> Bc2;
         public List<Boundary2D> Bc3;
@@ -258,6 +305,8 @@ namespace MakeGrid3D.Solver
             Grid.IXw = new List<int> { 0, 1, 2 };
             Grid.IYw = new List<int> { 0, 1, 2, 3 };
 
+            T = new List<double>() {0, 0.5, 1, 1.5, 2 };
+
             Bc1 = new List<Boundary2D>()
             {
                 new Boundary2D(0,1,1,0,1),
@@ -290,6 +339,7 @@ namespace MakeGrid3D.Solver
 
         public Grid2D Grid;
         public FEMParams2D FemParams;
+        public List<double> T;
         public List<Boundary2D> Bc1;
         public List<Boundary2D> Bc2;
         public List<Boundary2D> Bc3;
@@ -348,6 +398,7 @@ namespace MakeGrid3D.Solver
             Grid.Nc = Grid.Nnodes;
             Grid.IXw = new List<int> { 0, 3 };
             Grid.IYw = new List<int> { 0, 3 };
+            T = new List<double>() { 1, 2, 3, 4, 5 };
 
             Bc1 = new List<Boundary2D>()
             {
@@ -371,18 +422,18 @@ namespace MakeGrid3D.Solver
             FemParams.Ug = u_g;
         }
 
-        private double u_g(int si, double x, double y)
+        private double u_g(int si, double x, double y, double t)
         {
             switch (si)
             {
                 case 0:
-                    return x;
+                    return x * t * t;
                 case 1:
-                    return 7 * y;
+                    return 7 * y * t * t;
                 case 2:
-                    return x * 16;
+                    return x * 16 * t * t;
                 case 3:
-                    return y;
+                    return y * t * t;
             }
             return 0;
         }
@@ -395,6 +446,7 @@ namespace MakeGrid3D.Solver
     {
         public Grid2D Grid;
         public FEMParams2D FemParams;
+        public List<double> T;
         public List<Boundary2D> Bc1;
         public List<Boundary2D> Bc2;
         public List<Boundary2D> Bc3;
@@ -479,7 +531,8 @@ namespace MakeGrid3D.Solver
             Grid.IYw = new List<int> { 0, 4 };
             Grid.Nc = Grid.Nnodes - 6;
             Grid.CreateNX();
-            
+            T = new List<double>() { 1, 2, 3, 4, 5 };
+
 
             Bc1 = new List<Boundary2D>()
             {
@@ -503,18 +556,18 @@ namespace MakeGrid3D.Solver
             FemParams.Ug = u_g;
         }
 
-        private double u_g(int si, double x, double y)
+        private double u_g(int si, double x, double y, double t)
         {
             switch (si)
             {
                 case 0:
-                    return x;
+                    return x * t * t;
                 case 1:
-                    return 18 * y;
+                    return 18 * y * t * t;
                 case 2:
-                    return 14 * x;
+                    return 14 * x * t * t;
                 case 3:
-                    return y;
+                    return y * t * t;
             }
             return 0;
         }
@@ -527,6 +580,7 @@ namespace MakeGrid3D.Solver
     {
         public Grid2D Grid;
         public FEMParams2D FemParams;
+        List<double> T;
         public List<Boundary2D> Bc1;
         public List<Boundary2D> Bc2;
         public List<Boundary2D> Bc3;
@@ -602,6 +656,7 @@ namespace MakeGrid3D.Solver
             Grid.IYw = new List<int> { 0, 5 };
             Grid.Nc = Grid.Nnodes - 3;
             Grid.CreateNX();
+            T = new List<double>() { 1, 2, 3, 4, 5 };
 
             Bc1 = new List<Boundary2D>()
             {
@@ -625,18 +680,18 @@ namespace MakeGrid3D.Solver
             FemParams.Ug = u_g;
         }
 
-        private double u_g(int si, double x, double y)
+        private double u_g(int si, double x, double y, double t)
         {
             switch (si)
             {
                 case 0:
-                    return x;
+                    return x * t * t;
                 case 1:
-                    return 9 * y;
+                    return 9 * y * t * t;
                 case 2:
-                    return 13 * x;
+                    return 13 * x * t * t;
                 case 3:
-                    return y;
+                    return y * t * t;
             }
             return 0;
         }
@@ -649,6 +704,7 @@ namespace MakeGrid3D.Solver
     {
         public Grid2D Grid;
         public FEMParams2D FemParams;
+        public List<double> T;
         public List<Boundary2D> Bc1;
         public List<Boundary2D> Bc2;
         public List<Boundary2D> Bc3;
@@ -705,6 +761,7 @@ namespace MakeGrid3D.Solver
             Grid.IXw = new List<int> { 0, 3 };
             Grid.IYw = new List<int> { 0, 5 };
             Grid.Nc = Grid.Nnodes - 5;
+            T = new List<double>() { 1, 2, 3, 4, 5 };
 
             Bc1 = new List<Boundary2D>()
             {

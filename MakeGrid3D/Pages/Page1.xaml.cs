@@ -17,18 +17,18 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test5_2D test = new Test5_2D();
+            Test3_2D test = new Test3_2D();
             test.CreateTest();
             bool isSuccess = FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams,
-                test.Bc1, test.Bc2, test.Bc3);
+                test.Bc1, test.Bc2, test.Bc3, test.T);
             if (!isSuccess)
             {
                 LogService.LogWarning("Не удалось создать T матрицу, т.к. есть перехлесты");
             }
             else
             {
-                List<double> q = FEMSolver2D.Instance.Solve();
-                LogService.LogVector(q);
+                var qList = FEMSolver2D.Instance.Solve();
+                LogService.LogVector(qList);
             }
         }
 

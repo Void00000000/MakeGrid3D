@@ -201,10 +201,10 @@
                 bool isSuccess =  GenerateTMatrix(G);
                 if (!isSuccess) return false;
             }
+            GeneratePortrait();
 
             InitPrevQ_3_2();
             q_1 = SolveBy3Layers(_t[0], _t[1], _t[2]);
-            GeneratePortrait();
             return true;
         }
 
@@ -214,9 +214,16 @@
         /// <returns>Список векторов решения для каждого временного слоя.</returns>
         public List<List<double>> Solve() 
         {
-            List<List<double>> Q = new List<List<double>>(_t.Count);
+            List<List<double>> Q = new List<List<double>>(_t.Count)
+            {
+                q_3,
+                q_2,
+                q_1
+            };
+ 
             for (int i = 3; i < _t.Count; i++)
             {
+                ResetToZero();
                 double t_3 = _t[i - 3];
                 double t_2 = _t[i - 2];
                 double t_1 = _t[i - 1];
@@ -251,20 +258,27 @@
                 ApplyBc(2, t);
                 ApplyBc(3, t);
                 ApplyBc(1, t);
+
                 //_matrix.Di[2] = 1;
 
                 List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
-                q_3 = new List<double>(q_2);
-                q_2 = new List<double>(q_1);
-                q_1 = new List<double>(qc);
+                List<double> q;
                 if (_n == _grid.Nnodes)
                 {
                     Q.Add(qc);
+                    q = qc;
                 }
                 else
                 {
-                    List<double> q = _tMatrix.TMultiplyByVector(qc);
+                    q = _tMatrix.TMultiplyByVector(qc);
                     Q.Add(q);
+                }
+
+                if (i < _t.Count - 1)
+                {
+                    q_3 = new List<double>(q_2);
+                    q_2 = new List<double>(q_1);
+                    q_1 = new List<double>(q);
                 }
             }
             return Q;
@@ -278,27 +292,35 @@
         /// Вычисляет значения на предыдущих двух временных слоях (для 1-ой итерации). 
         /// </summary>
         private void InitPrevQ_3_2() 
-        { 
-            q_3 = new List<double>();
-            q_2 = new List<double>();
-            for (int i = 0; i < _n; i++)
+        {
+            q_3 = new List<double>(_grid.Nnodes);
+            q_2 = new List<double>(_grid.Nnodes);
+            for (int i = 0; i < _grid.Nnodes; i++)
+            {
+                q_3.Add(0);
+                q_2.Add(0);
+            }
+
+            for (int i = 0; i < _grid.Nnodes; i++)
             {
                 double x = _grid.XY[i].X;
                 double y = _grid.XY[i].Y;
                 int p = _grid.Area.FindSubArea(x, x, y, y);
+                if (p < -1)
+                    continue;
 
                 double u0 = _params.U0(p, x, y);
-                q_3.Add(u0);
+                q_3[i]= u0;
 
                 if (_params.U1 != null) 
                 { 
                     double u1 = _params.U1(p, x, y);
-                    q_2.Add(u1);
+                    q_2[i] = u1;
                 }
                 else 
                 {
                     double d_u1 = _params.DU0(p, x, y);
-                    q_2.Add(d_u1);
+                    q_2[i] = d_u1;
                 }
             }
         }
@@ -316,15 +338,38 @@
             AssemblyM(2 / (delta_t * delta_t0), isChi:true);
             AssemblyM((delta_t + delta_t0) / (delta_t * delta_t0), isChi:false);
             AssemblyB(t, true);
-            AssemblyB(t, false, -2 / (delta_t1 * delta_t), isChi:true, q_2);
-            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), isChi:true, q_1);
-            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), isChi:false, q_2);
-            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), isChi:false, q_1);
+            AssemblyB(t, false, -2 / (delta_t1 * delta_t), isChi:true, q_3);
+            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), isChi:true, q_2);
+            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), isChi:false, q_3);
+            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), isChi:false, q_2);
             ApplyBc(2, t);
             ApplyBc(3, t);
             ApplyBc(1, t);
 
-            return LOSSolver.Instance.LOS_DI(_matrix, _b);
+            //_matrix.Di[2] = 1;
+
+            List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
+            if (_n == _grid.Nnodes)
+                return qc;
+            else
+                return _tMatrix.TMultiplyByVector(qc);
+        }
+
+        /// <summary>
+        /// Обнуляет значение матрицы и вектора правой части. 
+        /// </summary>
+        private void ResetToZero() 
+        {
+            for (int i = 0; i < _n; i++)
+            {
+                _b[i] = 0;
+                _matrix.Di[i] = 0;
+            }
+            for (int i = 0; i < _matrix.Ng; i++)
+            {
+                _matrix.Gl[i] = 0;
+                _matrix.Gu[i] = 0;
+            }
         }
 
         /// <summary>
