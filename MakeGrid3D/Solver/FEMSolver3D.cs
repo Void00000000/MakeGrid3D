@@ -773,13 +773,10 @@ namespace MakeGrid3D.Solver
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                if (i < _grid.Nc)
+                if (i < _grid.Nc && !processed_nodes.Contains(i))
                 {
-                    if (!processed_nodes.Contains(i))
-                    {
-                        jg_gg.Add((i, m * Telem));
-                        elems_count++;
-                    }
+                    jg_gg.Add((i, m * Telem));
+                    elems_count++;
                     processed_nodes.Add(i);
                 }
                 else

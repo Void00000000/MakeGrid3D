@@ -4,7 +4,6 @@
     using MakeGrid3D.Solver.SparseModule;
     using System;
     using System.Collections.Generic;
-    using System.Windows.Controls;
 
     /// <summary>
     /// Решатель метода конечных элементов двумерный (с использованием T технологии). 
@@ -245,15 +244,16 @@
                 double d2_eta0 = 2 * (3 * t - t_3 - t_2 - t_1) / (delta_t * delta_t0 * delta_t4);
 
                 AssemblyG();
-                AssemblyM(d1_eta0, isChi:false);
-                AssemblyM(d2_eta0, isChi:true);
+                AssemblyM(1, _params.Gamma);
+                AssemblyM(d1_eta0, _params.Sigma);
+                AssemblyM(d2_eta0, _params.Chi);
                 AssemblyB(t, true);
-                AssemblyB(t, false, -d1_eta1, isChi:false, q_1);
-                AssemblyB(t, false, -d1_eta2, isChi:false, q_2);
-                AssemblyB(t, false, -d1_eta3, isChi:false, q_3);
-                AssemblyB(t, false, -d2_eta1, isChi:true, q_1);
-                AssemblyB(t, false, -d2_eta2, isChi:true, q_2);
-                AssemblyB(t, false, -d2_eta3, isChi:true, q_3);
+                AssemblyB(t, false, -d1_eta1, _params.Sigma, q_1);
+                AssemblyB(t, false, -d1_eta2, _params.Sigma, q_2);
+                AssemblyB(t, false, -d1_eta3, _params.Sigma, q_3);
+                AssemblyB(t, false, -d2_eta1, _params.Chi, q_1);
+                AssemblyB(t, false, -d2_eta2, _params.Chi, q_2);
+                AssemblyB(t, false, -d2_eta3, _params.Chi, q_3);
 
                 ApplyBc(2, t);
                 ApplyBc(3, t);
@@ -335,13 +335,14 @@
             double delta_t0 = t - t_1;
 
             AssemblyG();
-            AssemblyM(2 / (delta_t * delta_t0), isChi:true);
-            AssemblyM((delta_t + delta_t0) / (delta_t * delta_t0), isChi:false);
+            AssemblyM(1, _params.Gamma);
+            AssemblyM(2 / (delta_t * delta_t0), _params.Chi);
+            AssemblyM((delta_t + delta_t0) / (delta_t * delta_t0), _params.Sigma);
             AssemblyB(t, true);
-            AssemblyB(t, false, -2 / (delta_t1 * delta_t), isChi:true, q_3);
-            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), isChi:true, q_2);
-            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), isChi:false, q_3);
-            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), isChi:false, q_2);
+            AssemblyB(t, false, -2 / (delta_t1 * delta_t), _params.Chi, q_3);
+            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), _params.Chi, q_2);
+            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), _params.Sigma, q_3);
+            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), _params.Sigma, q_2);
             ApplyBc(2, t);
             ApplyBc(3, t);
             ApplyBc(1, t);
@@ -573,13 +574,10 @@
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                if (i < _grid.Nc)
+                if (i < _grid.Nc && !processed_nodes.Contains(i))
                 {
-                    if (!processed_nodes.Contains(i))
-                    {
-                        jg_gg.Add((i, m * Telem));
-                        elems_count++;
-                    }
+                    jg_gg.Add((i, m * Telem));
+                    elems_count++;
                     processed_nodes.Add(i);
                 }
                 else
@@ -733,7 +731,7 @@
         /// </summary>
         /// <param name="m">Множитель.</param>
         /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
-        private void AssemblyM(double m, bool isChi) 
+        private void AssemblyM(double m, Function param) 
         {
             foreach (Elem2D elem in _grid.Elems)
             {
@@ -743,7 +741,7 @@
                 double y2 = _grid.XY[elem.n4].Y;
                 double hx = x2 - x1;
                 double hy = y2 - y1;
-                double gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
+                double gamma = param(elem.wi);
                 for (int i = 0; i < 4; i++)
                     for (int j = 0; j < 4; j++)
                     {
@@ -765,7 +763,7 @@
         /// <param name="m">Множитель.</param>
         /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
         /// <param name="q_i">Вектор значений на i-ом временном слое.</param>
-        private void AssemblyB(double t, bool isF, double m = 1, bool isChi = false, List<double> q_i = null)
+        private void AssemblyB(double t, bool isF, double m = 1, Function param = null, List<double> q_i = null)
         {
             foreach (Elem2D elem in _grid.Elems)
             {
@@ -793,7 +791,8 @@
                     f2 = q_i[elem.n2];
                     f3 = q_i[elem.n3];
                     f4 = q_i[elem.n4];
-                    gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
+                    if (param != null)
+                        gamma = param(elem.wi);
                 }
 
                 

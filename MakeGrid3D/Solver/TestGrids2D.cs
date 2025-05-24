@@ -24,6 +24,7 @@ namespace MakeGrid3D.Solver
                     FemParams.U0 = Functions1_2D.u0;
                     FemParams.U1 = Functions1_2D.u1;
                     FemParams.DU0 = Functions1_2D.u0;
+                    FemParams.Gamma = Functions2_2D.gamma;
                     break;
                 case 2:
                     FemParams.Lambda = Functions2_2D.lambda;
@@ -37,6 +38,7 @@ namespace MakeGrid3D.Solver
                     FemParams.U0 = Functions2_2D.u0;
                     FemParams.U1 = Functions2_2D.u1;
                     FemParams.DU0 = Functions2_2D.u0;
+                    FemParams.Gamma = Functions2_2D.gamma;
                     break;
             }
             return FemParams;
@@ -59,6 +61,11 @@ namespace MakeGrid3D.Solver
                 case 2:
                     return 1;
             }
+            return 0;
+        }
+
+        static public double gamma(int wi) 
+        {
             return 0;
         }
 
@@ -196,9 +203,14 @@ namespace MakeGrid3D.Solver
             return 2;
         }
 
+        static public double gamma(int wi)
+        {
+            return 4;
+        }
+
         static public double f(int wi, double x, double y, double t)
         {
-            return sigma(wi) * 2 * x * y * t + chi(wi) * 2 * x * y;
+            return sigma(wi) * 2 * x * y * t + chi(wi) * 2 * x * y + gamma(wi) * x * y * t * t;
         }
 
         static public double u_g(int si, double x, double y, double t)
@@ -332,7 +344,7 @@ namespace MakeGrid3D.Solver
     }
 
     /// <summary>
-    /// Тест сетки 3x3 с u(x,y) = xy.
+    /// Тест сетки 4x4 с u(x,y) = xy.
     /// </summary>
     public class Test2_2D
     {
