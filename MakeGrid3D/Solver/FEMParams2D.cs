@@ -80,37 +80,15 @@ namespace MakeGrid3D.Solver
         /// </summary>
         public int Si { get; set; }
 
-        /// <summary>
-        /// Номер элемента в векторе Xw, 
-        /// с которого начинается начало фрагмента границы.
-        /// </summary>
-        public int Nx1 { get; set; }
+        // Глоабальные номер узлов грани
+        public int N1 { get; set; }
+        public int N2 { get; set; }
 
-        /// <summary>
-        /// Номер элемента в векторе Xw, 
-        /// с которого заканчивается фрагмент границы.
-        /// </summary>
-        public int Nx2 { get; set; }
-
-        /// <summary>
-        /// Номер элемента в векторе Yw, 
-        /// с которого начинается начало фрагмента границы.
-        /// </summary>
-        public int Ny1 { get; set; }
-
-        /// <summary>
-        /// Номер элемента в векторе Yw, 
-        /// с которого заканчивается фрагмента границы.
-        /// </summary>
-        public int Ny2 { get; set; }
-
-        public Boundary2D(int si, int nx1, int nx2, int ny1, int ny2) 
+        public Boundary2D(int si, int n1, int n2) 
         {
             Si = si;
-            Nx1 = nx1;
-            Nx2 = nx2;
-            Ny1 = ny1;
-            Ny2 = ny2;
+            N1 = n1;
+            N2 = n2;
         }
     }
 }

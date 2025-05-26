@@ -34,17 +34,19 @@
         /// </summary>
         /// <param name="message">Сообщение.</param>
         /// <param name="writeDate">Логировать ли с датой.</param>
-        private static void TryWriteToFile(string message, bool writeDate=true) 
+        /// <param name="isNewLine">Добалять ли перевод на новую строку в конце.</param>
+        private static void TryWriteToFile(string message, bool writeDate=true, bool isNewLine=true) 
         {
             try
             {
+                string end = isNewLine ? "\n" : string.Empty;
                 if (writeDate)
                 {
-                    File.AppendAllText(_logFileName, $"[{DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss")}] {message}\n");
+                    File.AppendAllText(_logFileName, $"[{DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss")}] {message}" + end);
                 }
                 else 
                 {
-                    File.AppendAllText(_logFileName, $"{message}\n");
+                    File.AppendAllText(_logFileName, $"{message}" + end);
                 }
             }
             catch (Exception ex) { }
@@ -57,14 +59,17 @@
         /// <summary>
         /// Логирует сообщение. 
         /// </summary>
-        public static void Log(string message) 
+        /// <param name="message">Сообщение.</param>
+        /// <param name="writeData">Логировать ли с датой.</param>
+        /// <param name="isNewLine">Добалять ли перевод на новую строку в конце.</param>
+        public static void Log(string message, bool writeData=false, bool isNewLine=false) 
         {
             if (IsLogOnlyErrors)
             {
                 return;
             }
 
-            TryWriteToFile(message);
+            TryWriteToFile(message, writeData, isNewLine);
         }
 
         /// <summary>
@@ -76,7 +81,7 @@
             {
                 return;
             }
-            TryWriteToFile("[WARNING] " +  message);
+            TryWriteToFile("[WARNING] " + message);
         }
 
         /// <summary>
@@ -85,17 +90,6 @@
         public static void LogError(Exception ex)
         {
             TryWriteToFile("[ERROR] " + ex.StackTrace + " " + ex.Message);
-        }
-
-        /// <summary>
-        /// Выводит элементы вектор в столбец. 
-        /// </summary>
-        public static void LogVector(IEnumerable vector) 
-        { 
-            foreach (var v in vector) 
-            {
-                TryWriteToFile(v.ToString(), false);
-            }
         }
 
         #endregion Public Methods
@@ -107,7 +101,12 @@
         /// </summary>
         static LogService()
         {
-            TryWriteToFile("NEW SESSION");
+            //TryWriteToFile("NEW SESSION");
+            try
+            {
+                File.WriteAllText(_logFileName, string.Empty);
+            }
+            catch (Exception ex) { }
         }
 
         #endregion Constructors

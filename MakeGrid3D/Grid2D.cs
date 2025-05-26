@@ -1,4 +1,6 @@
 ﻿global using ByteMat2D = System.Collections.Generic.List<System.Collections.Generic.List<MakeGrid3D.NodeType>>;
+using MakeGrid3D.Helpers;
+using MakeGrid3D.Solver;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -215,26 +217,10 @@ namespace MakeGrid3D
         public int Nx { get; set; }
         public int Ny { get; private set; }
 
-        // Хранят позиции координат границ подобластей в векторах X и Y
-        public List<int> IXw { get; set; }
-        public List<int> IYw { get; set; }
-
         public List<Elem2D> Elems { get; }
         public List<Vector2> XY { get; }
         public ByteMat2D IJ { get; }
         public List<int> removedNodes;
-
-        /// <summary>
-        /// Элемента массива [i] хранит суммарное количество нерегулярных и удаленных узлов, 
-        /// расположенных до i-ой строки. 
-        /// </summary>
-        public List<int> Rows_uc_removed;
-
-        /// <summary>
-        /// Элемента массива [i] хранит суммарное количество нерегулярных узлов, 
-        /// расположенных до i-ой строки. 
-        /// </summary>
-        public List<int> Rows_uc;
 
         public Grid2D(Area2D area, List<Vector2> XY, List<Elem2D> elems, ByteMat2D IJ)
         {
@@ -616,73 +602,6 @@ namespace MakeGrid3D
             return l - removedNodes.Count;   
         }
 
-        /// <summary>
-        /// Создает массивы rows_uc и rows_uc_removed.
-        /// </summary>
-        public void CreateNX() 
-        {
-            Rows_uc_removed = new List<int>(Ny);
-            for (int i = 0; i < Ny; i++)
-                Rows_uc_removed.Add(0);
-
-            for (int j = 1; j < Ny; j++)
-            {
-                int count = Rows_uc_removed[j - 1];
-                for (int i = 0; i < Nx; i++)
-                    if (IJ[i][j - 1] != NodeType.Regular)
-                        count++;
-                Rows_uc_removed[j] = count;
-            }
-
-
-            Rows_uc = new List<int>(Ny);
-            for (int i = 0; i < Ny; i++)
-                Rows_uc.Add(0);
-
-            for (int j = 1; j < Ny; j++)
-            {
-                int count = Rows_uc[j - 1];
-                for (int i = 0; i < Nx; i++)
-                    if (IJ[i][j - 1] != NodeType.Regular && IJ[i][j - 1] != NodeType.Removed)
-                        count++;
-                Rows_uc[j] = count;
-            }
-        }
-
-        /// <summary>
-        /// Возвращает глобальный узел по нумерации для решения краевой задачи с построением T матрицы.
-        /// То есть вначале нумеруются регулярные узлы (влево-вправо, снизу-вверх), а потом нерегулярные.
-        /// </summary>
-        public int global_num_T(int i, int j) 
-        {
-            if (IJ[i][j] == NodeType.Removed) 
-            {
-                return -1;
-            }
-
-            int l;
-            if (IJ[i][j] != NodeType.Regular && IJ[i][j] != NodeType.Removed)
-            {
-                l = Nc + Rows_uc[j];
-                if (j == Ny - 1 || Rows_uc[j] != Rows_uc[j + 1])
-                    for (int column = 0; column < i; column++)
-                        if (IJ[column][j] != NodeType.Regular && IJ[column][j] != NodeType.Removed)
-                            l++;
-            }
-
-            l = j * Nx + i;
-            if (Nnodes > Nc) 
-            {
-                l -= Rows_uc_removed[j];
-
-                if (j == Ny - 1 || Rows_uc_removed[j] != Rows_uc_removed[j + 1])
-                    for (int column = 0; column < i; column++)
-                        if (IJ[column][j] != NodeType.Regular)
-                            l--;
-            }
-            return l;
-        }
-
         public Vector2i global_ij(int node_num)
         {
             int i, j;
@@ -708,6 +627,53 @@ namespace MakeGrid3D
             i = (node_num + removedNodes.Count) % Nx;
             j = (node_num + removedNodes.Count) / Nx;
             return new Vector2i(i, j);
+        }
+
+        /// <summary>
+        /// Возвращает массив всех внутренних ребер границ подобласти.
+        /// </summary>
+        public List<Boundary2D> GetBoundaries()
+        {
+            double xmin = Area.Xw[0];
+            double xmax = Area.Xw[Area.NXw - 1];
+            double ymin = Area.Yw[0];
+            double ymax = Area.Yw[Area.NYw - 1];
+            List<Boundary2D> boundaries = new List<Boundary2D>();
+
+            foreach (Elem2D elem in Elems)
+            {
+                double x1 = XY[elem.n1].X;
+                double x2 = XY[elem.n2].X;
+                double x3 = XY[elem.n3].X;
+                double x4 = XY[elem.n4].X;
+
+                double y1 = XY[elem.n1].Y;
+                double y2 = XY[elem.n2].Y;
+                double y3 = XY[elem.n3].Y;
+                double y4 = XY[elem.n4].Y;
+
+                // Нижнее ребро
+                if (MathsHelper.IsEqual(y1, ymin) && MathsHelper.IsEqual(y2, ymin))
+                {
+                    boundaries.Add(new Boundary2D(0, elem.n1, elem.n2));
+                }
+                // Правое ребро
+                if (MathsHelper.IsEqual(x2, xmax) && MathsHelper.IsEqual(x4, xmax))
+                {
+                    boundaries.Add(new Boundary2D(1, elem.n2, elem.n4));
+                }
+                // Верхнее ребро
+                if (MathsHelper.IsEqual(y3, ymax) && MathsHelper.IsEqual(y4, ymax))
+                {
+                    boundaries.Add(new Boundary2D(2, elem.n3, elem.n4));
+                }
+                // Левое ребро
+                if (MathsHelper.IsEqual(x1, xmin) && MathsHelper.IsEqual(x3, xmin))
+                {
+                    boundaries.Add(new Boundary2D(3, elem.n1, elem.n3));
+                }
+            }
+            return boundaries;
         }
 
         public bool FindElem(double x, double y, ref int num)

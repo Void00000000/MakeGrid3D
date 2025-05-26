@@ -827,74 +827,19 @@
         /// <param name="bc">Номер краевого услоивя (1,2,3).</param>
         private void ApplyBc(int bcNum, double t) 
         {
-            int p;
-            int i_beg, i_end, j_beg, j_end;
-            int end = 0;
-            List<Boundary2D> bc;
             switch (bcNum) 
             {
                 case 1:
-                    bc = _bc1;
+                    foreach (Boundary2D boundary in _bc1)
+                        ApplyBc1(boundary, t);
                     break;
                 case 2:
-                    bc = _bc2;
-                    end = 1;
+                    foreach (Boundary2D boundary in _bc2)
+                        ApplyBc2(boundary, t);
                     break;
                 case 3:
-                    bc = _bc3;
-                    end = 1;
-                    break;
-                default:
-                    bc = new List<Boundary2D>();
-                    break;
-            }
-
-            for (int s = 0; s < bc.Count; s++)
-            {
-                i_beg = _grid.IXw[bc[s].Nx1];
-                i_end = _grid.IXw[bc[s].Nx2];
-                j_beg = _grid.IYw[bc[s].Ny1];
-                j_end = _grid.IYw[bc[s].Ny2];
-                p = bc[s].Si;
-                if (i_beg == i_end)
-                {
-                    int i = i_beg;
-                    for (int j = j_beg; j <= j_end - end; j++)
-                    {
-                        ApplyBcNode(bcNum, i, j, p, false, t);
-                    }
-                }
-                else
-                {
-                    int j = j_beg;
-                    for (int i = i_beg; i <= i_end - end; i++)
-                    {
-                        ApplyBcNode(bcNum, i, j, p, true, t);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Применяет краевое условие для узла. 
-        /// </summary>
-        /// <param name="bcNum">Номер краевого условия (1,2,3).</param>
-        /// <param name="i">Порядкой номер узла по горизонтали (нумерация с 0).</param>
-        /// <param name="j">Порядкой номер узла по горизонтали (нумерация с 0).</param>
-        /// <param name="p">Номер границы.</param>
-        /// <param name="isX">true, если граница горизонтальная, вертикальная иначе.</param>
-        private void ApplyBcNode(int bcNum, int i, int j, int p, bool isX, double t) 
-        {
-            switch (bcNum) 
-            {
-                case 1:
-                    ApplyBc1Node(i, j, p, t);
-                    break;
-                case 2:
-                    ApplyBc2Node(i, j, p, isX, t);
-                    break;
-                case 3:
-                    ApplyBc3Node(i, j, p, isX, t);
+                    foreach (Boundary2D boundary in _bc3)
+                        ApplyBc3(boundary, t);
                     break;
                 default:
                     LogService.LogWarning("Указано неверное краевое условие");
@@ -903,37 +848,39 @@
         }
 
         /// <summary>
-        /// Применяет первое краевое условие для узла. 
+        /// Применяет первое краевое условие. 
         /// </summary>
-        private void ApplyBc1Node(int i, int j, int p, double t) 
+        /// <param name="boundary">Граница.</param>
+        /// <param name="t">Временной слой.</param>
+        private void ApplyBc1(Boundary2D boundary, double t) 
         {
-            int l = _grid.global_num_T(i, j);
-            if (l < 0)
-                return;
+            int p = boundary.Si;
+            List<int> global_nodes = new List<int>() { boundary.N1, boundary.N2};
 
-            double x = _grid.XY[l].X;
-            double y = _grid.XY[l].Y;
-            _matrix.Di[l] = 1;
-            for (int k = _matrix.Ig[l]; k < _matrix.Ig[l + 1]; k++)
-                _matrix.Gl[k] = 0;
-            for (int k = 0; k < _matrix.Ng; k++)
-                if (_matrix.Jg[k] == l)
-                    _matrix.Gu[k] = 0;
-            _b[l] = _params.Ug(p, x, y, t);
+            foreach (int l in global_nodes)
+            {
+                double x = _grid.XY[l].X;
+                double y = _grid.XY[l].Y;
+                _matrix.Di[l] = 1;
+                for (int k = _matrix.Ig[l]; k < _matrix.Ig[l + 1]; k++)
+                    _matrix.Gl[k] = 0;
+                for (int k = 0; k < _matrix.Ng; k++)
+                    if (_matrix.Jg[k] == l)
+                        _matrix.Gu[k] = 0;
+                _b[l] = _params.Ug(p, x, y, t);
+            }
         }
 
         /// <summary>
-        /// Применяет второе краевое условие для узла. 
+        /// Применяет второе краевое условие. 
         /// </summary>
-        private void ApplyBc2Node(int i, int j, int p, bool isX, double t)
+        /// <param name="boundary">Граница.</param>
+        /// <param name="t">Временной слой.</param>
+        private void ApplyBc2(Boundary2D boundary, double t)
         {
-            int l1 = _grid.global_num_T(i, j);
-            if (l1 < 0)
-                return;
-
-            int l2 = -1;
-            while (l2 < 0)
-                l2 = isX ? _grid.global_num_T(i + 1, j) : _grid.global_num_T(i, j + 1);
+            int p = boundary.Si;
+            int l1 = boundary.N1;
+            int l2 = boundary.N2;
             double x1 = _grid.XY[l1].X;
             double x2 = _grid.XY[l2].X;
             double y1 = _grid.XY[l1].Y;
@@ -941,23 +888,21 @@
 
             double theta1 = _params.Theta(p, x1, y1, t);
             double theta2 = _params.Theta(p, x2, y2, t);
-            double h = isX ? x2 - x1 : y2 - y1;
+            double h = MathsHelper.IsEqual(y1, y2) ? x2 - x1 : y2 - y1;
             _b[l1] += h * (2 * theta1 + theta2) / 6.0;
             _b[l2] += h * (theta1 + 2 * theta2) / 6.0;
         }
 
         /// <summary>
-        /// Применяет третье краевое условие для узла. 
+        /// Применяет третье краевое условие. 
         /// </summary>
-        private void ApplyBc3Node(int i, int j, int p, bool isX, double t)
+        /// <param name="boundary">Граница.</param>
+        /// <param name="t">Временной слой.</param>
+        private void ApplyBc3(Boundary2D boundary, double t)
         {
-            int l1 = _grid.global_num_T(i, j);
-            if (l1 < 0)
-                return;
-
-            int l2 = -1;
-            while (l2 < 0)
-                l2 = isX ? _grid.global_num_T(i + 1, j) : _grid.global_num_T(i, j + 1);
+            int p = boundary.Si;
+            int l1 = boundary.N1;
+            int l2 = boundary.N2;
             double x1 = _grid.XY[l1].X;
             double x2 = _grid.XY[l2].X;
             double y1 = _grid.XY[l1].Y;
@@ -965,7 +910,7 @@
             double beta_const = _params.Beta(p);
             double u_beta1 = _params.Ubeta(p, x1, y1, t);
             double u_beta2 = _params.Ubeta(p, x2, y2, t);
-            double h = isX ? x2 - x1 : y2 - y1;
+            double h = MathsHelper.IsEqual(y1, y2) ? x2 - x1 : y2 - y1;
 
             _as3[0][1] = beta_const * h / 6.0;
             _as3[0][0] = 2 * _as3[0][1];

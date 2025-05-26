@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MakeGrid3D.Solver
 {
@@ -40,160 +41,83 @@ namespace MakeGrid3D.Solver
                     FemParams.DU0 = Functions2_2D.u0;
                     FemParams.Gamma = Functions2_2D.gamma;
                     break;
+                case 3:
+                    FemParams.Lambda = Functions3_2D.lambda;
+                    FemParams.Chi = Functions3_2D.chi;
+                    FemParams.Sigma = Functions3_2D.sigma;
+                    FemParams.Ubeta = Functions3_2D.u_beta;
+                    FemParams.Theta = Functions3_2D.theta;
+                    FemParams.Beta = Functions3_2D.beta;
+                    FemParams.Ug = Functions3_2D.u_g;
+                    FemParams.F = Functions3_2D.f;
+                    FemParams.U0 = Functions3_2D.u0;
+                    FemParams.U1 = Functions3_2D.u1;
+                    FemParams.DU0 = Functions3_2D.u0;
+                    FemParams.Gamma = Functions3_2D.gamma;
+                    break;
+                case 4:
+                    FemParams.Lambda = Functions4_2D.lambda;
+                    FemParams.Chi = Functions4_2D.chi;
+                    FemParams.Sigma = Functions4_2D.sigma;
+                    FemParams.Ubeta = Functions4_2D.u_beta;
+                    FemParams.Theta = Functions4_2D.theta;
+                    FemParams.Beta = Functions4_2D.beta;
+                    FemParams.Ug = Functions4_2D.u_g;
+                    FemParams.F = Functions4_2D.f;
+                    FemParams.U0 = Functions4_2D.u0;
+                    FemParams.U1 = Functions4_2D.u1;
+                    FemParams.DU0 = Functions4_2D.u0;
+                    FemParams.Gamma = Functions4_2D.gamma;
+                    break;
+                case 5:
+                    FemParams.Lambda = Functions5_2D.lambda;
+                    FemParams.Chi = Functions5_2D.chi;
+                    FemParams.Sigma = Functions5_2D.sigma;
+                    FemParams.Ubeta = Functions5_2D.u_beta;
+                    FemParams.Theta = Functions5_2D.theta;
+                    FemParams.Beta = Functions5_2D.beta;
+                    FemParams.Ug = Functions5_2D.u_g;
+                    FemParams.F = Functions5_2D.f;
+                    FemParams.U0 = Functions5_2D.u0;
+                    FemParams.U1 = Functions5_2D.u1;
+                    FemParams.DU0 = Functions5_2D.u0;
+                    FemParams.Gamma = Functions5_2D.gamma;
+                    break;
+                case 6:
+                    FemParams.Lambda = Functions6_2D.lambda;
+                    FemParams.Chi = Functions6_2D.chi;
+                    FemParams.Sigma = Functions6_2D.sigma;
+                    FemParams.Ubeta = Functions6_2D.u_beta;
+                    FemParams.Theta = Functions6_2D.theta;
+                    FemParams.Beta = Functions6_2D.beta;
+                    FemParams.Ug = Functions6_2D.u_g;
+                    FemParams.F = Functions6_2D.f;
+                    FemParams.U0 = Functions6_2D.u0;
+                    FemParams.U1 = Functions6_2D.u1;
+                    FemParams.DU0 = Functions6_2D.u0;
+                    FemParams.Gamma = Functions6_2D.gamma;
+                    break;
             }
             return FemParams;
         }
     }
 
     /// <summary>
-    /// Функция из кирпича с несколькоми подобластями (с надбавкой +4*t*t).
+    /// Функция x*y*t для функции testgrid1.
     /// </summary>
     static class Functions1_2D
     {
         static public double chi(int wi)
         {
-            switch (wi)
-            {
-                case 0:
-                    return 3;
-                case 1:
-                    return 2;
-                case 2:
-                    return 1;
-            }
-            return 0;
-        }
-
-        static public double gamma(int wi) 
-        {
-            return 0;
+            return 5;
         }
 
         static public double sigma(int wi)
         {
-            return 0;
+            return 4;
         }
 
-        static public double lambda(int wi)
-        {
-            switch (wi)
-            {
-                case 0:
-                    return 1;
-                case 1:
-                    return 10;
-                case 2:
-                    return 10;
-            }
-            return 0;
-        }
-
-        static public double f(int wi, double x, double y, double t)
-        {
-            switch (wi)
-            {
-                case 0:
-                    return 24;
-                case 1:
-                    return 16;
-                case 2:
-                    return 8;
-            }
-            return 0;
-        }
-
-        static public double u_g(int si, double x, double y, double t)
-        {
-            switch (si)
-            {
-                case 0:
-                    return 2 + 4 * t * t;
-                case 1:
-                    return 1.8 + 0.1 * x + 4 * t * t; ;
-            }
-            return 0;
-        }
-
-        static public double theta(int si, double x, double y, double t)
-        {
-            switch (si)
-            {
-                case 0:
-                    return 1;
-                case 1:
-                    return 0;
-            }
-            return 0;
-        }
-
-        static public double beta(int si)
-        {
-            switch (si)
-            {
-                case 0:
-                    return 1;
-                case 1:
-                    return 2;
-                case 2:
-                    return 0.5;
-            }
-            return 0;
-        }
-
-        static public double u_beta(int si, double x, double y, double t)
-        {
-            switch (si)
-            {
-                case 0:
-                    return x + 4 * t * t;
-                case 1:
-                    return 1.8 + 0.1 * x + 4 * t * t;
-                case 2:
-                    return -1 + 4 * t * t;
-            }
-            return 0;
-        }
-
-        static public double u0(int wi, double x, double y)
-        {
-            switch (wi)
-            {
-                case 0:
-                    return x;
-                case 1:
-                    return 1.8 + 0.1 * x;
-                case 2:
-                    return 1.8 + 0.1 * x;
-            }
-            return 0;
-        }
-
-        static public double u1(int wi, double x, double y)
-        {
-            switch (wi)
-            {
-                case 0:
-                    return x + 1;
-                case 1:
-                    return 1.8 + 0.1 * x + 1;
-                case 2:
-                    return 1.8 + 0.1 * x + 1;
-            }
-            return 0;
-        }
-    }
-
-    /// <summary>
-    /// Функция xy*t*t.
-    /// </summary>
-    static class Functions2_2D
-    {
-        static public double chi(int wi)
-        {
-            return 2;
-        }
-
-        static public double sigma(int wi)
+        static public double gamma(int wi)
         {
             return 3;
         }
@@ -203,14 +127,9 @@ namespace MakeGrid3D.Solver
             return 2;
         }
 
-        static public double gamma(int wi)
-        {
-            return 4;
-        }
-
         static public double f(int wi, double x, double y, double t)
         {
-            return sigma(wi) * 2 * x * y * t + chi(wi) * 2 * x * y + gamma(wi) * x * y * t * t;
+            return sigma(wi) * x * y + gamma(wi) * x * y * t;
         }
 
         static public double u_g(int si, double x, double y, double t)
@@ -218,13 +137,13 @@ namespace MakeGrid3D.Solver
             switch (si)
             {
                 case 0:
-                    return x * t * t;
+                    return x * t;
                 case 1:
-                    return 18 * y * t * t;
+                    return 18 * y * t;
                 case 2:
-                    return x * 14 * t * t;
+                    return x * 14 * t;
                 case 3:
-                    return y * t * t;
+                    return y * t;
             }
             return 0;
         }
@@ -246,19 +165,481 @@ namespace MakeGrid3D.Solver
 
         static public double u0(int wi, double x, double y)
         {
-            double t0 = 1;
-            return x * y * t0 * t0;
+            double t0 = 0;
+            return x * y * t0;
         }
 
         static public double u1(int wi, double x, double y)
         {
-            double t1 = 2;
-            return x * y * t1 * t1;
+            double t1 = 1;
+            return x * y * t1;
+        }
+
+        static public double u(double x, double y, double t) 
+        {
+            return x * y * t;
         }
     }
 
     /// <summary>
-    /// Тест сетки со всеми краевыми из учебника.
+    /// Функция xy*t для сетки testgrid2.
+    /// </summary>
+    static class Functions2_2D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double t)
+        {
+            return sigma(wi) * x * y + gamma(wi) * x * y * t;
+        }
+
+        static public double u_g(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, t);
+                case 1:
+                    return u(9, y, t);
+                case 2:
+                    return u(x, 13, t);
+                case 3:
+                    return u(1, y, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 2 * y * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 2:
+                    return 14 * x * t;
+            }
+            return 0;
+        }
+
+        static public double u0(int wi, double x, double y)
+        {
+            double t0 = 0;
+            return u(x, y, t0);
+        }
+
+        static public double u1(int wi, double x, double y)
+        {
+            double t1 = 1;
+            return u(x, y, t1);
+        }
+
+        static public double u(double x, double y, double t)
+        {
+            return x * y * t;
+        }
+    }
+
+    /// <summary>
+    /// Функция x^2*y^2*t для сетки testgrid2.
+    /// </summary>
+    static class Functions3_2D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double t)
+        {
+            return -lambda(wi) * 2*t*(x*x + y*y) + gamma(wi)*u(x,y,t) + sigma(wi)*x*x*y*y;
+        }
+
+        static public double u_g(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x,1,t);
+                case 1:
+                    return u(9, y, t);
+                case 2:
+                    return u(x, 13, t);
+                case 3:
+                    return u(1, y, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return lambda(si) * 18 * y * y * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 2:
+                    return (26 * lambda(si) * x * x * t + beta(si) * 169 * x * x * t) / beta(si);
+            }
+            return 0;
+        }
+
+        static public double u0(int wi, double x, double y)
+        {
+            double t0 = 0;
+            return u(x, y, t0);
+        }
+
+        static public double u1(int wi, double x, double y)
+        {
+            double t1 = 1;
+            return u(x,y,t1);
+        }
+
+        static public double u(double x, double y, double t)
+        {
+            return x*x * y*y * t;
+        }
+    }
+
+    /// <summary>
+    /// Функция x*y*t^2 для сетки testgrid2.
+    /// </summary>
+    static class Functions4_2D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double t)
+        {
+            return gamma(wi) * u(x,y,t) + sigma(wi) * 2*t*x*y + chi(wi) * 2 * x * y;
+        }
+
+        static public double u_g(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, t);
+                case 1:
+                    return u(9, y, t);
+                case 2:
+                    return u(x, 13, t);
+                case 3:
+                    return u(1, y, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 2 * y * t * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 2:
+                    return 14 * x * t * t;
+            }
+            return 0;
+        }
+
+        static public double u0(int wi, double x, double y)
+        {
+            double t0 = 0;
+            return u(x, y, t0);
+        }
+
+        static public double u1(int wi, double x, double y)
+        {
+            double t1 = 1;
+            return u(x, y, t1);
+        }
+
+        static public double u(double x, double y, double t)
+        {
+            return x * y * t * t;
+        }
+    }
+
+    /// <summary>
+    /// Функция x*y*t^3 для сетки testgrid2.
+    /// </summary>
+    static class Functions5_2D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double t)
+        {
+            return gamma(wi) * u(x, y, t) + sigma(wi) * 3 * t * t * x * y + chi(wi) * 6 * t * x * y;
+        }
+
+        static public double u_g(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, t);
+                case 1:
+                    return u(9, y, t);
+                case 2:
+                    return u(x, 13, t);
+                case 3:
+                    return u(1, y, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 2 * y * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 2:
+                    return 14 * x * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double u0(int wi, double x, double y)
+        {
+            double t0 = 0;
+            return u(x, y, t0);
+        }
+
+        static public double u1(int wi, double x, double y)
+        {
+            double t1 = 1;
+            return u(x, y, t1);
+        }
+
+        static public double u2(int wi, double x, double y)
+        {
+            double t2 = 2;
+            return u(x, y, t2);
+        }
+
+        static public double u(double x, double y, double t)
+        {
+            return x * y * t * t * t;
+        }
+    }
+
+    /// <summary>
+    /// Функция x*y*t^4 для сетки testgrid2.
+    /// </summary>
+    static class Functions6_2D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double t)
+        {
+            return gamma(wi) * u(x, y, t) + sigma(wi) * 4 * t * t * t * x * y + chi(wi) * 12 * t * t * x * y;
+        }
+
+        static public double u_g(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, t);
+                case 1:
+                    return u(9, y, t);
+                case 2:
+                    return u(x, 13, t);
+                case 3:
+                    return u(1, y, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 2 * y * t * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double t)
+        {
+            switch (si)
+            {
+                case 2:
+                    return 14 * x * t * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double u0(int wi, double x, double y)
+        {
+            double t0 = 0;
+            return u(x, y, t0);
+        }
+
+        static public double u1(int wi, double x, double y)
+        {
+            double t1 = 1;
+            return u(x, y, t1);
+        }
+
+        static public double u2(int wi, double x, double y)
+        {
+            double t2 = 2;
+            return u(x, y, t2);
+        }
+
+        static public double u(double x, double y, double t)
+        {
+            return x * y * t * t * t * t;
+        }
+    }
+
+    /// <summary>
+    /// Тест двумерной нерегулярной сетки рис 110.
     /// </summary>
     public class Test1_2D
     {
@@ -269,199 +650,6 @@ namespace MakeGrid3D.Solver
         public List<Boundary2D> Bc2;
         public List<Boundary2D> Bc3;
 
-        public void CreateTest()
-        {
-            List<double> xw = new List<double> { 1, 2, 6 };
-            List<double> yw = new List<double> { 1, 2, 4, 5 };
-            SubArea2D sub1 = new SubArea2D(0, 0, 1, 0, 3);
-            SubArea2D sub2 = new SubArea2D(1, 1, 2, 1, 2);
-            SubArea2D sub3 = new SubArea2D(2, 1, 2, 2, 3);
-            List<SubArea2D> subs = new List<SubArea2D> { sub1, sub2, sub3 };
-            Area2D area = new Area2D(xw, yw, subs, 3);
-            List<Vector2> XY = new List<Vector2>()
-            {
-                new Vector2(1,1),
-                new Vector2(2,1),
-                new Vector2(2,2),
-                new Vector2(1,2),
-                new Vector2(2,2),
-                new Vector2(6,2),
-                new Vector2(1,4),
-                new Vector2(2,4),
-                new Vector2(6,4),
-                new Vector2(1,5),
-                new Vector2(2,5),
-                new Vector2(6,5)
-            };
-            List<Elem2D> elems = new List<Elem2D>()
-            {
-                new Elem2D(0,0,1,3,4),
-                new Elem2D(0,3,4,6,7),
-                new Elem2D(1,4,5,7,8),
-                new Elem2D(0,6,7,9,10),
-                new Elem2D(2,7,8,10,11)
-            };
-            int nx = 3;
-            int ny = 4;
-            ByteMat2D IG = new ByteMat2D(nx);
-            for (int i = 0; i < nx; i++) 
-            {
-                IG.Add(new List<NodeType>(ny));
-                for (int j = 0; j< ny; j++) 
-                {
-                    IG[i].Add(NodeType.Regular);
-                }
-            }
-            Grid = new Grid2D(area, XY, elems, IG);
-            Grid.Nc= Grid.Nnodes;
-            Grid.IXw = new List<int> { 0, 1, 2 };
-            Grid.IYw = new List<int> { 0, 1, 2, 3 };
-
-            T = new List<double>() {0, 0.5, 1, 1.5, 2 };
-
-            Bc1 = new List<Boundary2D>()
-            {
-                new Boundary2D(0,1,1,0,1),
-                new Boundary2D(1,1,2,1,1),
-            };
-
-            Bc2 = new List<Boundary2D>()
-            {
-                new Boundary2D(0,2,2,1,2),
-                new Boundary2D(0,2,2,2,3),
-                new Boundary2D(1,0,1,0,0),
-            };
-
-           Bc3 = new List<Boundary2D>()
-            {
-                new Boundary2D(0,0,1,3,3),
-                new Boundary2D(1,1,2,3,3),
-                new Boundary2D(2,0,0,0,3),
-            };
-
-            FemParams = FemParamsFactory2D.CreateFemParams(1);
-        }
-    }
-
-    /// <summary>
-    /// Тест сетки 4x4 с u(x,y) = xy.
-    /// </summary>
-    public class Test2_2D
-    {
-
-        public Grid2D Grid;
-        public FEMParams2D FemParams;
-        public List<double> T;
-        public List<Boundary2D> Bc1;
-        public List<Boundary2D> Bc2;
-        public List<Boundary2D> Bc3;
-
-        public void CreateTest()
-        {
-            List<double> xw = new List<double> { 1, 7 };
-            List<double> yw = new List<double> { 1, 16 };
-            SubArea2D sub1 = new SubArea2D(0, 0, 1, 0, 1);
-            List<SubArea2D> subs = new List<SubArea2D> { sub1 };
-            int nmats = 1;
-            Area2D area = new Area2D(xw, yw, subs, nmats);
-            List<Vector2> XY = new List<Vector2>()
-            {
-                new Vector2(1,1),
-                new Vector2(2,1),
-                new Vector2(4,1),
-                new Vector2(7,1),
-                new Vector2(1,5),
-                new Vector2(2,5),
-                new Vector2(4,5),
-                new Vector2(7,5),
-                new Vector2(1,10),
-                new Vector2(2,10),
-                new Vector2(4,10),
-                new Vector2(7,10),
-                new Vector2(1,16),
-                new Vector2(2,16),
-                new Vector2(4,16),
-                new Vector2(7,16)
-            };
-            List<Elem2D> elems = new List<Elem2D>()
-            {
-                new Elem2D(0,0,1,4,5),
-                new Elem2D(0,1,2,5,6),
-                new Elem2D(0,2,3,6,7),
-                new Elem2D(0,4,5,8,9),
-                new Elem2D(0,5,6,9,10),
-                new Elem2D(0,6,7,10,11),
-                new Elem2D(0,8,9,12,13),
-                new Elem2D(0,9,10,13,14),
-                new Elem2D(0,10,11,14,15)
-            };
-            int nx = 4;
-            int ny = 4;
-            ByteMat2D IG = new ByteMat2D(nx);
-            for (int i = 0; i < nx; i++)
-            {
-                IG.Add(new List<NodeType>(ny));
-                for (int j = 0; j < ny; j++)
-                {
-                    IG[i].Add(NodeType.Regular);
-                }
-            }
-            Grid = new Grid2D(area, XY, elems, IG);
-            Grid.Nc = Grid.Nnodes;
-            Grid.IXw = new List<int> { 0, 3 };
-            Grid.IYw = new List<int> { 0, 3 };
-            T = new List<double>() { 1, 2, 3, 4, 5 };
-
-            Bc1 = new List<Boundary2D>()
-            {
-                new Boundary2D(0,0,1,0,0),
-                new Boundary2D(1,1,1,0,1),
-                new Boundary2D(2,0,1,1,1),
-                new Boundary2D(3,0,0,0,1),
-            };
-
-            Bc2 = new List<Boundary2D>()
-            {
-               
-            };
-
-            Bc3 = new List<Boundary2D>()
-            {
-                
-            };
-
-            FemParams = FemParamsFactory2D.CreateFemParams(2);
-            FemParams.Ug = u_g;
-        }
-
-        private double u_g(int si, double x, double y, double t)
-        {
-            switch (si)
-            {
-                case 0:
-                    return x * t * t;
-                case 1:
-                    return 7 * y * t * t;
-                case 2:
-                    return x * 16 * t * t;
-                case 3:
-                    return y * t * t;
-            }
-            return 0;
-        }
-    }
-
-    /// <summary>
-    /// Тест двумерной нерегулярной сетки рис 110.
-    /// </summary>
-    public class Test3_2D
-    {
-        public Grid2D Grid;
-        public FEMParams2D FemParams;
-        public List<double> T;
-        public List<Boundary2D> Bc1;
-        public List<Boundary2D> Bc2;
-        public List<Boundary2D> Bc3;
 
         public void CreateTest()
         {
@@ -521,38 +709,12 @@ namespace MakeGrid3D.Solver
                 }
             }
 
-            IJ[1][1] = NodeType.Right;
-            IJ[1][3] = NodeType.Right;
-            IJ[2][2] = NodeType.Left;
-            IJ[2][3] = NodeType.Bottom;
-            IJ[3][1] = NodeType.Bottom;
-            IJ[4][1] = NodeType.Left;
-
-            IJ[0][1] = NodeType.Removed;
-            IJ[0][3] = NodeType.Removed;
-            IJ[2][4] = NodeType.Removed;
-            IJ[3][2] = NodeType.Removed;
-            IJ[3][3] = NodeType.Removed;
-            IJ[3][4] = NodeType.Removed;
-            IJ[5][1] = NodeType.Removed;
-            IJ[5][2] = NodeType.Removed;
-            IJ[4][2] = NodeType.Removed;
-
             Grid = new Grid2D(area, XY, elems, IJ);
-            Grid.IXw = new List<int> { 0, 5 };
-            Grid.IYw = new List<int> { 0, 4 };
             Grid.Nc = Grid.Nnodes - 6;
-            Grid.CreateNX();
-            T = new List<double>() { 1, 2, 3, 4, 5 };
+            T = new List<double>() { 0, 1, 2, 3, 4 };
 
 
-            Bc1 = new List<Boundary2D>()
-            {
-                new Boundary2D(0,0,1,0,0),
-                new Boundary2D(1,1,1,0,1),
-                new Boundary2D(2,0,1,1,1),
-                new Boundary2D(3,0,0,0,1),
-            };
+            Bc1 = Grid.GetBoundaries();
 
             Bc2 = new List<Boundary2D>()
             {
@@ -564,35 +726,18 @@ namespace MakeGrid3D.Solver
 
             };
 
-            FemParams = FemParamsFactory2D.CreateFemParams(2);
-            FemParams.Ug = u_g;
-        }
-
-        private double u_g(int si, double x, double y, double t)
-        {
-            switch (si)
-            {
-                case 0:
-                    return x * t * t;
-                case 1:
-                    return 18 * y * t * t;
-                case 2:
-                    return 14 * x * t * t;
-                case 3:
-                    return y * t * t;
-            }
-            return 0;
+            FemParams = FemParamsFactory2D.CreateFemParams(1);
         }
     }
 
     /// <summary>
     /// Тест двумерной нерегулярной сетки рис 111.
     /// </summary>
-    public class Test4_2D
+    public class Test2_2D
     {
         public Grid2D Grid;
         public FEMParams2D FemParams;
-        List<double> T;
+        public List<double> T;
         public List<Boundary2D> Bc1;
         public List<Boundary2D> Bc2;
         public List<Boundary2D> Bc3;
@@ -656,63 +801,43 @@ namespace MakeGrid3D.Solver
                 }
             }
 
-            IG[1][4] = NodeType.Bottom;
-            IG[1][5] = NodeType.Removed;
-            IG[2][2] = NodeType.Left;
-            IG[2][3] = NodeType.Left;
-            IG[3][2] = NodeType.Removed;
-            IG[3][3] = NodeType.Removed;
-
             Grid = new Grid2D(area, XY, elems, IG);
-            Grid.IXw = new List<int> { 0, 3 };
-            Grid.IYw = new List<int> { 0, 5 };
             Grid.Nc = Grid.Nnodes - 3;
-            Grid.CreateNX();
-            T = new List<double>() { 1, 2, 3, 4, 5 };
+            T = new List<double>() { 0, 1, 2, 3, 4 };
+            var boundaries = Grid.GetBoundaries();
 
-            Bc1 = new List<Boundary2D>()
+            Bc1 = new List<Boundary2D>();
+            Bc2 = new List<Boundary2D>();
+            Bc3 = new List<Boundary2D>();
+            foreach (Boundary2D boundary in boundaries) 
             {
-                new Boundary2D(0,0,1,0,0),
-                new Boundary2D(1,1,1,0,1),
-                new Boundary2D(2,0,1,1,1),
-                new Boundary2D(3,0,0,0,1),
-            };
+                switch (boundary.Si) 
+                {
+                    case 0: case 3:
+                        Bc1.Add(boundary);
+                        break;
+                    case 1: 
+                        Bc2.Add(boundary);
+                        break;
+                    case 2:
+                        Bc3.Add(boundary);
+                        break;
+                }
+            }
 
-            Bc2 = new List<Boundary2D>()
-            {
-
-            };
-
-            Bc3 = new List<Boundary2D>()
-            {
-
-            };
-
-            FemParams = FemParamsFactory2D.CreateFemParams(2);
-            FemParams.Ug = u_g;
+            FemParams = FemParamsFactory2D.CreateFemParams(6);
         }
 
-        private double u_g(int si, double x, double y, double t)
+        public double U(double x, double y, double t) 
         {
-            switch (si)
-            {
-                case 0:
-                    return x * t * t;
-                case 1:
-                    return 9 * y * t * t;
-                case 2:
-                    return 13 * x * t * t;
-                case 3:
-                    return y * t * t;
-            }
-            return 0;
+            return Functions6_2D.u(x, y, t);
         }
     }
 
     /// <summary>
     /// Тест двумерной нерегулярной сетки с перехлестами.
     /// </summary>
-    public class Test5_2D
+    public class Test3_2D
     {
         public Grid2D Grid;
         public FEMParams2D FemParams;
@@ -770,18 +895,10 @@ namespace MakeGrid3D.Solver
                 }
             }
             Grid = new Grid2D(area, XY, elems, IG);
-            Grid.IXw = new List<int> { 0, 3 };
-            Grid.IYw = new List<int> { 0, 5 };
             Grid.Nc = Grid.Nnodes - 5;
             T = new List<double>() { 1, 2, 3, 4, 5 };
 
-            Bc1 = new List<Boundary2D>()
-            {
-                new Boundary2D(0,0,1,0,0),
-                new Boundary2D(1,1,1,0,1),
-                new Boundary2D(2,0,1,1,1),
-                new Boundary2D(3,0,0,0,1),
-            };
+            Bc1 = Grid.GetBoundaries();
 
             Bc2 = new List<Boundary2D>()
             {

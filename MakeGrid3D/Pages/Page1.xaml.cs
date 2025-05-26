@@ -1,5 +1,6 @@
 ﻿using MakeGrid3D.Solver;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
@@ -14,7 +15,7 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test3_2D test = new Test3_2D();
+            Test2_2D test = new Test2_2D();
             test.CreateTest();
             bool isSuccess = FEMSolver2D.Instance.Initialize(test.Grid, test.FemParams,
                 test.Bc1, test.Bc2, test.Bc3, test.T);
@@ -25,7 +26,24 @@ namespace MakeGrid3D.Pages
             else
             {
                 var qList = FEMSolver2D.Instance.Solve();
-                LogService.LogVector(qList);
+                int J = test.T.Count - 1;
+                for (int i = 0; i < test.Grid.Nnodes; i++)
+                {
+                    double x = test.Grid.XY[i].X;
+                    double y = test.Grid.XY[i].Y;
+                    double uh = qList[J][i];
+                    double u = test.U(x, y, test.T[J]);
+                    double abs = Math.Abs(u - uh) / u * 100;
+
+                    string frmt = "e15";
+                    LogService.Log(i + 1 + " ");
+                    LogService.Log(x.ToString() + " ");
+                    LogService.Log(y.ToString() + " ");
+                    LogService.Log(uh.ToString(frmt) + " ");
+                    LogService.Log(u.ToString(frmt) + " ");
+                    LogService.Log(abs.ToString("F3") + " ");
+                    LogService.Log("\n");
+                }
             }
         }
 
