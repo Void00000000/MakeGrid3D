@@ -14,6 +14,11 @@ namespace MakeGrid3D.Solver
         public Function Lambda { get; set; }
 
         /// <summary>
+        /// Параметр гамма. 
+        /// </summary>
+        public Function Gamma { get; set; }
+
+        /// <summary>
         /// Параметр сигма. 
         /// </summary>
         public Function Sigma { get; set; }

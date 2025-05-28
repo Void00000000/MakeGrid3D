@@ -233,7 +233,7 @@ namespace MakeGrid3D.Solver
             }
 
             GeneratePortrait();
-
+            GenerateMmatrices();
             InitPrevQ_3_2();
             q_1 = SolveBy3Layers(_t[0], _t[1], _t[2]);
             return true;
@@ -276,15 +276,16 @@ namespace MakeGrid3D.Solver
                 double d2_eta0 = 2 * (3 * t - t_3 - t_2 - t_1) / (delta_t * delta_t0 * delta_t4);
 
                 AssemblyG();
-                AssemblyM(d1_eta0, isChi: false);
-                AssemblyM(d2_eta0, isChi: true);
+                AssemblyM(1, _params.Gamma);
+                AssemblyM(d1_eta0, _params.Sigma);
+                AssemblyM(d2_eta0, _params.Chi);
                 AssemblyB(t, true);
-                AssemblyB(t, false, -d1_eta1, isChi: false, q_1);
-                AssemblyB(t, false, -d1_eta2, isChi: false, q_2);
-                AssemblyB(t, false, -d1_eta3, isChi: false, q_3);
-                AssemblyB(t, false, -d2_eta1, isChi: true, q_1);
-                AssemblyB(t, false, -d2_eta2, isChi: true, q_2);
-                AssemblyB(t, false, -d2_eta3, isChi: true, q_3);
+                AssemblyB(t, false, -d1_eta1, _params.Sigma, q_1);
+                AssemblyB(t, false, -d1_eta2, _params.Sigma, q_2);
+                AssemblyB(t, false, -d1_eta3, _params.Sigma, q_3);
+                AssemblyB(t, false, -d2_eta1, _params.Chi, q_1);
+                AssemblyB(t, false, -d2_eta2, _params.Chi, q_2);
+                AssemblyB(t, false, -d2_eta3, _params.Chi, q_3);
 
                 ApplyBc(2, t);
                 ApplyBc(3, t);
@@ -352,7 +353,7 @@ namespace MakeGrid3D.Solver
                 else
                 {
                     double d_u1 = _params.DU0(p, x, y, z);
-                    q_2[i] = d_u1;
+                    q_2[i] = u0 + d_u1 * (_t[1] - _t[0]);
                 }
             }
         }
@@ -367,13 +368,14 @@ namespace MakeGrid3D.Solver
             double delta_t0 = t - t_1;
 
             AssemblyG();
-            AssemblyM(2 / (delta_t * delta_t0), isChi: true);
-            AssemblyM((delta_t + delta_t0) / (delta_t * delta_t0), isChi: false);
+            AssemblyM(1, _params.Gamma);
+            AssemblyM(2 / (delta_t * delta_t0), _params.Chi);
+            AssemblyM((delta_t + delta_t0) / (delta_t * delta_t0), _params.Sigma);
             AssemblyB(t, true);
-            AssemblyB(t, false, -2 / (delta_t1 * delta_t), isChi: true, q_3);
-            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), isChi: true, q_2);
-            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), isChi: false, q_3);
-            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), isChi: false, q_2);
+            AssemblyB(t, false, -2 / (delta_t1 * delta_t), _params.Chi, q_3);
+            AssemblyB(t, false, 2 / (delta_t1 * delta_t0), _params.Chi, q_2);
+            AssemblyB(t, false, -delta_t0 / (delta_t1 * delta_t), _params.Sigma, q_3);
+            AssemblyB(t, false, delta_t / (delta_t1 * delta_t0), _params.Sigma, q_2);
             ApplyBc(2, t);
             ApplyBc(3, t);
             ApplyBc(1, t);
@@ -773,11 +775,14 @@ namespace MakeGrid3D.Solver
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                if (i < _grid.Nc && !processed_nodes.Contains(i))
+                if (i < _grid.Nc)
                 {
-                    jg_gg.Add((i, m * Telem));
-                    elems_count++;
-                    processed_nodes.Add(i);
+                    if (!processed_nodes.Contains(i))
+                    {
+                        jg_gg.Add((i, m * Telem));
+                        elems_count++;
+                        processed_nodes.Add(i);
+                    }
                 }
                 else
                 {
@@ -1008,13 +1013,13 @@ namespace MakeGrid3D.Solver
         /// Собирает матрицу масс и добавляет её в глобальную матрицу. 
         /// </summary>
         /// <param name="m">Множитель.</param>
-        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
-        private void AssemblyM(double m, bool isChi)
+        /// <param name="param">Функция параметра.</param>
+        private void AssemblyM(double m, Function param)
         {
             for (int k = 0; k < _grid.Nelems; k++)
             {
                 Elem3D elem = _grid.Elems[k];
-                double gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
+                double gamma = param(elem.wi);
                 for (int i = 0; i < 8; i++)
                     for (int j = 0; j < 8; j++)
                     {
@@ -1034,9 +1039,9 @@ namespace MakeGrid3D.Solver
         /// <param name="t">Значение на текущем временном слое.</param>
         /// <param name="isF">Сборка происходит через вектор f, иначе через q_i. Если isF = true, то умножается на 1</param>
         /// <param name="m">Множитель.</param>
-        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
+        /// <param name="param">Функция параметра.</param>
         /// <param name="q_i">Вектор значений на i-ом временном слое.</param>
-        private void AssemblyB(double t, bool isF, double m = 1, bool isChi = false, List<double> q_i = null) 
+        private void AssemblyB(double t, bool isF, double m = 1, Function param=null, List<double> q_i = null) 
         {
             for (int k = 0; k < _grid.Nelems; k++)
             {
@@ -1064,7 +1069,7 @@ namespace MakeGrid3D.Solver
                     f8 = _params.F(elem.wi, x2, y2, z2, t);
                     gamma = 1;
                 }
-                else 
+                else if (param != null)
                 {
                     f1 = q_i[elem.n1];
                     f2 = q_i[elem.n2];
@@ -1074,7 +1079,7 @@ namespace MakeGrid3D.Solver
                     f6 = q_i[elem.n6];
                     f7 = q_i[elem.n7];
                     f8 = q_i[elem.n8];
-                    gamma = isChi ? _params.Chi(elem.wi) : _params.Sigma(elem.wi);
+                    gamma = param(elem.wi);
                 }
 
                 for (int i = 0; i < 8; i++)

@@ -320,7 +320,7 @@
                 else 
                 {
                     double d_u1 = _params.DU0(p, x, y);
-                    q_2[i] = d_u1;
+                    q_2[i] = u0 + d_u1 * (_t[1] - _t[0]);
                 }
             }
         }
@@ -574,11 +574,14 @@
                 int i = treeNode.Item1;
                 double Telem = treeNode.Item2;
 
-                if (i < _grid.Nc && !processed_nodes.Contains(i))
+                if (i < _grid.Nc)
                 {
-                    jg_gg.Add((i, m * Telem));
-                    elems_count++;
-                    processed_nodes.Add(i);
+                    if (!processed_nodes.Contains(i))
+                    {
+                        jg_gg.Add((i, m * Telem));
+                        elems_count++;
+                        processed_nodes.Add(i);
+                    }
                 }
                 else
                 {
@@ -730,7 +733,7 @@
         /// Собирает матрицу масс и добавляет её в глобальную матрицу. 
         /// </summary>
         /// <param name="m">Множитель.</param>
-        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
+        /// <param name="param">Функция параметра.</param>
         private void AssemblyM(double m, Function param) 
         {
             foreach (Elem2D elem in _grid.Elems)
@@ -761,7 +764,7 @@
         /// <param name="t">Значение на текущем временном слое.</param>
         /// <param name="isF">Сборка происходит через вектор f, иначе через q_i. Если isF = true, то умножается на 1</param>
         /// <param name="m">Множитель.</param>
-        /// <param name="isChi">Множитель хи, иначе множитель сигма.</param>
+        /// <param name="param">Функция параметра.</param>
         /// <param name="q_i">Вектор значений на i-ом временном слое.</param>
         private void AssemblyB(double t, bool isF, double m = 1, Function param = null, List<double> q_i = null)
         {
