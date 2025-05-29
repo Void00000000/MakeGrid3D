@@ -32,7 +32,7 @@ namespace MakeGrid3D.Solver
     }
 
     /// <summary>
-    /// Функция xyzt для регулярной сетки.
+    /// Функция xyzt.
     /// </summary>
     static class Functions1_3D
     {
@@ -72,7 +72,7 @@ namespace MakeGrid3D.Solver
                 case 2:
                     return u(x, 4, z, t);
                 case 3:
-                    return u(1, y, z, t); ;
+                    return u(1, y, z, t);
                 case 4:
                     return u(x, y, 1, t);
                 case 5:
@@ -85,23 +85,23 @@ namespace MakeGrid3D.Solver
         {
             switch (si)
             {
-                case 0:
-                    return -2 * x * z;
+                case 1:
+                    return lambda(si) * y * z * t;
             }
             return 0;
         }
 
         static public double beta(int si)
         {
-            return 1;
+            return 2;
         }
 
         static public double u_beta(int si, double x, double y, double z, double t)
         {
             switch (si)
             {
-                case 0:
-                    return -(-2 * x * z + 1 * x * z);
+                case 5:
+                    return 9*x*y*t;
             }
             return 0;
         }
@@ -208,12 +208,23 @@ namespace MakeGrid3D.Solver
             Grid.Nc = Grid.Nnodes;
             List<Boundary3D> boundaries = Grid.GetBoundaries();
 
-            Bc1 = boundaries;
+            Bc1 = new List<Boundary3D>()
+            {
 
+            };
+            foreach(var boundary in boundaries) 
+            {
+                if (boundary.Si != 1) Bc1.Add(boundary);
+            }
+                    
             Bc2 = new List<Boundary3D>()
             {
 
             };
+            foreach (var boundary in boundaries)
+            {
+                if (boundary.Si == 1) Bc2.Add(boundary);
+            }
 
             Bc3 = new List<Boundary3D>()
             {
@@ -230,7 +241,7 @@ namespace MakeGrid3D.Solver
     }
 
     /// <summary>
-    /// Тест нерегулярной сетки из кирпича.
+    /// Тест нерегулярной сетки.
     /// </summary>
     public class Test2_3D
     {
@@ -303,19 +314,37 @@ namespace MakeGrid3D.Solver
                     new Vector3(x2,y2,z2), //35
                     new Vector3(x3,y2,z2), //36
                     new Vector3(x4,y2,z2), //37
-                    new Vector3(x1,y2,z3), //38
+                    new Vector3(x2,y2,z3), //38
                     new Vector3(x2,y2,z4), //39
                 };
-            List<Elem3D> elems = new List<Elem3D>()
+            List<Elem3D> num_1_elems = new List<Elem3D>()
                 {
-                    new Elem3D(0,0,1,4,5,8,9,12,13, new List<int>{15,16,17,19}),
-                    new Elem3D(0,1,2,15,3,16,7,17,18),
-                    new Elem3D(0,16,7,17,18,9,10,19,11),
-                    new Elem3D(0,15,3,5,6,19,11,13,14, new List<int>{17,18})
+                    new Elem3D(0,1,2,7,8,13,14,19,20, new List<int>{33,34,35,38}),
+                    new Elem3D(0,2,3,33,5,34,11,35,36),
+                    new Elem3D(0,3,4,5,6,11,12,36,37),
+                    new Elem3D(0,33,5,8,9,38,17,20,21, new List<int>{35,36}),
+                    new Elem3D(0,5,6,9,10,17,18,21,22, new List<int>{36,37}),
+                    new Elem3D(0,34,11,35,36,14,15,38,17),
+                    new Elem3D(0,11,12,36,37,15,16,17,18),
+                    new Elem3D(0,13,14,19,20,23,24,29,30, new List<int>{38,39}),
+                    new Elem3D(0,14,15,38,17,24,25,39,27),
+                    new Elem3D(0,15,16,17,18,25,26,27,28),
+                    new Elem3D(0,38,17,20,21,39,27,30,31),
+                    new Elem3D(0,17,18,21,22,27,28,31,32)
                 };
             int nx = 3;
             int ny = 3;
             int nz = 3;
+            List<Elem3D> elems = new List<Elem3D>();
+            foreach (var elem in num_1_elems) 
+            {
+                List<int> u_uc = new List<int>();
+                foreach (int n in elem.n_uc)
+                    u_uc.Add(n - 1);
+
+                elems.Add(new Elem3D(elem.wi, elem.n1 - 1, elem.n2 - 1, elem.n3 - 1, elem.n4 - 1, 
+                    elem.n5 - 1, elem.n6 - 1, elem.n7 - 1, elem.n8 - 1, u_uc));
+            }
 
             ByteMat3D IJK = new ByteMat3D(nx);
             for (int i = 0; i < nx; i++)
@@ -330,20 +359,35 @@ namespace MakeGrid3D.Solver
             }
 
             Grid = new Grid3D(area, XYZ, elems, IJK);
-            Grid.Nc = Grid.Nnodes - 5;
+            Grid.Nc = Grid.Nnodes - 7;
             List<Boundary3D> boundaries = Grid.GetBoundaries();
 
-            Bc1 = boundaries;
+            Bc1 = new List<Boundary3D>()
+            {
+
+            };
+            foreach (var boundary in boundaries)
+            {
+                if (boundary.Si != 1 && boundary.Si != 5) Bc1.Add(boundary);
+            }
 
             Bc2 = new List<Boundary3D>()
             {
 
             };
+            foreach (var boundary in boundaries)
+            {
+                if (boundary.Si == 1) Bc2.Add(boundary);
+            }
 
             Bc3 = new List<Boundary3D>()
             {
 
             };
+            foreach (var boundary in boundaries)
+            {
+                if (boundary.Si == 5) Bc3.Add(boundary);
+            }
 
             FemParams = FemParamsFactory3D.CreateFemParams(1);
             FemParams.Ug = ug;
@@ -357,21 +401,25 @@ namespace MakeGrid3D.Solver
         private double ug(int si, double x, double y, double z, double t)
         {
             double xmin = 0;
-            double xmax = 5;
+            double xmax = 8;
+            double ymin = 0;
+            double ymax = 5;
+            double zmin = 0;
+            double zmax = 8;
             switch (si)
             {
                 case 0:
-                    return u(x, 0, z, t);
+                    return u(x, ymin, z, t);
                 case 1:
                     return u(xmax, y, z, t);
                 case 2:
-                    return u(x, 5, z, t);
+                    return u(x, ymax, z, t);
                 case 3:
                     return u(xmin, y, z, t); ;
                 case 4:
-                    return u(x, y, 0, t);
+                    return u(x, y, zmin, t);
                 case 5:
-                    return u(x, y, 4, t);
+                    return u(x, y, zmax, t);
             }
             return 0;
         }

@@ -606,8 +606,8 @@ namespace MakeGrid3D.Solver
                         double psiZ2 = BasicFunc2(zc, zmin, hz);
                         double Telem1 = psiX1 * psiZ1;
                         double Telem2 = psiX2 * psiZ1;
-                        double Telem3 = psiZ1 * psiZ2;
-                        double Telem4 = psiZ2 * psiZ2;
+                        double Telem3 = psiX1 * psiZ2;
+                        double Telem4 = psiX2 * psiZ2;
 
                         if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n2))
                         {
@@ -636,8 +636,8 @@ namespace MakeGrid3D.Solver
                         double psiZ2 = BasicFunc2(zc, zmin, hz);
                         double Telem1 = psiY1 * psiZ1;
                         double Telem2 = psiY2 * psiZ1;
-                        double Telem3 = psiZ1 * psiZ2;
-                        double Telem4 = psiZ2 * psiZ2;
+                        double Telem3 = psiY1 * psiZ2;
+                        double Telem4 = psiY2 * psiZ2;
 
                         if (!MathsHelper.IsEqual(Telem1, 0) && !G[nc].Any(tuple => tuple.Item1 == n1))
                         {
@@ -1190,20 +1190,12 @@ namespace MakeGrid3D.Solver
             if (MathsHelper.IsEqual(x1, x2))
             {
                 theta1 = _params.Theta(p, x1, y1, z1, t);
-                theta2 = _params.Theta(p, x2, y1, z1, t);
-                theta3 = _params.Theta(p, x1, y2, z1, t);
-                theta4 = _params.Theta(p, x2, y2, z1, t);
-                area = (x2 - x1) * (y2 - y1);
-            }
-            else if (MathsHelper.IsEqual(y1, y2))
-            {
-                theta1 = _params.Theta(p, x1, y1, z1, t);
                 theta2 = _params.Theta(p, x1, y2, z1, t);
                 theta3 = _params.Theta(p, x1, y1, z2, t);
                 theta4 = _params.Theta(p, x1, y2, z2, t);
                 area = (y2 - y1) * (z2 - z1);
             }
-            else
+            else if (MathsHelper.IsEqual(y1, y2))
             {
                 theta1 = _params.Theta(p, x1, y1, z1, t);
                 theta2 = _params.Theta(p, x2, y1, z1, t);
@@ -1211,10 +1203,29 @@ namespace MakeGrid3D.Solver
                 theta4 = _params.Theta(p, x2, y1, z2, t);
                 area = (x2 - x1) * (z2 - z1);
             }
+            else
+            {
+                theta1 = _params.Theta(p, x1, y1, z1, t);
+                theta2 = _params.Theta(p, x2, y1, z1, t);
+                theta3 = _params.Theta(p, x1, y2, z1, t);
+                theta4 = _params.Theta(p, x2, y2, z1, t);
+                area = (x2 - x1) * (y2 - y1);
+            }
 
             int[] global_nodes = new int[4] {l1,l2,l3,l4 };
-            for (int l = 0; l < 4; l++)
-                _b[global_nodes[l]] += area * (theta1 * _c[l][0] + theta2 * _c[l][1] + theta3 * _c[l][2] + theta4 * _c[l][3]) / 36.0;
+            for (int i = 0; i < 4; i++)
+            {
+                if (global_nodes[i] < _n)
+                    _b[global_nodes[i]] += area * (theta1 * _c[i][0] + theta2 * _c[i][1] + theta3 * _c[i][2] + theta4 * _c[i][3]) / 36.0;
+                else
+                {
+                    int d = global_nodes[i] - _n;
+                    for (int j = _tMatrix.Ig[d]; j < _tMatrix.Ig[d + 1]; j++)
+                    {
+                        _b[_tMatrix.Jg[j]] += _tMatrix.Gg[j] * area * (theta1 * _c[i][0] + theta2 * _c[i][1] + theta3 * _c[i][2] + theta4 * _c[i][3]) / 36.0;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -1244,27 +1255,27 @@ namespace MakeGrid3D.Solver
 
             if (MathsHelper.IsEqual(x1, x2))
             {
-                ubeta1 = _params.Theta(p, x1, y1, z1, t);
-                ubeta2 = _params.Theta(p, x2, y1, z1, t);
-                ubeta3 = _params.Theta(p, x1, y2, z1, t);
-                ubeta4 = _params.Theta(p, x2, y2, z1, t);
-                area = (x2 - x1) * (y2 - y1);
+                ubeta1 = _params.Ubeta(p, x1, y1, z1, t);
+                ubeta2 = _params.Ubeta(p, x1, y2, z1, t);
+                ubeta3 = _params.Ubeta(p, x1, y1, z2, t);
+                ubeta4 = _params.Ubeta(p, x1, y2, z2, t);
+                area = (y2 - y1) * (z2 - z1);
             }
             else if (MathsHelper.IsEqual(y1, y2))
             {
-                ubeta1 = _params.Theta(p, x1, y1, z1, t);
-                ubeta2 = _params.Theta(p, x1, y2, z1, t);
-                ubeta3 = _params.Theta(p, x1, y1, z2, t);
-                ubeta4 = _params.Theta(p, x1, y2, z2, t);
-                area = (y2 - y1) * (z2 - z1);
+                ubeta1 = _params.Ubeta(p, x1, y1, z1, t);
+                ubeta2 = _params.Ubeta(p, x2, y1, z1, t);
+                ubeta3 = _params.Ubeta(p, x1, y1, z2, t);
+                ubeta4 = _params.Ubeta(p, x2, y1, z2, t);
+                area = (x2 - x1) * (z2 - z1);
             }
             else
             {
-                ubeta1 = _params.Theta(p, x1, y1, z1, t);
-                ubeta2 = _params.Theta(p, x2, y1, z1, t);
-                ubeta3 = _params.Theta(p, x1, y1, z2, t);
-                ubeta4 = _params.Theta(p, x2, y1, z2, t);
-                area = (x2 - x1) * (z2 - z1);
+                ubeta1 = _params.Ubeta(p, x1, y1, z1, t);
+                ubeta2 = _params.Ubeta(p, x2, y1, z1, t);
+                ubeta3 = _params.Ubeta(p, x1, y2, z1, t);
+                ubeta4 = _params.Ubeta(p, x2, y2, z1, t);
+                area = (x2 - x1) * (y2 - y1);
             }
 
             int[] global_nodes = new int[4] { l1, l2, l3, l4 };
@@ -1273,9 +1284,20 @@ namespace MakeGrid3D.Solver
                 for (int jc = 0; jc < 4; jc++)
                     AddLocalMatrixElement(_c[ic][jc] * area * beta / 36.0, global_nodes[ic], global_nodes[jc]);
 
-           
-            for (int l = 0; l < 4; l++)
-                _b[global_nodes[l]] += beta * area * (ubeta1 * _c[l][0] + ubeta2 * _c[l][1] + ubeta3 * _c[l][2] + ubeta4 * _c[l][3]) / 36.0;
+
+            for (int i = 0; i < 4; i++) 
+            {
+                if (global_nodes[i] < _n)
+                    _b[global_nodes[i]] += beta * area * (ubeta1 * _c[i][0] + ubeta2 * _c[i][1] + ubeta3 * _c[i][2] + ubeta4 * _c[i][3]) / 36.0;
+                else
+                {
+                    int d = global_nodes[i] - _n;
+                    for (int j = _tMatrix.Ig[d]; j < _tMatrix.Ig[d + 1]; j++)
+                    {
+                        _b[_tMatrix.Jg[j]] += _tMatrix.Gg[j] * beta * area * (ubeta1 * _c[i][0] + ubeta2 * _c[i][1] + ubeta3 * _c[i][2] + ubeta4 * _c[i][3]) / 36.0;
+                    }
+                }
+            }
         }
 
         #endregion Private Methods
