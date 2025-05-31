@@ -380,8 +380,6 @@ namespace MakeGrid3D.Solver
             ApplyBc(3, t);
             ApplyBc(1, t);
 
-            //_matrix.Di[2] = 1;
-
             List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
             if (_n == _grid.Nnodes)
                 return qc;

@@ -26,13 +26,65 @@ namespace MakeGrid3D.Solver
                     FemParams.U1 = Functions1_3D.u1;
                     FemParams.Gamma = Functions1_3D.gamma;
                     break;
+                case 2:
+                    FemParams.Lambda = Functions2_3D.lambda;
+                    FemParams.Chi = Functions2_3D.chi;
+                    FemParams.Sigma = Functions2_3D.sigma;
+                    FemParams.Ubeta = Functions2_3D.u_beta;
+                    FemParams.Theta = Functions2_3D.theta;
+                    FemParams.Beta = Functions2_3D.beta;
+                    FemParams.Ug = Functions2_3D.u_g;
+                    FemParams.F = Functions2_3D.f;
+                    FemParams.U0 = Functions2_3D.u0;
+                    FemParams.U1 = Functions2_3D.u1;
+                    FemParams.Gamma = Functions2_3D.gamma;
+                    break;
+                case 3:
+                    FemParams.Lambda = Functions3_3D.lambda;
+                    FemParams.Chi = Functions3_3D.chi;
+                    FemParams.Sigma = Functions3_3D.sigma;
+                    FemParams.Ubeta = Functions3_3D.u_beta;
+                    FemParams.Theta = Functions3_3D.theta;
+                    FemParams.Beta = Functions3_3D.beta;
+                    FemParams.Ug = Functions3_3D.u_g;
+                    FemParams.F = Functions3_3D.f;
+                    FemParams.U0 = Functions3_3D.u0;
+                    FemParams.U1 = Functions3_3D.u1;
+                    FemParams.Gamma = Functions3_3D.gamma;
+                    break;
+                case 4:
+                    FemParams.Lambda = Functions4_3D.lambda;
+                    FemParams.Chi = Functions4_3D.chi;
+                    FemParams.Sigma = Functions4_3D.sigma;
+                    FemParams.Ubeta = Functions4_3D.u_beta;
+                    FemParams.Theta = Functions4_3D.theta;
+                    FemParams.Beta = Functions4_3D.beta;
+                    FemParams.Ug = Functions4_3D.u_g;
+                    FemParams.F = Functions4_3D.f;
+                    FemParams.U0 = Functions4_3D.u0;
+                    FemParams.U1 = Functions4_3D.u1;
+                    FemParams.Gamma = Functions4_3D.gamma;
+                    break;
+                case 5:
+                    FemParams.Lambda = Functions5_3D.lambda;
+                    FemParams.Chi = Functions5_3D.chi;
+                    FemParams.Sigma = Functions5_3D.sigma;
+                    FemParams.Ubeta = Functions5_3D.u_beta;
+                    FemParams.Theta = Functions5_3D.theta;
+                    FemParams.Beta = Functions5_3D.beta;
+                    FemParams.Ug = Functions5_3D.u_g;
+                    FemParams.F = Functions5_3D.f;
+                    FemParams.U0 = Functions5_3D.u0;
+                    FemParams.U1 = Functions5_3D.u1;
+                    FemParams.Gamma = Functions5_3D.gamma;
+                    break;
             }
             return FemParams;
         }
     }
 
     /// <summary>
-    /// Функция xyzt.
+    /// Функция xyz*t^2.
     /// </summary>
     static class Functions1_3D
     {
@@ -58,7 +110,7 @@ namespace MakeGrid3D.Solver
 
         static public double f(int wi, double x, double y, double z, double t)
         {
-            return gamma(wi) * u(x, y, z, t) + sigma(wi) * x * y * z;
+            return sigma(wi) * x * y * z + gamma(wi) * u(x, y, z, t);
         }
 
         static public double u_g(int si, double x, double y, double z, double t)
@@ -86,7 +138,7 @@ namespace MakeGrid3D.Solver
             switch (si)
             {
                 case 1:
-                    return lambda(si) * y * z * t;
+                    return 2 * y * z * t;
             }
             return 0;
         }
@@ -101,7 +153,7 @@ namespace MakeGrid3D.Solver
             switch (si)
             {
                 case 5:
-                    return 9*x*y*t;
+                    return 9 * x * y * t;
             }
             return 0;
         }
@@ -121,6 +173,390 @@ namespace MakeGrid3D.Solver
         static public double u(double x, double y, double z, double t)
         {
             return x * y * z * t;
+        }
+    }
+
+    /// <summary>
+    /// Функция (x^2 + y^2 + z^2)t.
+    /// </summary>
+    static class Functions2_3D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double z, double t)
+        {
+            return -12*t + gamma(wi) * u(x, y, z, t) + sigma(wi) * (x*x+y*y+z*z);
+        }
+
+        static public double u_g(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, z, t);
+                case 1:
+                    return u(4, y, z, t);
+                case 2:
+                    return u(x, 4, z, t);
+                case 3:
+                    return u(1, y, z, t);
+                case 4:
+                    return u(x, y, 1, t);
+                case 5:
+                    return u(x, y, 4, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 32 * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 5:
+                    return (80 + x*x + y*y)*t;
+            }
+            return 0;
+        }
+
+        static public double u0(int si, double x, double y, double z)
+        {
+            double t0 = 0;
+            return u(x, y, z, t0);
+        }
+
+        static public double u1(int si, double x, double y, double z)
+        {
+            double t1 = 1;
+            return u(x, y, z, t1);
+        }
+
+        static public double u(double x, double y, double z, double t)
+        {
+            return (x*x + y*y + z*z) * t;
+        }
+    }
+
+    /// <summary>
+    /// Функция xyz*t^2.
+    /// </summary>
+    static class Functions3_3D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double z, double t)
+        {
+            return sigma(wi)*2*x*y*z*t + gamma(wi) * u(x,y,z,t) + chi(wi) * 2 * x * y * z;
+        }
+
+        static public double u_g(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, z, t);
+                case 1:
+                    return u(4, y, z, t);
+                case 2:
+                    return u(x, 4, z, t);
+                case 3:
+                    return u(1, y, z, t);
+                case 4:
+                    return u(x, y, 1, t);
+                case 5:
+                    return u(x, y, 4, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 2*y*z*t*t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 5:
+                    return 9*x*y*t*t;
+            }
+            return 0;
+        }
+
+        static public double u0(int si, double x, double y, double z)
+        {
+            double t0 = 0;
+            return u(x, y, z, t0);
+        }
+
+        static public double u1(int si, double x, double y, double z)
+        {
+            double t1 = 1;
+            return u(x, y, z, t1);
+        }
+
+        static public double u(double x, double y, double z, double t)
+        {
+            return x*y*z * t*t;
+        }
+    }
+
+    /// <summary>
+    /// Функция xyz*t^3.
+    /// </summary>
+    static class Functions4_3D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double z, double t)
+        {
+            return sigma(wi) * 3 * x * y * z * t*t + gamma(wi) * u(x, y, z, t) + chi(wi) * 6 * x * y * z * t;
+        }
+
+        static public double u_g(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, z, t);
+                case 1:
+                    return u(4, y, z, t);
+                case 2:
+                    return u(x, 4, z, t);
+                case 3:
+                    return u(1, y, z, t);
+                case 4:
+                    return u(x, y, 1, t);
+                case 5:
+                    return u(x, y, 4, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 2 * y * z * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 5:
+                    return 9 * x * y * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double u0(int si, double x, double y, double z)
+        {
+            double t0 = 0;
+            return u(x, y, z, t0);
+        }
+
+        static public double u1(int si, double x, double y, double z)
+        {
+            double t1 = 1;
+            return u(x, y, z, t1);
+        }
+
+        static public double u2(int si, double x, double y, double z)
+        {
+            double t1 = 2;
+            return u(x, y, z, t1);
+        }
+
+        static public double u(double x, double y, double z, double t)
+        {
+            return x * y * z * t * t * t;
+        }
+    }
+
+    /// <summary>
+    /// Функция xyz*t^4.
+    /// </summary>
+    static class Functions5_3D
+    {
+        static public double chi(int wi)
+        {
+            return 5;
+        }
+
+        static public double sigma(int wi)
+        {
+            return 4;
+        }
+
+        static public double gamma(int wi)
+        {
+            return 3;
+        }
+
+        static public double lambda(int wi)
+        {
+            return 2;
+        }
+
+        static public double f(int wi, double x, double y, double z, double t)
+        {
+            return sigma(wi) * 4 * x * y * z * t * t * t + gamma(wi) * u(x, y, z, t) + chi(wi) * 12 * x * y * z * t * t;
+        }
+
+        static public double u_g(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 0:
+                    return u(x, 1, z, t);
+                case 1:
+                    return u(4, y, z, t);
+                case 2:
+                    return u(x, 4, z, t);
+                case 3:
+                    return u(1, y, z, t);
+                case 4:
+                    return u(x, y, 1, t);
+                case 5:
+                    return u(x, y, 4, t);
+            }
+            return 0;
+        }
+
+        static public double theta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 1:
+                    return 2 * y * z * t * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double beta(int si)
+        {
+            return 2;
+        }
+
+        static public double u_beta(int si, double x, double y, double z, double t)
+        {
+            switch (si)
+            {
+                case 5:
+                    return 9 * x * y * t * t * t * t;
+            }
+            return 0;
+        }
+
+        static public double u0(int si, double x, double y, double z)
+        {
+            double t0 = 0;
+            return u(x, y, z, t0);
+        }
+
+        static public double u1(int si, double x, double y, double z)
+        {
+            double t1 = 1;
+            return u(x, y, z, t1);
+        }
+
+        static public double u2(int si, double x, double y, double z)
+        {
+            double t1 = 2;
+            return u(x, y, z, t1);
+        }
+
+        static public double u(double x, double y, double z, double t)
+        {
+            return x * y * z * t * t * t * t;
         }
     }
 
@@ -389,13 +825,13 @@ namespace MakeGrid3D.Solver
                 if (boundary.Si == 5) Bc3.Add(boundary);
             }
 
-            FemParams = FemParamsFactory3D.CreateFemParams(1);
+            FemParams = FemParamsFactory3D.CreateFemParams(5);
             FemParams.Ug = ug;
         }
 
         public double u(double x, double y, double z, double t) 
         {
-            return Functions1_3D.u(x, y, z, t);
+            return Functions5_3D.u(x, y, z, t);
         }
 
         private double ug(int si, double x, double y, double z, double t)

@@ -28,8 +28,13 @@ namespace MakeGrid3D.Pages
             {
                 var qList = FEMSolver3D.Instance.Solve();
                 int J = test.T.Count - 1;
+                List<int> output_nodes = new() { 17, 33, 34, 35, 36, 37, 38, 39 };
                 for (int i = 0; i < test.Grid.Nnodes; i++)
                 {
+                    if (!output_nodes.Contains(i + 1))
+                    {
+                        continue;
+                    }
                     double x = test.Grid.XYZ[i].X;
                     double y = test.Grid.XYZ[i].Y;
                     double z = test.Grid.XYZ[i].Z;
