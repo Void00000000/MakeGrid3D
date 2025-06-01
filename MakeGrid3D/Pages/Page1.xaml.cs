@@ -16,43 +16,6 @@ namespace MakeGrid3D.Pages
         public Page1()
         {
             InitializeComponent();
-            Test2_3D test = new Test2_3D();
-            test.CreateTest();
-            bool isSuccess = FEMSolver3D.Instance.Initialize(test.Grid, test.FemParams,
-                test.Bc1, test.Bc2, test.Bc3, test.T);
-            if (!isSuccess)
-            {
-                LogService.LogWarning("Не удалось создать T матрицу, т.к. есть перехлесты");
-            }
-            else
-            {
-                var qList = FEMSolver3D.Instance.Solve();
-                int J = test.T.Count - 1;
-                List<int> output_nodes = new() { 17, 33, 34, 35, 36, 37, 38, 39 };
-                for (int i = 0; i < test.Grid.Nnodes; i++)
-                {
-                    if (!output_nodes.Contains(i + 1))
-                    {
-                        continue;
-                    }
-                    double x = test.Grid.XYZ[i].X;
-                    double y = test.Grid.XYZ[i].Y;
-                    double z = test.Grid.XYZ[i].Z;
-                    double uh = qList[J][i];
-                    double u = test.u(x, y, z, test.T[J]);
-                    double abs = !MathsHelper.IsEqual(u,0) ? Math.Abs(u - uh) / u * 100 : 0;
-
-                    string frmt = "e15";
-                    LogService.Log(i + 1 + " ");
-                    LogService.Log(x.ToString() + " ");
-                    LogService.Log(y.ToString() + " ");
-                    LogService.Log(z.ToString() + " ");
-                    LogService.Log(uh.ToString(frmt) + " ");
-                    LogService.Log(u.ToString(frmt) + " ");
-                    LogService.Log(abs.ToString("F3") + " ");
-                    LogService.Log("\n");
-                }
-            }
         }
 
         private void OpenFileClick(object sender, RoutedEventArgs e)

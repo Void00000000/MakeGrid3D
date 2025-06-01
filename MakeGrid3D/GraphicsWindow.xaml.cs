@@ -10,13 +10,18 @@ using System.Windows.Media;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Windows.Controls;
+using MakeGrid3D.Helpers;
+using MakeGrid3D.Solver;
+using Antlr.Runtime.Misc;
+using System.Xml.Linq;
+using System.ComponentModel;
 
 namespace MakeGrid3D
 {
     /// <summary>
     /// Interaction logic for GraphicsWindow.xaml
     /// </summary>
-    public partial class GraphicsWindow : Window
+    public partial class GraphicsWindow : Window, INotifyPropertyChanged
     {
         RenderGrid renderGrid;
         IrregularGridMaker irregularGridMaker;
@@ -72,6 +77,262 @@ namespace MakeGrid3D
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
 
+        #region FEM fields
+
+        private int prevArea = 1;
+
+        private List<string> str_lambdas;
+        private List<string> str_gammas;
+        private List<string> str_sigmas;
+        private List<string> str_chis;
+        private List<string> str_fs;
+
+        private List<double> lambdas;
+        private List<double> gammas;
+        private List<double> sigmas;
+        private List<double> chis;
+        private List<FunctionXYT> fs_2d;
+        private List<FunctionXYZT> fs_3d;
+
+        private List<FunctionXYT> ugs_2d;
+        private List<FunctionXYT> thetas_2d;
+        private List<FunctionXYT> ubetas_2d;
+        private List<double> betas;
+
+        private int _bcnum1;
+        private int _bcnum2;
+        private int _bcnum3;
+        private int _bcnum4;
+        private string _ug1;
+        private string _ug2;
+        private string _ug3;
+        private string _ug4;
+        private string _theta1;
+        private string _theta2;
+        private string _theta3;
+        private string _theta4;
+        private string _beta1;
+        private string _beta2;
+        private string _beta3;
+        private string _beta4;
+        private string _ubeta1;
+        private string _ubeta2;
+        private string _ubeta3;
+        private string _ubeta4;
+
+        public string Ug1 
+        { 
+            get => _ug1; 
+            set 
+            {
+                if (_ug1 == value) return;
+                _ug1 = value;
+                OnPropertyChanged(nameof(Ug1));
+            }
+        }
+        public string Ug2
+        {
+            get => _ug2;
+            set
+            {
+                if (_ug2 == value) return;
+                _ug2 = value;
+                OnPropertyChanged(nameof(Ug2));
+            }
+        }
+        public string Ug3
+        {
+            get => _ug3;
+            set
+            {
+                if (_ug3 == value) return;
+                _ug3 = value;
+                OnPropertyChanged(nameof(Ug3));
+            }
+        }
+        public string Ug4
+        {
+            get => _ug4;
+            set
+            {
+                if (_ug4 == value) return;
+                _ug4 = value;
+                OnPropertyChanged(nameof(Ug4));
+            }
+        }
+        public string Theta1
+        {
+            get => _theta1;
+            set
+            {
+                if (_theta1 == value) return;
+                _theta1 = value;
+                OnPropertyChanged(nameof(Theta1));
+            }
+        }
+        public string Theta2
+        {
+            get => _theta2;
+            set
+            {
+                if (_theta2 == value) return;
+                _theta2 = value;
+                OnPropertyChanged(nameof(Theta2));
+            }
+        }
+        public string Theta3
+        {
+            get => _theta3;
+            set
+            {
+                if (_theta3 == value) return;
+                _theta3 = value;
+                OnPropertyChanged(nameof(Theta3));
+            }
+        }
+        public string Theta4
+        {
+            get => _theta4;
+            set
+            {
+                if (_theta4 == value) return;
+                _theta4 = value;
+                OnPropertyChanged(nameof(Theta4));
+            }
+        }
+        public string Beta1
+        {
+            get => _beta1;
+            set
+            {
+                if (_beta1 == value) return;
+                _beta1 = value;
+                OnPropertyChanged(nameof(Beta1));
+            }
+        }
+        public string Beta2
+        {
+            get => _beta2;
+            set
+            {
+                if (_beta2 == value) return;
+                _beta2 = value;
+                OnPropertyChanged(nameof(Beta2));
+            }
+        }
+        public string Beta3
+        {
+            get => _beta3;
+            set
+            {
+                if (_beta3 == value) return;
+                _beta3 = value;
+                OnPropertyChanged(nameof(Beta3));
+            }
+        }
+        public string Beta4
+        {
+            get => _beta4;
+            set
+            {
+                if (_beta4 == value) return;
+                _beta4 = value;
+                OnPropertyChanged(nameof(Beta4));
+            }
+        }
+        public string UBeta1
+        {
+            get => _ubeta1;
+            set
+            {
+                if (_ubeta1 == value) return;
+                _ubeta1 = value;
+                OnPropertyChanged(nameof(UBeta1));
+            }
+        }
+        public string UBeta2
+        {
+            get => _ubeta2;
+            set
+            {
+                if (_ubeta2 == value) return;
+                _ubeta2 = value;
+                OnPropertyChanged(nameof(UBeta2));
+            }
+        }
+        public string UBeta3
+        {
+            get => _ubeta3;
+            set
+            {
+                if (_ubeta3 == value) return;
+                _ubeta3 = value;
+                OnPropertyChanged(nameof(UBeta3));
+            }
+        }
+        public string UBeta4
+        {
+            get => _ubeta4;
+            set
+            {
+                if (_ubeta4 == value) return;
+                _ubeta4 = value;
+                OnPropertyChanged(nameof(UBeta4));
+            }
+        }
+        public int BcNum1
+        {
+            get => _bcnum1;
+            set
+            {
+                if (_bcnum1 == value) return;
+                _bcnum1 = value;
+                OnPropertyChanged(nameof(BcNum1));
+            }
+        }
+        public int BcNum2
+        {
+            get => _bcnum2;
+            set
+            {
+                if (_bcnum2 == value) return;
+                _bcnum2 = value;
+                OnPropertyChanged(nameof(BcNum2));
+            }
+        }
+        public int BcNum3
+        {
+            get => _bcnum3;
+            set
+            {
+                if (_bcnum3 == value) return;
+                _bcnum3 = value;
+                OnPropertyChanged(nameof(BcNum3));
+            }
+        }
+        public int BcNum4
+        {
+            get => _bcnum4;
+            set
+            {
+                if (_bcnum4 == value) return;
+                _bcnum4 = value;
+                OnPropertyChanged(nameof(BcNum4));
+            }
+        }
+
+        private List<string> str_u0s;
+        private List<string> str_du0s;
+        private List<string> str_u1s;
+        private List<FunctionXY> u0s_2d;
+        private List<FunctionXY> du0s_2d;
+        private List<FunctionXY> u1s_2d;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+
+        #endregion FEM fields
+
         public GraphicsWindow(GridParams gridParams)
         {
             InitializeComponent();
@@ -106,6 +367,11 @@ namespace MakeGrid3D
             ResetUI();
         }
 
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         private void SetRenderGrid(bool removeQ = true)
         {
             if (renderGrid == null)
@@ -125,11 +391,17 @@ namespace MakeGrid3D
             speedHor = (float)(renderGrid.Right - renderGrid.Left) * 0.01f;
             speedVer = (float)(renderGrid.Top - renderGrid.Bottom) * 0.01f;
             SetAxis();
+            FEMSubAreaNumDownMenu.Items.Clear();
             SubAreaNumDownMenu.Items.Clear();
+
+            ResetParamsStrings();
+
             for (int i = 0; i < renderGrid.Grid.Nmats; i++)
             {
+                FEMSubAreaNumDownMenu.Items.Add($"{i + 1}");
                 SubAreaNumDownMenu.Items.Add($"{i + 1}");
             }
+            FEMSubAreaNumDownMenu.SelectedIndex = 0;
             if (removeQ)
                 RemoveQFile();
         }
@@ -2023,71 +2295,577 @@ namespace MakeGrid3D
             string subAreaNum_txt = "";
             if (comboBox != null && comboBox.SelectedItem != null)
                 subAreaNum_txt = comboBox.SelectedItem.ToString();
-            int subAreaNum;
-            if (int.TryParse(subAreaNum_txt, out subAreaNum))
+            if (int.TryParse(subAreaNum_txt, out int subAreaNum))
             {
-                ;
+                FEMSubAreaColorRect.Fill = new SolidColorBrush(ColordoubleToByte(renderGrid.AreaColors[subAreaNum - 1]));
+                string lambdaBox = FEMLambdaBox.Text;
+                string gammaBox = FEMGammaBox.Text;
+                string fBox = FEMFBox.Text;
+                string sigmaBox = FEMSigmaBox.Text;
+                string chiBox = FEMChiBox.Text;
+                string u0Box = FEMU0Box.Text;
+                string du0Box = FEMDU0Box.Text;
+                string u1Box = FEMU1Box.Text;
+
+                FixParams();
+
+                FEMLambdaBox.Text = str_lambdas[subAreaNum - 1];
+                FEMGammaBox.Text = str_gammas[subAreaNum - 1];
+                FEMFBox.Text = str_fs[subAreaNum - 1];
+                FEMSigmaBox.Text = str_sigmas[subAreaNum - 1];
+                FEMChiBox.Text = str_chis[subAreaNum - 1];
+                FEMU0Box.Text = str_u0s[subAreaNum - 1];
+                FEMU1Box.Text = str_u1s[subAreaNum - 1];
+                FEMDU0Box.Text = str_du0s[subAreaNum - 1];
+
+                str_lambdas[prevArea - 1] = lambdaBox;
+                str_sigmas[prevArea - 1] = sigmaBox;
+                str_gammas[prevArea - 1] = gammaBox;
+                str_fs[prevArea - 1] = fBox;
+                str_chis[prevArea - 1] = chiBox;
+                str_u0s[prevArea - 1] = u0Box;
+                str_u1s[prevArea - 1] = u1Box;
+                str_du0s[prevArea - 1] = du0Box;
+
+                prevArea = subAreaNum;
             }
         }
 
-        private void FEMLambdaChanged(object sender, RoutedEventArgs e)
+        private void OnSolveButtonClick(object sender, RoutedEventArgs e)
         {
+            lambdas = new();
+            gammas = new();
+            sigmas = new();
+            chis = new();
+            fs_2d = new();
+            u0s_2d = new();
+            du0s_2d = new();
+            u1s_2d = new();
 
+            FixParams();
+
+            str_lambdas[prevArea - 1] = FEMLambdaBox.Text;
+            str_gammas[prevArea - 1] = FEMGammaBox.Text;
+            str_fs[prevArea - 1] = FEMFBox.Text;
+            str_sigmas[prevArea - 1] = FEMSigmaBox.Text;
+            str_chis[prevArea - 1] = FEMChiBox.Text;
+            str_u0s[prevArea - 1] = FEMU0Box.Text;
+            str_du0s[prevArea - 1] = FEMDU0Box.Text;
+            str_u1s[prevArea - 1] = FEMU1Box.Text;
+
+            for (int i = 0; i < renderGrid.Grid.Nmats; i++)
+            {
+                if (double.TryParse(str_lambdas[i], out double lambda) ) 
+                {
+                    lambdas.Add(lambda);
+                }
+                else 
+                {
+                    MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                    return;
+                }
+
+                if (double.TryParse(str_gammas[i], out double gamma))
+                {
+                    gammas.Add(gamma);
+                }
+                else
+                {
+                    MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                    return;
+                }
+
+                if (double.TryParse(str_sigmas[i], out double sigma))
+                {
+                    sigmas.Add(sigma);
+                }
+                else
+                {
+                    MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                    return;
+                }
+
+                if (double.TryParse(str_chis[i], out double chi))
+                {
+                    chis.Add(chi);
+                }
+                else
+                {
+                    MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                    return;
+                }
+
+                var f_2d = FuncParserHelper.ParseXYTExpression(str_fs[i]);
+                if (f_2d == null) 
+                {
+                    MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                    return;
+                }
+                fs_2d.Add(f_2d);
+
+                var u0_2d = FuncParserHelper.ParseXYExpression(str_u0s[i]);
+                if (u0_2d == null)
+                {
+                    MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                    return;
+                }
+                u0s_2d.Add(u0_2d);
+
+                if (FEMIsU1CheckBox.IsChecked ?? false)
+                {
+                    var u1_2d = FuncParserHelper.ParseXYExpression(str_u1s[i]);
+                    if (u1_2d == null)
+                    {
+                        MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                        return;
+                    }
+                    u1s_2d.Add(u1_2d);
+                }
+                else
+                {
+                    var du0_2d = FuncParserHelper.ParseXYExpression(str_du0s[i]);
+                    if (du0_2d == null)
+                    {
+                        MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                        return;
+                    }
+                    du0s_2d.Add(du0_2d);
+                }
+            }
+
+            #region Boundaries
+
+            ugs_2d = new();
+            thetas_2d = new();
+            betas = new();
+            ubetas_2d = new();
+            for (int i = 0; i < 4; i++) 
+            {
+                ugs_2d.Add(null);
+                thetas_2d.Add(null);
+                betas.Add(0);
+                ubetas_2d.Add(null);
+            }
+
+            List<string> Ug = new() { Ug1, Ug2, Ug3, Ug4};
+            List<string> Theta = new() { Theta1, Theta2, Theta3, Theta4 };
+            List<string> Beta = new() { Beta1, Beta2, Beta3, Beta4 };
+            List<string> Ubeta = new() { UBeta1, UBeta2, UBeta3, UBeta4 };
+
+            WriteBoundaryCond(BcNum1, 0);
+            WriteBoundaryCond(BcNum2, 1);
+            WriteBoundaryCond(BcNum3, 2);
+            WriteBoundaryCond(BcNum4, 3);
+
+            void WriteBoundaryCond(int bcnum, int bnum)
+            {
+                switch (bcnum + 1)
+                {
+                    case 1:
+                        var ug = FuncParserHelper.ParseXYTExpression(Ug[bnum]);
+                        if (ug == null)
+                        {
+                            MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                            return;
+                        }
+                        ugs_2d[bnum] = ug;
+                        break;
+                    case 2:
+                        var theta = FuncParserHelper.ParseXYTExpression(Theta[bnum]);
+                        if (theta == null)
+                        {
+                            MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                            return;
+                        }
+                        thetas_2d[bnum] = theta;
+                        break;
+                    case 3:
+                        var ubeta = FuncParserHelper.ParseXYTExpression(Ubeta[bnum]);
+                        double beta = 0;
+                        if (ubeta == null && !double.TryParse(Beta[bnum], out beta))
+                        {
+                            MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                            return;
+                        }
+                        ubetas_2d[bnum] = ubeta;
+                        betas[bnum] = double.Parse(Beta[bnum]);
+                        break;
+                }
+            }
+
+            #endregion Boundaries
+
+            if (double.TryParse(FEMT0Box.Text, out double t0) &&
+                double.TryParse(FEMTnBox.Text, out double tn) &&
+                int.TryParse(FEMNtBox.Text, out int nt) &&
+                double.TryParse(FEMQtBox.Text, out double qt))
+            {
+                List<double> T = new(nt + 1);
+                for (int i = 0; i < T.Capacity; i++) 
+                {
+                    T.Add(0);
+                }
+                int i0 = 0; int j0 = 0;
+                Grid2D.MakeGrid1D(T, t0, tn, nt, qt, ref i0, ref j0);
+                T[nt] = tn;
+
+
+                FEMParams2D femParams = new FEMParams2D();
+                femParams.Lambda = (wi) => lambdas[wi];
+                femParams.Gamma = (wi) => gammas[wi];
+                femParams.Sigma = (wi) => sigmas[wi];
+                femParams.Chi = (wi) => chis[wi];
+                femParams.F = (wi, x, y, t) => fs_2d[wi](x, y, t);
+                femParams.U0 = (wi, x, y) => u0s_2d[wi](x, y);
+                if (FEMIsU1CheckBox.IsChecked ?? false) 
+                {
+                    femParams.U1 = (wi, x, y) => u1s_2d[wi](x, y);
+                    femParams.DU0 = null;
+                }
+                else 
+                {
+                    femParams.DU0 = (wi, x, y) => du0s_2d[wi](x, y);
+                    femParams.U1 = null;
+                }
+                femParams.Ug = (si, x, y, t) => ugs_2d[si](x, y, t);
+                femParams.Theta = (si, x, y, t) => thetas_2d[si](x, y, t);
+                femParams.Beta = (si) => betas[si];
+                femParams.Ubeta = (si, x, y, t) => ubetas_2d[si](x, y, t);
+
+                Grid2D femGrid = (Grid2D)renderGrid.Grid;
+                femGrid = femGrid.Renumerate();
+
+                List<Boundary2D> boundaries = femGrid.GetBoundaries();
+                List<Boundary2D> bc1 = new();
+                List<Boundary2D> bc2 = new();
+                List<Boundary2D> bc3 = new();
+
+                foreach (Boundary2D boundary in boundaries) 
+                {
+                    switch (boundary.Si + 1) 
+                    {
+                        case 1:
+                            AddBoundary(BcNum1);
+                            break;
+                        case 2:
+                            AddBoundary(BcNum2);
+                            break;
+                        case 3:
+                            AddBoundary(BcNum3);
+                            break;
+                        case 4:
+                            AddBoundary(BcNum4);
+                            break;
+                    }
+
+                    void AddBoundary(int bcnum) 
+                    {
+                        switch (bcnum + 1)
+                        {
+                            case 1:
+                                bc1.Add(boundary);
+                                break;
+                            case 2:
+                                bc2.Add(boundary);
+                                break;
+                            case 3:
+                                bc3.Add(boundary);
+                                break;
+                        }
+                    }
+                }
+
+                FEMSolver2D.Instance.Initialize(femGrid, femParams, bc1, bc2, bc3, T);
+                var qList = FEMSolver2D.Instance.Solve();
+            }
+            else 
+            {
+                MessageBox.Show("Введены некорректные данные для решения краевой задачи");
+                return;
+            }
         }
 
-        private void FEMSigmaChanged(object sender, RoutedEventArgs e)
+        private void OnSigmaFixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_sigmas.Count; i++) 
+                str_sigmas[i] = FEMSigmaBox.Text;
         }
 
-        private void FEMChiChanged(object sender, RoutedEventArgs e)
+        private void OnChiFixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_chis.Count; i++)
+                str_chis[i] = FEMChiBox.Text;
         }
 
-        private void FEMFChanged(object sender, RoutedEventArgs e)
+        private void OnFFixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_fs.Count; i++)
+                str_fs[i] = FEMFBox.Text;
         }
 
-        private void FEM1BCLeftChanged(object sender, RoutedEventArgs e)
+        private void OnGammaFixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_gammas.Count; i++)
+                str_gammas[i] = FEMGammaBox.Text;
         }
 
-        private void FEM1BCRightChanged(object sender, RoutedEventArgs e)
+        private void OnLambdaFixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_lambdas.Count; i++)
+                str_lambdas[i] = FEMLambdaBox.Text;
         }
 
-        private void FEM1BCTopChanged(object sender, RoutedEventArgs e)
+        private void OnU0Fixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_u0s.Count; i++)
+                str_u0s[i] = FEMU0Box.Text;
         }
 
-        private void FEM1BCBottomChanged(object sender, RoutedEventArgs e)
+        private void OnD0Fixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_du0s.Count; i++)
+                str_du0s[i] = FEMDU0Box.Text;
         }
 
-        private void FEMT0Changed(object sender, RoutedEventArgs e)
+        private void OnU1Fixed(object sender, RoutedEventArgs e)
         {
-
+            for (int i = 0; i < str_u1s.Count; i++)
+                str_u1s[i] = FEMU1Box.Text;
         }
 
-        private void FEMTnChanged(object sender, RoutedEventArgs e)
+        private void FixParams() 
         {
+            if (FEMLambdaFixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_lambdas.Count; i++)
+                    str_lambdas[i] = FEMLambdaBox.Text;
 
+            if (FEMGammaFixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_gammas.Count; i++)
+                    str_gammas[i] = FEMGammaBox.Text;
+
+            if (FEMFFixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_fs.Count; i++)
+                    str_fs[i] = FEMFBox.Text;
+
+            if (FEMSigmaFixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_sigmas.Count; i++)
+                    str_sigmas[i] = FEMSigmaBox.Text;
+
+            if (FEMChiFixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_chis.Count; i++)
+                    str_chis[i] = FEMChiBox.Text;
+
+            if (FEMU0FixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_u0s.Count; i++)
+                    str_u0s[i] = FEMU0Box.Text;
+
+            if (FEMU1FixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_u1s.Count; i++)
+                    str_u1s[i] = FEMU1Box.Text;
+
+            if (FEDU0FixCheckBox.IsChecked ?? false)
+                for (int i = 0; i < str_du0s.Count; i++)
+                    str_du0s[i] = FEMDU0Box.Text;
         }
 
-        private void FEMNtChanged(object sender, RoutedEventArgs e)
+        private void ResetParamsStrings() 
         {
+            str_lambdas = new();
+            str_gammas = new();
+            str_sigmas = new();
+            str_chis = new();
+            str_fs = new();
+            str_u0s = new();
+            str_u1s = new();
+            str_du0s = new();
+            Ug1 = string.Empty;
+            Ug2 = string.Empty;
+            Ug3 = string.Empty;
+            Ug4 = string.Empty;
+            Theta1 = string.Empty;
+            Theta2 = string.Empty;
+            Theta3 = string.Empty;
+            Theta4 = string.Empty;
+            Beta1 = string.Empty;
+            Beta2 = string.Empty;
+            Beta3 = string.Empty;
+            Beta4 = string.Empty;
+            UBeta1 = string.Empty;
+            UBeta2 = string.Empty;
+            UBeta3 = string.Empty;
+            UBeta4 = string.Empty;
 
+            for (int i = 0; i < renderGrid.Grid.Nmats; i++)
+            {
+                str_lambdas.Add(string.Empty);
+                str_gammas.Add(string.Empty);
+                str_sigmas.Add(string.Empty);
+                str_chis.Add(string.Empty);
+                str_fs.Add(string.Empty);
+                str_u0s.Add(string.Empty);
+                str_u1s.Add(string.Empty);
+                str_du0s.Add(string.Empty);
+            }
+            FEMLambdaBox.Text = string.Empty;
+            FEMGammaBox.Text = string.Empty;
+            FEMSigmaBox.Text = string.Empty;
+            FEMChiBox.Text = string.Empty;
+            FEMFBox.Text = string.Empty;
+            FEMU0Box.Text = string.Empty;
+            FEMU1Box.Text = string.Empty;
+            FEMDU0Box.Text = string.Empty;
         }
 
-        private void FEMQtChanged(object sender, RoutedEventArgs e)
+        private void OnSaveFemParamsButtonClick(object sender, RoutedEventArgs e)
         {
+            // Configure save file dialog box
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "New params"; // Default file name
+            dlg.DefaultExt = ".fem"; // Default file extension
+            dlg.Filter = "MakeGrid FEM parameters format (.fem)|*.fem"; // Filter files by extension
 
+            // Show save file dialog box
+            bool? result = dlg.ShowDialog();
+
+            // Process save file dialog box results
+            if (result == true)
+            {
+                str_lambdas[prevArea - 1] = FEMLambdaBox.Text;
+                str_gammas[prevArea - 1] = FEMGammaBox.Text;
+                str_fs[prevArea - 1] = FEMFBox.Text;
+                str_sigmas[prevArea - 1] = FEMSigmaBox.Text;
+                str_chis[prevArea - 1] = FEMChiBox.Text;
+                str_u0s[prevArea - 1] = FEMU0Box.Text;
+                str_du0s[prevArea - 1] = FEMDU0Box.Text;
+                str_u1s[prevArea - 1] = FEMU1Box.Text;
+
+                string paramsText = string.Empty;
+                for (int i = 0; i < str_lambdas.Count; i++) 
+                    paramsText += $"{str_lambdas[i]}|";
+                paramsText += "\n";
+                for (int i = 0; i < str_gammas.Count; i++)
+                    paramsText += $"{str_gammas[i]}|";
+                paramsText += "\n";
+                for (int i = 0; i < str_sigmas.Count; i++)
+                    paramsText += $"{str_sigmas[i]}|";
+                paramsText += "\n";
+                for (int i = 0; i < str_chis.Count; i++)
+                    paramsText += $"{str_chis[i]}|";
+                paramsText += "\n";
+                for (int i = 0; i < str_fs.Count; i++)
+                    paramsText += $"{str_fs[i]}|";
+                paramsText += "\n";
+                for (int i = 0; i < str_u0s.Count; i++)
+                    paramsText += $"{str_u0s[i]}|";
+                paramsText += "\n";
+                for (int i = 0; i < str_u1s.Count; i++)
+                    paramsText += $"{str_u1s[i]}|";
+                paramsText += "\n";
+                for (int i = 0; i < str_du0s.Count; i++)
+                    paramsText += $"{str_du0s[i]}|";
+                paramsText += "\n";
+
+                paramsText += $"{BcNum1}|{BcNum2}|{BcNum3}|{BcNum4}\n";
+                paramsText += $"{Ug1}|{Ug2}|{Ug3}|{Ug4}\n";
+                paramsText += $"{Theta1}|{Theta2}|{Theta3}|{Theta4}\n";
+                paramsText += $"{Beta1}|{Beta2}|{Beta3}|{Beta4}\n";
+                paramsText += $"{UBeta1}|{UBeta2}|{UBeta3}|{UBeta4}\n";
+
+                File.WriteAllText(dlg.FileName, paramsText);
+            }
+        }
+
+        private void OnOpenFemParamsButtonClick(object sender, RoutedEventArgs e)
+        {
+            // Configure open file dialog box
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.DefaultExt = ".fem"; // Default file extension
+            dialog.Filter = "MakeGrid FEM parameters format (.fem)|*.fem"; // Filter files by extension
+
+            // Show open file dialog box
+            bool? result = dialog.ShowDialog();
+
+            // Process open file dialog box results
+            if (result == true)
+            {
+                fileName = dialog.FileName;
+                try
+                {
+                    ResetParamsStrings();
+                    using (TextReader reader = File.OpenText(fileName))
+                    {
+                        var lambdas_array = reader.ReadLine().Split('|');
+                        var gammas_array = reader.ReadLine().Split('|');
+                        var sigmas_array = reader.ReadLine().Split('|');
+                        var chis_array = reader.ReadLine().Split('|');
+                        var fs_array = reader.ReadLine().Split('|');
+                        var u0s_array = reader.ReadLine().Split('|');
+                        var u1s_array = reader.ReadLine().Split('|');
+                        var du0s_array = reader.ReadLine().Split('|');
+                        var bcnum_array = reader.ReadLine().Split('|');
+                        var ug_array = reader.ReadLine().Split('|');
+                        var theta_array = reader.ReadLine().Split('|');
+                        var beta_array = reader.ReadLine().Split('|');
+                        var ubeta_array = reader.ReadLine().Split('|');
+
+                        for (int i = 0; i < renderGrid.Grid.Nmats; i++)
+                        {
+                            str_lambdas[i] = lambdas_array[i];
+                            str_gammas[i] = gammas_array[i];
+                            str_sigmas[i] = sigmas_array[i];
+                            str_chis[i] = chis_array[i];
+                            str_fs[i] = fs_array[i];
+                            str_u0s[i] = u0s_array[i];
+                            str_u1s[i] = u1s_array[i];
+                            str_du0s[i] = du0s_array[i];
+                        }
+
+                        FEMLambdaBox.Text = str_lambdas[prevArea - 1];
+                        FEMGammaBox.Text = str_gammas[prevArea - 1];
+                        FEMFBox.Text = str_fs[prevArea - 1];
+                        FEMSigmaBox.Text = str_sigmas[prevArea - 1];
+                        FEMChiBox.Text = str_chis[prevArea - 1];
+                        FEMU0Box.Text = str_u0s[prevArea - 1];
+                        FEMU1Box.Text = str_u1s[prevArea - 1];
+                        FEMDU0Box.Text = str_du0s[prevArea - 1];
+
+                        BcNum1 = int.Parse(bcnum_array[0]);
+                        BcNum2 = int.Parse(bcnum_array[1]);
+                        BcNum3 = int.Parse(bcnum_array[2]);
+                        BcNum4 = int.Parse(bcnum_array[3]);
+
+                        Ug1 = ug_array[0];
+                        Ug2 = ug_array[1];
+                        Ug3 = ug_array[2];
+                        Ug4 = ug_array[3];
+
+                        Theta1 = theta_array[0];
+                        Theta2 = theta_array[1];
+                        Theta3 = theta_array[2];
+                        Theta4 = theta_array[3];
+
+                        Beta1 = beta_array[0];
+                        Beta2 = beta_array[1];
+                        Beta3 = beta_array[2];
+                        Beta4 = beta_array[3];
+
+                        UBeta1 = ubeta_array[0];
+                        UBeta2 = ubeta_array[1];
+                        UBeta3 = ubeta_array[2];
+                        UBeta4 = ubeta_array[3];
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ex is DirectoryNotFoundException || ex is FileNotFoundException)
+                        ErrorHandler.FileReadingErrorMessage("Не удалось найти файл с сеткой");
+                    else if (ex is FormatException)
+                        ErrorHandler.FileReadingErrorMessage("Некорректный формат файла");
+                    else
+                        ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл");
+                    ResetParamsStrings();
+                }
+            }
         }
     }
 }

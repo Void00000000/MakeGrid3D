@@ -206,16 +206,16 @@ namespace MakeGrid3D.Solver
         /// Инициализирует решатель. 
         /// </summary>
         /// <param name="grid">Конечноэлементная сетка.</param>
-        /// <param name="gridParams">Параметры краевой задачи.</param>
+        /// <param name="femParams">Параметры краевой задачи.</param>
         /// <param name="bc1">Список границ с первым к.у.</param>
         /// <param name="bc2">Список границ со вторым к.у.</param>
         /// <param name="bc3">Список границ с третьим к.у.</param>
         /// <param name="t">Список временных слоев.</param>
         /// <returns>true, если успешно удалось проинициализировать решатель.</returns>
-        public bool Initialize(Grid3D grid, FEMParams3D gridParams, List<Boundary3D> bc1, List<Boundary3D> bc2, List<Boundary3D> bc3, List<double> t)
+        public bool Initialize(Grid3D grid, FEMParams3D femParams, List<Boundary3D> bc1, List<Boundary3D> bc2, List<Boundary3D> bc3, List<double> t)
         {
             _grid = grid;
-            _params = gridParams;
+            _params = femParams;
             _bc1 = bc1;
             _bc2 = bc2;
             _bc3 = bc3;
@@ -1012,7 +1012,7 @@ namespace MakeGrid3D.Solver
         /// </summary>
         /// <param name="m">Множитель.</param>
         /// <param name="param">Функция параметра.</param>
-        private void AssemblyM(double m, Function param)
+        private void AssemblyM(double m, FunctionW param)
         {
             for (int k = 0; k < _grid.Nelems; k++)
             {
@@ -1039,7 +1039,7 @@ namespace MakeGrid3D.Solver
         /// <param name="m">Множитель.</param>
         /// <param name="param">Функция параметра.</param>
         /// <param name="q_i">Вектор значений на i-ом временном слое.</param>
-        private void AssemblyB(double t, bool isF, double m = 1, Function param=null, List<double> q_i = null) 
+        private void AssemblyB(double t, bool isF, double m = 1, FunctionW param=null, List<double> q_i = null) 
         {
             for (int k = 0; k < _grid.Nelems; k++)
             {

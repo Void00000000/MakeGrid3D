@@ -62,6 +62,10 @@ namespace MakeGrid3D
             this.n3 = n3;
             this.n4 = n4;
             this.n_uc = n_uc;
+            if (n_uc.Count > 0)
+            {
+                this.n5 = n_uc[0];
+            }
         }
     }
 
@@ -241,6 +245,7 @@ namespace MakeGrid3D
                         removedNodes.Add(j * Nx + i);
                 }
             CalcAR();
+            CalcNc();
         }
 
         // Создание регулярной сетки не через файл
@@ -322,6 +327,7 @@ namespace MakeGrid3D
                     IJ[i].Add(NodeType.Regular);
             }
             CalcAR();
+            CalcNc();
         }
 
         // Создание сетки через файл
@@ -421,6 +427,7 @@ namespace MakeGrid3D
                         }
                     }
                     CalcAR();
+                    CalcNc();
                 }
             }
             catch (Exception e)
@@ -502,6 +509,22 @@ namespace MakeGrid3D
             Elems = new List<Elem2D>();
             BuildElemsFromByteMat();
             CalcAR();
+            CalcNc();
+        }
+
+        private void CalcNc() 
+        {
+            Nc = 0;
+            for (int j = 0; j < Ny; j++)
+            {
+                for (int i = 0; i < Nx; i++)
+                {
+                    if (IJ[i][j] == NodeType.Regular)
+                    {
+                        Nc++;
+                    }
+                }
+            }
         }
 
         private void BuildElemsFromByteMat()
@@ -674,6 +697,61 @@ namespace MakeGrid3D
                 }
             }
             return boundaries;
+        }
+
+        /// <summary>
+        /// Перенумеровывает узлы для решателя.
+        /// </summary>
+        public Grid2D Renumerate() 
+        {
+            List<int> convert = new List<int>(Nnodes);
+            for (int i = 0; i < Nnodes; i++)
+                convert.Add(0);
+            int reg_count = 0;
+            int uc_count = 0;
+
+            for (int j = 0; j < Ny; j++) 
+            {
+                for (int i = 0; i < Nx; i++)
+                {
+                    if (IJ[i][j] == NodeType.Regular) 
+                    {
+                        convert[global_num(i, j)] = reg_count;
+                        reg_count++;
+                    }
+                    else if (IJ[i][j] != NodeType.Removed) 
+                    {
+                        convert[global_num(i, j)] = Nc + uc_count;
+                        uc_count++;
+                    }
+                }
+            }
+
+            List<Vector2> newXY = new List<Vector2>(Nnodes);
+            for (int i = 0; i < Nnodes; i++)
+                newXY.Add(new Vector2(0,0));
+            for (int i = 0; i < Nnodes; i++)
+                newXY[convert[i]] = XY[i];
+
+            List<Elem2D> newElems = new List<Elem2D>(Nelems);
+            foreach (Elem2D elem in Elems)
+            {
+                int n1 = convert[elem.n1];
+                int n2 = convert[elem.n2];
+                int n3 = convert[elem.n3];
+                int n4 = convert[elem.n4];
+                List<int> n_uc = new List<int>();
+                foreach (int n in elem.n_uc) 
+                {
+                    if (n >= 0)
+                    {
+                        n_uc.Add(convert[n]);
+                    }
+                }
+                newElems.Add(new Elem2D(elem.wi, n1, n2, n3, n4, n_uc));
+            }
+
+            return new Grid2D(Area, newXY, newElems, IJ);
         }
 
         public bool FindElem(double x, double y, ref int num)

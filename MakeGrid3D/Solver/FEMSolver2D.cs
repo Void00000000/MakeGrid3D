@@ -175,16 +175,16 @@
         /// Инициализирует решатель. 
         /// </summary>
         /// <param name="grid">Конечноэлементная сетка.</param>
-        /// <param name="gridParams">Параметры краевой задачи.</param>
+        /// <param name="femParams">Параметры краевой задачи.</param>
         /// <param name="bc1">Список границ с первым к.у.</param>
         /// <param name="bc2">Список границ со вторым к.у.</param>
         /// <param name="bc3">Список границ с третьим к.у.</param>
         /// <param name="t">Список временных слоев.</param>
         /// <returns>true, если успешно удалось проинициализировать решатель.</returns>
-        public bool Initialize(Grid2D grid, FEMParams2D gridParams, List<Boundary2D> bc1, List<Boundary2D> bc2, List<Boundary2D> bc3, List<double> t)
+        public bool Initialize(Grid2D grid, FEMParams2D femParams, List<Boundary2D> bc1, List<Boundary2D> bc2, List<Boundary2D> bc3, List<double> t)
         {
             _grid = grid;
-            _params = gridParams;
+            _params = femParams;
             _bc1 = bc1;
             _bc2 = bc2;
             _bc3 = bc3;
@@ -204,6 +204,7 @@
 
             InitPrevQ_3_2();
             q_1 = SolveBy3Layers(_t[0], _t[1], _t[2]);
+
             return true;
         }
 
@@ -259,8 +260,6 @@
                 ApplyBc(3, t);
                 ApplyBc(1, t);
 
-                //_matrix.Di[2] = 1;
-
                 List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
                 List<double> q;
                 if (_n == _grid.Nnodes)
@@ -280,6 +279,25 @@
                     q_2 = new List<double>(q_1);
                     q_1 = new List<double>(q);
                 }
+            }
+
+            int J = _t.Count - 1;
+            for (int i = 0; i < q_1.Count; i++)
+            {
+                double x = _grid.XY[i].X;
+                double y = _grid.XY[i].Y;
+                double uh = Q[J][i];
+                double u = x * y * _t[J];
+                double abs = !MathsHelper.IsEqual(u, 0) ? Math.Abs(u - uh) / u * 100 : 0;
+
+                string frmt = "e15";
+                LogService.Log(i + " ");
+                LogService.Log(x.ToString() + " ");
+                LogService.Log(y.ToString() + " ");
+                LogService.Log(uh.ToString(frmt) + " ");
+                LogService.Log(u.ToString(frmt) + " ");
+                LogService.Log(abs.ToString("F3") + " ");
+                LogService.Log("\n");
             }
             return Q;
         }
@@ -346,8 +364,6 @@
             ApplyBc(2, t);
             ApplyBc(3, t);
             ApplyBc(1, t);
-
-            //_matrix.Di[2] = 1;
 
             List<double> qc = LOSSolver.Instance.LOS_DI(_matrix, _b);
             if (_n == _grid.Nnodes)
@@ -504,7 +520,7 @@
                     {
                         double Telem1 = BasicFunc1(xc, xmax, hx);
                         double Telem2 = BasicFunc2(xc, xmin, hx);
-                        G[nc].Add((n2, Telem1));
+                        G[nc].Add((n3, Telem1));
                         G[nc].Add((n4, Telem2));
                     }
                     // Узел лежит на левой стороне
@@ -734,7 +750,7 @@
         /// </summary>
         /// <param name="m">Множитель.</param>
         /// <param name="param">Функция параметра.</param>
-        private void AssemblyM(double m, Function param) 
+        private void AssemblyM(double m, FunctionW param) 
         {
             foreach (Elem2D elem in _grid.Elems)
             {
@@ -766,7 +782,7 @@
         /// <param name="m">Множитель.</param>
         /// <param name="param">Функция параметра.</param>
         /// <param name="q_i">Вектор значений на i-ом временном слое.</param>
-        private void AssemblyB(double t, bool isF, double m = 1, Function param = null, List<double> q_i = null)
+        private void AssemblyB(double t, bool isF, double m = 1, FunctionW param = null, List<double> q_i = null)
         {
             foreach (Elem2D elem in _grid.Elems)
             {

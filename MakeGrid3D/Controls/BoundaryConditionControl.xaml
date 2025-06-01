@@ -1,0 +1,88 @@
+﻿<UserControl
+    x:Class="MakeGrid3D.Controls.BoundaryConditionControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:MakeGrid3D.Convertres"
+    Name="root">
+    <UserControl.Resources>
+        <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Border
+        Padding="5"
+        BorderBrush="Black"
+        BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Header and ComboBox  -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Margin="0,0,5,0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontWeight="Bold"
+                    Text="{Binding Header, ElementName=root}" />
+
+                <ComboBox
+                    Grid.Column="1"
+                    Width="40"
+                    SelectedIndex="{Binding SelectedOption, ElementName=root, Mode=TwoWay}">
+                    <ComboBoxItem Content="1" />
+                    <ComboBoxItem Content="2" />
+                    <ComboBoxItem Content="3" />
+                </ComboBox>
+            </Grid>
+
+            <!--  Dynamic Content Area  -->
+            <Grid Grid.Row="1">
+                <!--  Option 1 Content  -->
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding SelectedOption, ElementName=root, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=1}">
+                    <StackPanel Margin="5" Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" Text="ug = " />
+                        <TextBox Width="100" Text="{Binding Ug, ElementName=root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  Option 2 Content  -->
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding SelectedOption, ElementName=root, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=2}">
+                    <StackPanel Margin="5" Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" Text="θ = " />
+                        <TextBox Width="100" Text="{Binding Theta, ElementName=root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  Option 3 Content  -->
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding SelectedOption, ElementName=root, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=3}">
+                    <StackPanel Margin="5" Orientation="Vertical">
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" Text="uβ = " />
+                            <TextBox Width="100" Text="{Binding UBeta, ElementName=root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="7,5,0,5" Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" Text="β = " />
+                            <TextBox Width="100" Text="{Binding Beta, ElementName=root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

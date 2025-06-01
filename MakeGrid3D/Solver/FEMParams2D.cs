@@ -1,6 +1,8 @@
-﻿global using Function = System.Func<int, double>;
-global using FunctionXY = System.Func<int, double, double, double>;
-global using FunctionXYT = System.Func<int, double, double, double, double>;
+﻿global using FunctionW = System.Func<int, double>;
+global using FunctionWXY = System.Func<int, double, double, double>;
+global using FunctionWXYT = System.Func<int, double, double, double, double>;
+global using FunctionXYT = System.Func<double, double, double, double>;
+global using FunctionXY = System.Func<double, double, double>;
 
 namespace MakeGrid3D.Solver
 {
@@ -12,62 +14,62 @@ namespace MakeGrid3D.Solver
         /// <summary>
         /// Параметр лямбда. 
         /// </summary>
-        public Function Lambda { get; set; }
+        public FunctionW Lambda { get; set; }
 
         /// <summary>
         /// Параметр гамма. 
         /// </summary>
-        public Function Gamma { get; set; }
+        public FunctionW Gamma { get; set; }
 
         /// <summary>
         /// Параметр сигма. 
         /// </summary>
-        public Function Sigma { get; set; }
+        public FunctionW Sigma { get; set; }
 
         /// <summary>
         /// Параметр хи. 
         /// </summary>
-        public Function Chi { get; set; }
+        public FunctionW Chi { get; set; }
 
         /// <summary>
         /// Функция правой части. 
         /// </summary>
-        public FunctionXYT F { get; set; }
+        public FunctionWXYT F { get; set; }
 
         /// <summary>
         /// Функция первого краевого условия. 
         /// </summary>
-        public FunctionXYT Ug { get; set; }
+        public FunctionWXYT Ug { get; set; }
 
         /// <summary>
         /// Функция второго краевого условия. 
         /// </summary>
-        public FunctionXYT Theta { get; set; }
+        public FunctionWXYT Theta { get; set; }
 
         /// <summary>
         /// Параметр бета 3-го краевого условия. 
         /// </summary>
-        public Function Beta { get; set; }
+        public FunctionW Beta { get; set; }
 
         /// <summary>
         /// Функция третьего краевого условия. 
         /// </summary>
-        public FunctionXYT Ubeta { get; set; }
+        public FunctionWXYT Ubeta { get; set; }
 
         /// <summary>
         /// Первое начальное условие (значение функции на нулевом слое). 
         /// </summary>
-        public FunctionXY U0 { get; set; }
+        public FunctionWXY U0 { get; set; }
 
         /// <summary>
         /// Второе начальное условие (значение производной функции на нулевом слое). 
         /// </summary>
-        public FunctionXY DU0 { get; set; }
+        public FunctionWXY DU0 { get; set; }
 
         /// <summary>
         /// Второе начальное условие (значение функции на первом слое). 
         /// </summary>
-        public FunctionXY U1 { get; set; }
+        public FunctionWXY U1 { get; set; }
     }
 
     /// <summary>
