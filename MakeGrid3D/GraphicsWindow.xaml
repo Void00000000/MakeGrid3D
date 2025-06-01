@@ -21,6 +21,7 @@
     <Window.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converters:InvertedBoolToVisibilityConverter x:Key="InvertedBoolToVisibilityConverter" />
+        <converters:DoubleToIntConverter x:Key="DoubleToIntConverter" />
     </Window.Resources>
 
     <Grid>
@@ -688,98 +689,9 @@
                                 </Separator.RenderTransform>
                             </Separator>
 
-                            <!--  Uploading q vector  -->
-                            <Grid Grid.Row="8" Margin="10,10,10,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Border
-                                    Width="150"
-                                    Height="20"
-                                    Margin="0,0,5,0"
-                                    BorderBrush="Black"
-                                    BorderThickness="1">
-                                    <TextBlock
-                                        Name="QFileNameBlock"
-                                        Grid.Column="0"
-                                        Width="150"
-                                        Height="25"
-                                        Background="White"
-                                        Text="Файл не загружен" />
-                                </Border>
-                                <Button
-                                    Grid.Column="1"
-                                    Width="35"
-                                    Height="35"
-                                    Margin="0,0,5,0"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Click="UploadQFileClick">
-                                    <Image Source="Images/upload.png" />
-                                </Button>
-                                <Button
-                                    Grid.Column="2"
-                                    Width="40"
-                                    Height="40"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Click="RemoveQFileClick">
-                                    <Image Source="Images/cancel.png" />
-                                </Button>
-                            </Grid>
-                            <CheckBox
-                                Name="ShowQGradientCheckbox"
-                                Grid.Row="9"
-                                Margin="10,10,10,0"
-                                Checked="ShowQGradientChecked"
-                                Content="Визуализировать вектор q"
-                                Unchecked="ShowQGradientUnChecked" />
-                            <Grid Grid.Row="10" Margin="10,10,10,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    FontSize="14"
-                                    Foreground="Black"
-                                    Text="Цвет 1: " />
-                                <xctk:ColorPicker
-                                    Name="MinColorPicker"
-                                    Grid.Column="1"
-                                    Width="50"
-                                    SelectedColorChanged="MinColorChanged" />
-                                <TextBlock
-                                    Grid.Column="2"
-                                    Margin="10,0,0,0"
-                                    FontSize="14"
-                                    Foreground="Black"
-                                    Text="Цвет 2: " />
-                                <xctk:ColorPicker
-                                    Name="MaxColorPicker"
-                                    Grid.Column="3"
-                                    Width="50"
-                                    SelectedColorChanged="MaxColorChanged" />
-                            </Grid>
-
-                            <!--  Separator: Uploading q vector|Reset Settings  -->
-                            <Separator
-                                Grid.Row="11"
-                                Margin="10,10,10,0"
-                                Background="Black">
-                                <Separator.RenderTransform>
-                                    <ScaleTransform ScaleY="2.5" />
-                                </Separator.RenderTransform>
-                            </Separator>
-
                             <!--  Reset Settings  -->
                             <Button
-                                Grid.Row="12"
+                                Grid.Row="8"
                                 Margin="0,10,0,0"
                                 HorizontalAlignment="Center"
                                 Click="ResetSettingsClick"
@@ -1007,7 +919,7 @@
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="Решаетель">
+                    <TabItem Header="Решатель">
                         <ScrollViewer
                             Margin="30,10"
                             CanContentScroll="True"
@@ -1350,6 +1262,135 @@
                                     Content="Сохранить" />
                             </Grid>
                         </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Постпроцессор">
+                        <Grid
+                            Margin="30,10"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top">
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <!--  Uploading q vector  -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border
+                                    Width="150"
+                                    Height="20"
+                                    Margin="0,0,5,0"
+                                    BorderBrush="Black"
+                                    BorderThickness="1">
+                                    <TextBlock
+                                        Name="QFileNameBlock"
+                                        Grid.Column="0"
+                                        Width="150"
+                                        Height="25"
+                                        Background="White"
+                                        Text="Файл не загружен" />
+                                </Border>
+                                <Button
+                                    Grid.Column="1"
+                                    Width="35"
+                                    Height="35"
+                                    Margin="0,0,5,0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="UploadQFileClick">
+                                    <Image Source="Images/upload.png" />
+                                </Button>
+                                <Button
+                                    Grid.Column="2"
+                                    Width="40"
+                                    Height="40"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="RemoveQFileClick">
+                                    <Image Source="Images/cancel.png" />
+                                </Button>
+                            </Grid>
+                            <CheckBox
+                                Name="ShowQGradientCheckbox"
+                                Grid.Row="1"
+                                Margin="0,10,0,0"
+                                Checked="ShowQGradientChecked"
+                                Content="Визуализировать вектор q"
+                                Unchecked="ShowQGradientUnChecked" />
+                            <Grid Grid.Row="2" Margin="0,10,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Цвет 1: " />
+                                <xctk:ColorPicker
+                                    Name="MinColorPicker"
+                                    Grid.Column="1"
+                                    Width="50"
+                                    Height="25"
+                                    VerticalAlignment="Top"
+                                    SelectedColorChanged="MinColorChanged" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Margin="10,0,0,0"
+                                    FontSize="14"
+                                    Foreground="Black"
+                                    Text="Цвет 2: " />
+                                <xctk:ColorPicker
+                                    Name="MaxColorPicker"
+                                    Grid.Column="3"
+                                    Width="50"
+                                    Height="25"
+                                    VerticalAlignment="Top"
+                                    SelectedColorChanged="MaxColorChanged" />
+                            </Grid>
+                            <StackPanel
+                                Grid.Row="3"
+                                Margin="20,0,0,0"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal">
+                                <TextBlock Margin="-20,0,10,0">
+                                    <Run Text="t0 = " />
+                                    <Run Text="{Binding T0, ElementName=rootPage, Mode=OneWay}" />
+                                </TextBlock>
+                                <Slider
+                                    x:Name="TimeSlider"
+                                    Width="200"
+                                    Margin="0,0,10,0"
+                                    AutoToolTipPlacement="TopLeft"
+                                    IsSnapToTickEnabled="True"
+                                    LargeChange="1"
+                                    Minimum="0"
+                                    SmallChange="1"
+                                    TickFrequency="1"
+                                    TickPlacement="BottomRight"
+                                    ValueChanged="OnTimeSliderChanged"
+                                    Value="{Binding IndexT, ElementName=rootPage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DoubleToIntConverter}}" />
+                                <TextBlock Margin="0,0,10,0">
+                                    <Run Text="tN = " />
+                                    <Run Text="{Binding TN, ElementName=rootPage, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="4" HorizontalAlignment="Center">
+                                <Run Text="t = " />
+                                <Run Text="{Binding CurrentT, ElementName=rootPage, Mode=OneWay}" />
+                            </TextBlock>
+                        </Grid>
                     </TabItem>
                 </TabControl>
                 <!--  Instrument Panel End  -->

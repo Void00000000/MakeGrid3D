@@ -225,6 +225,7 @@ namespace MakeGrid3D
         public List<Vector2> XY { get; }
         public ByteMat2D IJ { get; }
         public List<int> removedNodes;
+        public List<int> Convert;
 
         public Grid2D(Area2D area, List<Vector2> XY, List<Elem2D> elems, ByteMat2D IJ)
         {
@@ -704,9 +705,9 @@ namespace MakeGrid3D
         /// </summary>
         public Grid2D Renumerate() 
         {
-            List<int> convert = new List<int>(Nnodes);
+            Convert = new List<int>(Nnodes);
             for (int i = 0; i < Nnodes; i++)
-                convert.Add(0);
+                Convert.Add(0);
             int reg_count = 0;
             int uc_count = 0;
 
@@ -716,12 +717,12 @@ namespace MakeGrid3D
                 {
                     if (IJ[i][j] == NodeType.Regular) 
                     {
-                        convert[global_num(i, j)] = reg_count;
+                        Convert[global_num(i, j)] = reg_count;
                         reg_count++;
                     }
                     else if (IJ[i][j] != NodeType.Removed) 
                     {
-                        convert[global_num(i, j)] = Nc + uc_count;
+                        Convert[global_num(i, j)] = Nc + uc_count;
                         uc_count++;
                     }
                 }
@@ -731,27 +732,28 @@ namespace MakeGrid3D
             for (int i = 0; i < Nnodes; i++)
                 newXY.Add(new Vector2(0,0));
             for (int i = 0; i < Nnodes; i++)
-                newXY[convert[i]] = XY[i];
+                newXY[Convert[i]] = XY[i];
 
             List<Elem2D> newElems = new List<Elem2D>(Nelems);
             foreach (Elem2D elem in Elems)
             {
-                int n1 = convert[elem.n1];
-                int n2 = convert[elem.n2];
-                int n3 = convert[elem.n3];
-                int n4 = convert[elem.n4];
+                int n1 = Convert[elem.n1];
+                int n2 = Convert[elem.n2];
+                int n3 = Convert[elem.n3];
+                int n4 = Convert[elem.n4];
                 List<int> n_uc = new List<int>();
                 foreach (int n in elem.n_uc) 
                 {
                     if (n >= 0)
                     {
-                        n_uc.Add(convert[n]);
+                        n_uc.Add(Convert[n]);
                     }
                 }
                 newElems.Add(new Elem2D(elem.wi, n1, n2, n3, n4, n_uc));
             }
-
-            return new Grid2D(Area, newXY, newElems, IJ);
+            Grid2D result = new Grid2D(Area, newXY, newElems, IJ);
+            result.Convert = Convert;
+            return result;
         }
 
         public bool FindElem(double x, double y, ref int num)

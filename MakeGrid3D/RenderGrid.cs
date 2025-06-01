@@ -565,6 +565,12 @@ namespace MakeGrid3D
             }
         }
 
+        public void SetMinMaxQ(double qmin, double qmax) 
+        {
+            minGradValue = qmin;
+            maxGradValue = qmax;
+        }
+
         private Color4 CalcGradientColor(double qi)
         {
             double h = maxGradValue - minGradValue;

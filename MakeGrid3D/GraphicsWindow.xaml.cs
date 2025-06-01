@@ -68,6 +68,7 @@ namespace MakeGrid3D
 
         bool isQFileLoaded = false;
         List<double> q;
+        List<List<double>> qList;
 
         Vector2 lastMousePos;
         bool firstMove = true;
@@ -328,6 +329,56 @@ namespace MakeGrid3D
         private List<FunctionXY> du0s_2d;
         private List<FunctionXY> u1s_2d;
 
+        private double _t0 = 0;
+        private double _tN = 0;
+        private int _indexT = 0;
+        private double _currentT = 0;
+        private List<double> T;
+
+        public double T0
+        {
+            get => _t0;
+            set
+            {
+                if (_t0 == value) return;
+                _t0 = value;
+                OnPropertyChanged(nameof(T0));
+            }
+        }
+
+        public double TN
+        {
+            get => _tN;
+            set
+            {
+                if (_tN == value) return;
+                _tN = value;
+                OnPropertyChanged(nameof(TN));
+            }
+        }
+
+        public double CurrentT
+        {
+            get => _currentT;
+            set
+            {
+                if (_currentT == value) return;
+                _currentT = value;
+                OnPropertyChanged(nameof(CurrentT));
+            }
+        }
+
+        public int IndexT
+        {
+            get => _indexT;
+            set
+            {
+                if (_indexT == value) return;
+                _indexT = value;
+                OnPropertyChanged(nameof(IndexT));
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
 
@@ -513,7 +564,7 @@ namespace MakeGrid3D
                 {
                     if (!renderGrid.WireframeMode)
                         renderGrid.shader.SetColor4("current_color", new Color4(86 / 255f, 89 / 255f, 88 / 255f, 0.75f));
-                    else if (renderGrid.WireframeMode && isQFileLoaded)
+                    else if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null))
                     {
                         renderGrid.shader.SetInt("isGradient", 1);
                         renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 4]);
@@ -524,16 +575,16 @@ namespace MakeGrid3D
                     }
                     else
                         renderGrid.shader.SetColor4("current_color", Color4.Red);
-                    if (renderGrid.WireframeMode && isQFileLoaded) renderGrid.shader.SetInt("isGradient", 1);
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null)) renderGrid.shader.SetInt("isGradient", 1);
                     renderGrid.GradientMeshes[currentElemIndex].DrawElems(6, 0, PrimitiveType.Triangles);
                     renderGrid.shader.SetInt("isGradient", 0);
                 }
                 // ------------------------------------ 3D --------------------------------------------
                 else
                 {
-                    if (renderGrid.WireframeMode && isQFileLoaded) renderGrid.shader.SetInt("isGradient", 1);
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null)) renderGrid.shader.SetInt("isGradient", 1);
                     // 1 face
-                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null))
                     {
                         renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24]);
                         renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 1]);
@@ -543,7 +594,7 @@ namespace MakeGrid3D
                     else renderGrid.shader.SetColor4("current_color", Color4.Red);
                     renderGrid.GradientMeshes[currentElemIndex * 6].DrawElems(6, 0, PrimitiveType.Triangles);
                     // 2 face
-                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null))
                     {
                         renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 4]);
                         renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 5]);
@@ -554,7 +605,7 @@ namespace MakeGrid3D
                     else renderGrid.shader.SetColor4("current_color", Color4.Red);
                     renderGrid.GradientMeshes[currentElemIndex * 6 + 1].DrawElems(6, 0, PrimitiveType.Triangles);
                     // 3 face
-                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null))
                     {
                         renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 8]);
                         renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 9]);
@@ -565,7 +616,7 @@ namespace MakeGrid3D
                     else renderGrid.shader.SetColor4("current_color", Color4.Red);
                     renderGrid.GradientMeshes[currentElemIndex * 6 + 2].DrawElems(6, 0, PrimitiveType.Triangles);
                     // 4 face
-                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null))
                     {
                         renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 12]);
                         renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 13]);
@@ -576,7 +627,7 @@ namespace MakeGrid3D
                     else renderGrid.shader.SetColor4("current_color", Color4.Red);
                     renderGrid.GradientMeshes[currentElemIndex * 6 + 3].DrawElems(6, 0, PrimitiveType.Triangles);
                     // 5 face
-                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null))
                     {
                         renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 16]);
                         renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 17]);
@@ -587,7 +638,7 @@ namespace MakeGrid3D
                     else renderGrid.shader.SetColor4("current_color", Color4.Red);
                     renderGrid.GradientMeshes[currentElemIndex * 6 + 4].DrawElems(6, 0, PrimitiveType.Triangles);
                     // 6 face
-                    if (renderGrid.WireframeMode && isQFileLoaded)
+                    if (renderGrid.WireframeMode && (isQFileLoaded || qList != null && T != null))
                     {
                         renderGrid.shader.SetColor4("color1", renderGrid.GridColors[currentElemIndex * 24 + 20]);
                         renderGrid.shader.SetColor4("color2", renderGrid.GridColors[currentElemIndex * 24 + 21]);
@@ -897,7 +948,7 @@ namespace MakeGrid3D
             BlockNodesNum4.Text = "П.В. №: " + selectedElem2D.n4;
             BlockNodesCoords4.Text = "\tx: " + grid2D.XY[selectedElem2D.n4].X.ToString("0.00")
                                    + "\ty: " + grid2D.XY[selectedElem2D.n4].Y.ToString("0.00");
-            if (isQFileLoaded)
+            if (isQFileLoaded || qList != null && T != null)
             {
                 BlockNodesCoords1.Text += "\tq: " + q[selectedElem2D.n1].ToString("0.00");
                 BlockNodesCoords2.Text += "\tq: " + q[selectedElem2D.n2].ToString("0.00");
@@ -909,7 +960,7 @@ namespace MakeGrid3D
                 BlockNodesNum5.Text = "ДОП. №: " + selectedElem2D.n5;
                 BlockNodesCoords5.Text = "\tx: " + grid2D.XY[selectedElem2D.n5].X.ToString("0.00")
                                        + "\ty: " + grid2D.XY[selectedElem2D.n5].Y.ToString("0.00");
-                if (isQFileLoaded)
+                if (isQFileLoaded || qList != null && T != null)
                     BlockNodesCoords5.Text += "\tq: " + q[selectedElem2D.n5].ToString("0.00");
             }
             else
@@ -963,7 +1014,7 @@ namespace MakeGrid3D
             BlockNodesCoords8.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n8].X.ToString("0.00")
                                    + "\ty: " + grid3D.XYZ[selectedElem3D.n8].Y.ToString("0.00") +
                                    "\tz: " + grid3D.XYZ[selectedElem3D.n8].Z.ToString("0.00");
-            if (isQFileLoaded)
+            if (isQFileLoaded || qList != null && T != null)
             {
                 BlockNodesCoords1.Text += "\tq: " + q[selectedElem3D.n1].ToString("0.00");
                 BlockNodesCoords2.Text += "\tq: " + q[selectedElem3D.n2].ToString("0.00");
@@ -984,7 +1035,7 @@ namespace MakeGrid3D
                 BlockNodesCoords10.Text = "\tx: " + grid3D.XYZ[selectedElem3D.n10].X.ToString("0.00")
                                        + "\ty: " + grid3D.XYZ[selectedElem3D.n10].Y.ToString("0.00") +
                                        "\tz: " + grid3D.XYZ[selectedElem3D.n10].Z.ToString("0.00");
-                if (isQFileLoaded)
+                if (isQFileLoaded || qList != null && T != null)
                 {
                     BlockNodesCoords9.Text += "\tq: " + q[selectedElem3D.n9].ToString("0.00");
                     BlockNodesCoords10.Text += "\tq: " + q[selectedElem3D.n10].ToString("0.00");
@@ -2002,7 +2053,7 @@ namespace MakeGrid3D
                 int index = crossSections.CurrentPlaneSec;
                 double value = crossSections.CurrentValue;
                 List<double> q_new;
-                if (isQFileLoaded) regularGrid = new Grid2D(grid3D, plane, index, value, true, q, out q_new);
+                if (isQFileLoaded || qList != null && T != null) regularGrid = new Grid2D(grid3D, plane, index, value, true, q, out q_new);
                 else regularGrid = new Grid2D(grid3D, plane, index, value, false, q, out q_new);
                 q = q_new;
                 twoD = true;
@@ -2012,7 +2063,7 @@ namespace MakeGrid3D
                 ResetSelectedElem();
                 crossSections.Active = false;
                 currentPlane = plane;
-                if (isQFileLoaded) renderGrid.SetGridColors(q, false);
+                if (isQFileLoaded || qList != null && T != null) renderGrid.SetGridColors(q, false);
             }
         }
 
@@ -2130,7 +2181,7 @@ namespace MakeGrid3D
 
         private void ShowQGradientChecked(object sender, RoutedEventArgs e)
         {
-            if (isQFileLoaded)
+            if (isQFileLoaded || (qList != null && T != null))
             {
                 renderGrid.ShowQGradient = true;
             }
@@ -2500,15 +2551,16 @@ namespace MakeGrid3D
                 int.TryParse(FEMNtBox.Text, out int nt) &&
                 double.TryParse(FEMQtBox.Text, out double qt))
             {
-                List<double> T = new(nt + 1);
+                T0 = t0;
+                TN = tn;
+                T = new(nt + 1);
                 for (int i = 0; i < T.Capacity; i++) 
                 {
                     T.Add(0);
                 }
                 int i0 = 0; int j0 = 0;
-                Grid2D.MakeGrid1D(T, t0, tn, nt, qt, ref i0, ref j0);
-                T[nt] = tn;
-
+                Grid2D.MakeGrid1D(T, T0, TN, nt, qt, ref i0, ref j0);
+                T[nt] = TN;
 
                 FEMParams2D femParams = new FEMParams2D();
                 femParams.Lambda = (wi) => lambdas[wi];
@@ -2576,7 +2628,35 @@ namespace MakeGrid3D
                 }
 
                 FEMSolver2D.Instance.Initialize(femGrid, femParams, bc1, bc2, bc3, T);
-                var qList = FEMSolver2D.Instance.Solve();
+                List<List<double>> qListFemNum = FEMSolver2D.Instance.Solve();
+                // Меняем нумерацию массивов q.
+                qList = new(qListFemNum.Count);
+                foreach (List<double> qFemNum in qListFemNum) 
+                {
+                    List<double> qGridNum = new List<double>();
+                    for (int i = 0; i < qFemNum.Count; i++)
+                        qGridNum.Add(0);
+                    for (int i = 0; i < qGridNum.Count; i++)
+                        qGridNum[i] = qFemNum[femGrid.Convert[i]];
+                    qList.Add(qGridNum);
+                }
+
+                double minValue = qList
+                .Where(inner => inner != null && inner.Count > 0)
+                .SelectMany(inner => inner)
+                .Min();
+
+                double maxValue = qList
+                    .Where(inner => inner != null && inner.Count > 0)
+                    .SelectMany(inner => inner)
+                    .Max();
+                renderGrid.SetMinMaxQ(minValue, maxValue);
+                IndexT = 0;
+                CurrentT = T[IndexT];
+                TimeSlider.Maximum = T.Count - 1;
+                q = qList[0];
+                renderGrid.SetGridColors(q, false);
+                MessageBox.Show("Зада была успешно решена");
             }
             else 
             {
@@ -2864,6 +2944,19 @@ namespace MakeGrid3D
                     else
                         ErrorHandler.FileReadingErrorMessage("Не удалось прочитать файл");
                     ResetParamsStrings();
+                }
+            }
+        }
+
+        private void OnTimeSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!isQFileLoaded)
+            {
+                if (T != null && qList != null)
+                {
+                    CurrentT = T[IndexT];
+                    q = qList[IndexT];
+                    renderGrid.SetGridColors(q, false);
                 }
             }
         }
